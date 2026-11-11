@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>A modern, FSRS-powered spaced repetition plugin that lives inside your notes.</strong><br>
-  No separate app. Write, tag, and study directly where your knowledge lives. Cards stay plain Markdown in your vault; review history stays on your device (or your own CouchDB), with backups one command away.
+  No separate app. Write, tag, and study directly where your knowledge lives. Cards stay plain Markdown in your vault; schedules and review history are saved automatically in the plugin’s data.json, with optional CouchDB sync.
 </p>
 
 <p align="center">
@@ -124,7 +124,18 @@ Interactive creation modals with dropdown format selection, live syntax previews
 Undo the last rating from the review window (`Z`). Export all schedules, review history and streak data to a JSON file and merge it back on another device, or import cards from a plain text export of another flashcard app or a CSV or TSV file.
 
 ### Optional CouchDB Sync
-Review data is stored on each device (IndexedDB). Optionally connect your own CouchDB or Cloudant instance to sync it across devices.
+Review data is saved automatically in the plugin’s `data.json` file inside your vault. With PouchDB enabled, an IndexedDB copy supports optional sync through your own CouchDB or Cloudant instance.
+
+Incoming sync changes update open cards, whole-note schedules, statistics, and the vault copy without
+restarting Obsidian. New review logs include earned XP so synced reviews and undo update the XP total.
+
+### Dashboard navigation
+Decks follow the vault's folder hierarchy. Expanded folders remain open, and the dashboard remembers
+its scroll position during the session. Use a folder's study button to review its decks and subfolders.
+The **available today** count and study buttons respect daily limits and sibling burying; total due
+and new counts remain visible separately. Deck links and action buttons support keyboard navigation.
+Flashcard notes also have a play icon beside the reading and editing controls. It saves pending edits
+and starts a session using the flashcards in that note, with the same daily limits as the dashboard.
 
 ---
 
@@ -298,16 +309,31 @@ non-Markdown files, attachments, or data belonging to other plugins.
 
 ### Data storage
 
-Settings are saved through Obsidian's plugin data API (`data.json`). Scheduling state and review
-history are stored in IndexedDB through PouchDB, in a database that is named per vault for new
-installs (existing installs keep the original shared name, so no data is moved). PouchDB probes `localStorage` and uses a small
+Settings, card and whole-note schedules, review history, XP, and streaks are saved automatically
+through Obsidian's plugin data API in `.obsidian/plugins/lemma-flashcards/data.json` (or the equivalent
+path if you use a custom configuration folder). Reviews, undo, imports, and resets update this file.
+Include the plugin configuration folder when backing up or copying your vault.
+
+With PouchDB enabled, review data is also stored in IndexedDB for CouchDB sync. Existing IndexedDB
+progress is copied to `data.json` on load. If IndexedDB has no schedules or review history, Lemma
+restores them from `data.json` automatically. Otherwise, IndexedDB remains the source used on load;
+copying an older `data.json` over a device with existing IndexedDB data does not replace that data.
+Use **Import review data from backup** to merge a selected file into an existing collection.
+New installs use a database named per vault; existing installs retain their database name.
+
+If saving fails, Lemma displays a persistent notice and a **Retry save** action in the dashboard.
+Deleting a deck note or folder removes its stored schedules, including whole-note review schedules,
+while keeping historical reviews. Resetting all progress clears schedules, history, XP, streaks,
+and undo in both storage copies, with deletions retained for CouchDB sync.
+
+PouchDB probes `localStorage` and uses a small
 cross-tab change marker; this is the Local Storage disclosure reported by the community plugin
 scanner. Lemma never stores vault content, settings, or review data in `localStorage` or
 `sessionStorage`.
 
 ### Files Lemma writes and reads
 
-Lemma creates files in your vault only when you run a command that says so: **Export review data
+Besides automatically saving the plugin’s `data.json`, Lemma creates files in your vault when you run these commands: **Export review data
 (backup)** writes one `Lemma backup <date and time>.json` file to the vault root, **Import cards
 from file** creates one new deck note, **Create new deck** and **Create card** create or edit the
 note you choose. The import commands read only the single file you select in the file picker.

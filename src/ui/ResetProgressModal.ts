@@ -34,6 +34,7 @@ export class ResetProgressModal extends Modal {
         consequences.createEl('li', { text: 'All cards will be reset to "new" status' });
         consequences.createEl('li', { text: 'All review history will be deleted' });
         consequences.createEl('li', { text: 'All FSRS scheduling data will be cleared' });
+        consequences.createEl('li', { text: 'XP, streaks, and whole-note review progress will be reset' });
         consequences.createEl('li', { text: 'You will start from scratch with every card' });
 
         const statsContainer = this.contentEl.createDiv({ cls: 'fsrs-reset-stats' });

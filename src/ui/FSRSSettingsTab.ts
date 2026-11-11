@@ -137,7 +137,7 @@ export class FSRSSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Use PouchDB (IndexedDB)')
-            .setDesc('Store review progress in high-performance browser storage (IndexedDB) instead of a single data.json file. Recommended for vaults with over 500 cards or when using sync.')
+            .setDesc('Keep an IndexedDB copy of review progress for CouchDB sync. Settings, schedules, history, XP, and streaks are also saved automatically in the plugin’s data.json file in your vault.')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.usePouchDB)
                 .onChange(async (value) => {

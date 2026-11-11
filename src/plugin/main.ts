@@ -9,6 +9,7 @@ import { CreateCardModal } from '../ui/CreateCardModal';
 import { CreateDeckModal } from '../ui/CreateDeckModal';
 import { ImportBackupModal } from '../ui/ImportBackupModal';
 import { ImportCardsModal } from '../ui/ImportCardsModal';
+import { updateNoteStudyActions } from '../ui/noteStudyAction';
 
 class FSRSFlashcardsPlugin extends Plugin {
     settings: FSRSSettings;
@@ -31,6 +32,8 @@ class FSRSFlashcardsPlugin extends Plugin {
 
         this.addSettingTab(new FSRSSettingsTab(this.app, this));
         this.registerView(VIEW_TYPE_DASHBOARD, (leaf) => new DashboardView(leaf, this));
+        this.registerEvent(this.app.workspace.on('file-open', () => updateNoteStudyActions(this)));
+        this.registerEvent(this.app.workspace.on('layout-change', () => updateNoteStudyActions(this)));
 
         const ribbonIconEl = this.addRibbonIcon(VIEW_ICON_NAME, 'Open Lemma dashboard', (evt: MouseEvent) => {
             void this.activateView();
@@ -300,9 +303,14 @@ class FSRSFlashcardsPlugin extends Plugin {
 
             let anyDeckUpdated = false;
             for (const file of filesToProcess) {
+                if (this.app.vault.getAbstractFileByPath(file.path) !== file) continue;
                 try {
                     const changed = await this.dataManager.updateFile(file);
                     if (changed) anyDeckUpdated = true;
+                    if (this.app.vault.getAbstractFileByPath(file.path) !== file) {
+                        await this.dataManager.removePath(file.path);
+                        anyDeckUpdated = true;
+                    }
                 } catch (e) {
                     console.error('Failed to update file:', e);
                 }
@@ -326,12 +334,20 @@ class FSRSFlashcardsPlugin extends Plugin {
                 processPendingFiles();
             }
         }));
-        this.registerEvent(this.app.vault.on('delete', (file) => {
-            if (file instanceof TFile && file.extension === 'md') {
-                const deckId = this.dataManager.getDeckId(file.path);
-                this.dataManager.removeDeck(deckId);
-                debouncedRefresh();
+        this.registerEvent(this.app.metadataCache.on('changed', (file) => {
+            if (file.extension === 'md') {
+                pendingModifiedFiles.add(file);
+                processPendingFiles();
             }
+        }));
+        this.registerEvent(this.app.vault.on('delete', (file) => {
+            if (file instanceof TFile && file.extension !== 'md') return;
+            for (const pending of pendingModifiedFiles) {
+                if (pending.path === file.path || pending.path.startsWith(`${file.path}/`)) pendingModifiedFiles.delete(pending);
+            }
+            void this.dataManager.removePath(file.path).then(debouncedRefresh).catch((error: unknown) => {
+                new Notice(`Could not finish deleting progress: ${getErrorMessage(error)}`, 7000);
+            });
         }));
         this.registerEvent(this.app.vault.on('rename', (file, oldPath) => {
             if (file instanceof TFile && (file.extension === 'md' || oldPath.endsWith('.md'))) {
@@ -399,9 +415,9 @@ class FSRSFlashcardsPlugin extends Plugin {
     }
 
     refreshDashboardView() {
-        const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD)[0];
-        if (leaf?.view instanceof DashboardView) {
-            (leaf.view).render();
+        updateNoteStudyActions(this);
+        for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD)) {
+            if (leaf.view instanceof DashboardView) leaf.view.render();
         }
     }
 }

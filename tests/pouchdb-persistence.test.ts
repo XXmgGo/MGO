@@ -5,6 +5,7 @@ vi.hoisted(() => {
 });
 
 import 'fake-indexeddb/auto';
+import PouchDB from 'pouchdb-browser';
 import { createEmptyCard, Rating } from 'ts-fsrs';
 
 vi.mock('obsidian', () => ({
@@ -113,5 +114,34 @@ describe('PouchDB card state persistence', () => {
         expect(stamps).toHaveLength(2);
         expect(stamps[0]).toBeLessThan(stamps[1]);
         await second.getPouchDB()!.close();
+    });
+});
+
+
+describe('reset progress replication', () => {
+    it('replicates deletions and does not restore reset progress from a remote replica', async () => {
+        const name = `lemma_reset_replication_${++dbCounter}`;
+        const manager = open(name);
+        const local = new PouchDB(name);
+        const remote = new PouchDB(`${name}_remote`);
+        try {
+            await manager.saveCardState('card', 'deck', 'Deck.md', createEmptyCard());
+            await manager.addReviewLog('card', 1000, Rating.Good);
+            await local.put({ _id: 'settings', type: 'settings', fontSize: 18 });
+            await local.replicate.to(remote);
+
+            await manager.clearReviewProgress();
+            await local.sync(remote);
+            expect(await manager.getAllCardStates()).toEqual({});
+            expect(await manager.getReviewHistory()).toEqual([]);
+            expect((await remote.allDocs()).rows.map(row => row.id)).toEqual(['settings']);
+            expect((await local.get<{ fontSize: number }>('settings')).fontSize).toBe(18);
+
+            await manager.clearReviewProgress();
+            expect(await manager.getAllCardStates()).toEqual({});
+        } finally {
+            await local.close();
+            await remote.destroy();
+        }
     });
 });

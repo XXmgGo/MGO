@@ -28,6 +28,7 @@ export interface FSRSSettings {
     syncPassword: string;
     usePouchDB: boolean;
     databaseName?: string;
+    expandedDashboardFolders?: string[];
     burySiblings?: boolean;
     leechThreshold?: number;
     gamification: Gamification;
@@ -67,6 +68,15 @@ export interface Deck {
     settings?: DeckSettings;
 }
 
+export interface DeckFolder {
+    path: string;
+    name: string;
+    folders: DeckFolder[];
+    decks: Deck[];
+    deckCount: number;
+    dueCount: number;
+}
+
 export interface NoteReviewData {
     filePath: string;
     fsrsData?: FSRSData;
@@ -76,6 +86,7 @@ export interface ReviewLog {
     cardId: string;
     timestamp: number;
     rating: Rating;
+    xp?: number;
 }
 
 export interface PluginData {

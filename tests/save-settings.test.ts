@@ -9,7 +9,7 @@ vi.mock('obsidian', () => {
     const stub = class {};
     return {
         addIcon: () => {}, ButtonComponent: stub, Component: stub, debounce: (fn: unknown) => fn,
-        ItemView: stub, MarkdownRenderer: stub, Modal: stub, Notice: stub, Plugin: stub,
+        ItemView: stub, MarkdownRenderer: stub, Modal: stub, Notice: class { hide() {} }, Plugin: stub,
         PluginSettingTab: stub, setIcon: () => {}, Setting: stub, TFile: stub,
     };
 });
@@ -47,10 +47,10 @@ async function savedPayload(usePouchDB: boolean) {
 }
 
 describe('saveSettings', () => {
-    it('does not write card data or review history to data.json in PouchDB mode', async () => {
+    it('writes card data and review history to data.json in PouchDB mode', async () => {
         const payload = await savedPayload(true);
-        expect(payload.cardData).toEqual({});
-        expect(payload.reviewHistory).toEqual([]);
+        expect(Object.keys(payload.cardData)).toEqual(['deck::card']);
+        expect(payload.reviewHistory).toHaveLength(1);
         expect(payload.settings.usePouchDB).toBe(true);
     });
 
@@ -59,4 +59,36 @@ describe('saveSettings', () => {
         expect(Object.keys(payload.cardData)).toEqual(['deck::card']);
         expect(payload.reviewHistory).toHaveLength(1);
     });
+});
+
+
+it('serializes saves and freezes each snapshot before later changes', async () => {
+    const writes: Array<{ settings: { fontSize: number } }> = [];
+    let finishFirst: () => void = () => {};
+    const saveData = vi.fn(async (data: { settings: { fontSize: number } }) => {
+        if (writes.length === 0) {
+            writes.push(data);
+            await new Promise<void>(resolve => { finishFirst = resolve; });
+        } else writes.push(data);
+    });
+    const plugin = { settings: { ...DEFAULT_SETTINGS, usePouchDB: false, fontSize: 16 }, saveData };
+    const dm = new DataManager(plugin as never);
+    const first = dm.save();
+    await Promise.resolve();
+    plugin.settings.fontSize = 20;
+    const second = dm.save();
+    await Promise.resolve();
+    expect(saveData).toHaveBeenCalledTimes(1);
+    expect(writes[0].settings.fontSize).toBe(16);
+    finishFirst();
+    await Promise.all([first, second]);
+    expect(writes.map(write => write.settings.fontSize)).toEqual([16, 20]);
+});
+
+it('allows a later save to succeed after a failed write', async () => {
+    const saveData = vi.fn().mockRejectedValueOnce(new Error('Disk unavailable')).mockResolvedValue(undefined);
+    const dm = new DataManager({ settings: { ...DEFAULT_SETTINGS, usePouchDB: false }, saveData } as never);
+    await expect(dm.save()).rejects.toThrow('Disk unavailable');
+    await expect(dm.save()).resolves.toBeUndefined();
+    expect(saveData).toHaveBeenCalledTimes(2);
 });

@@ -10,18 +10,19 @@ import 'fake-indexeddb/auto';
 vi.mock('obsidian', () => ({ Notice: class {}, TFile: class {} }));
 
 import { DataManager } from '../src/data/DataManager';
+import { parseBackup } from '../src/data/backup';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
 const CONTENT = 'First::One\nSecond::Two\n';
 const settle = () => new Promise((r) => setTimeout(r, 200));
 
-function create(usePouchDB: boolean, databaseName: string, store?: { saved?: unknown }) {
+function create(usePouchDB: boolean, databaseName: string, store?: { saved?: unknown }, reviewNote = false) {
     const file = { path: 'Decks/U.md', basename: 'U', extension: 'md', stat: { mtime: 1 } };
     const savedSettings = (store?.saved as { settings?: typeof DEFAULT_SETTINGS } | undefined)?.settings;
     const plugin = {
         app: {
             vault: { getMarkdownFiles: () => [file], read: async () => CONTENT },
-            metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+            metadataCache: { getFileCache: () => ({ frontmatter: { tags: reviewNote ? ['flashcards', 'review'] : ['flashcards'] } }) },
         },
         settings: savedSettings
             ? { ...savedSettings, gamification: { ...savedSettings.gamification }, usePouchDB, databaseName }
@@ -124,4 +125,124 @@ describe('undo last rating', () => {
         expect(gamificationReconciled.longestStreak).toBe(1);
         await third.dm.getPouchDB()!.close();
     });
+});
+
+
+describe('reset all progress', () => {
+    it.each([false, true])('clears counters, notes, schedules and undo durably (PouchDB: %s)', async (usePouchDB) => {
+        const store = { saved: undefined as unknown };
+        const name = `reset_progress_${usePouchDB}`;
+        const first = create(usePouchDB, name, store, true);
+        await first.dm.load();
+        first.dm.updateCard(first.dm.getAllCards()[0], Rating.Good);
+        first.dm.rateNote('Decks/U.md', Rating.Easy);
+        expect(first.dm.canUndo()).toBe(true);
+        expect(first.dm.getGamificationStats().totalXp).toBeGreaterThan(0);
+        expect(first.dm.getAllReviewNotes()[0].fsrsData).toBeDefined();
+
+        await first.dm.resetAllProgress();
+        expect(first.dm.getReviewHistory()).toEqual([]);
+        expect(first.dm.getGamificationStats()).toEqual(DEFAULT_SETTINGS.gamification);
+        expect(first.dm.getAllCards().every(card => !card.fsrsData)).toBe(true);
+        expect(first.dm.getAllReviewNotes()[0].fsrsData).toBeUndefined();
+        expect(first.dm.canUndo()).toBe(false);
+        expect(first.dm.undoLastRating()).toBeNull();
+        expect(first.dm.getDecks()[0].stats).toEqual({ new: 2, due: 0, learning: 0 });
+        await first.dm.getPouchDB()?.close();
+
+        const second = create(usePouchDB, name, store, true);
+        await second.dm.load();
+        expect(second.dm.getGamificationStats()).toEqual(DEFAULT_SETTINGS.gamification);
+        expect(second.dm.getReviewHistory()).toEqual([]);
+        expect(second.dm.getAllCards().every(card => !card.fsrsData)).toBe(true);
+        expect(second.dm.getAllReviewNotes()[0].fsrsData).toBeUndefined();
+        await second.dm.getPouchDB()?.close();
+    });
+});
+
+describe('automatic vault review data', () => {
+    it('restores cards, whole-note schedules and history from data.json into an empty database', async () => {
+        const store = { saved: undefined as unknown };
+        const first = create(true, 'vault_copy_original', store, true);
+        await first.dm.load();
+        const card = first.dm.getAllCards()[0];
+        first.dm.updateCard(card, Rating.Good);
+        first.dm.rateNote('Decks/U.md', Rating.Good);
+        await first.dm.save();
+        const snapshot = JSON.parse(JSON.stringify(store.saved));
+        expect(Object.keys(snapshot.cardData)).toEqual([card.id, 'note::Decks/U.md']);
+        expect(snapshot.reviewHistory).toHaveLength(2);
+        expect(snapshot.settings.gamification.totalXp).toBeGreaterThan(0);
+        await settle();
+        await first.dm.getPouchDB()!.close();
+
+        store.saved = snapshot;
+        const restored = create(true, 'vault_copy_new_device', store, true);
+        await restored.dm.load();
+        expect(restored.dm.getAllCards()[0].fsrsData?.due).toEqual(card.fsrsData?.due);
+        expect(restored.dm.getAllReviewNotes()[0].fsrsData?.last_review).toBeInstanceOf(Date);
+        expect(restored.dm.getReviewHistory()).toHaveLength(2);
+        expect(restored.dm.getGamificationStats()).toEqual(first.dm.getGamificationStats());
+        expect(Object.keys(await restored.dm.getPouchDB()!.getAllCardStates())).toHaveLength(2);
+        expect(await restored.dm.getPouchDB()!.getReviewHistory()).toHaveLength(2);
+        await restored.dm.getPouchDB()!.close();
+
+        const again = create(true, 'vault_copy_new_device', store, true);
+        await again.dm.load();
+        expect(again.dm.getReviewHistory()).toHaveLength(2);
+        await again.dm.resetAllProgress();
+        expect((store.saved as { cardData: object }).cardData).toEqual({});
+        expect((store.saved as { reviewHistory: unknown[] }).reviewHistory).toEqual([]);
+        await again.dm.getPouchDB()!.close();
+
+        const afterReset = create(true, 'vault_copy_after_reset', store, true);
+        await afterReset.dm.load();
+        expect(afterReset.dm.getReviewHistory()).toEqual([]);
+        expect(afterReset.dm.getGamificationStats()).toEqual(DEFAULT_SETTINGS.gamification);
+        expect(afterReset.dm.getAllCards().every(card => !card.fsrsData)).toBe(true);
+        await afterReset.dm.getPouchDB()!.close();
+    });
+
+    it('copies existing IndexedDB data into data.json without importing an older vault copy over it', async () => {
+        const first = create(true, 'vault_copy_existing');
+        await first.dm.load();
+        const card = first.dm.getAllCards()[0];
+        first.dm.updateCard(card, Rating.Good);
+        await first.dm.save();
+        await settle();
+        await first.dm.getPouchDB()!.close();
+
+        const store = { saved: { settings: first.plugin.settings, cardData: {}, reviewHistory: [] } as unknown };
+        const upgraded = create(true, 'vault_copy_existing', store);
+        await upgraded.dm.load();
+        const saved = store.saved as { cardData: Record<string, { reps: number }>; reviewHistory: unknown[] };
+        expect(saved.cardData[card.id].reps).toBe(1);
+        expect(saved.reviewHistory).toHaveLength(1);
+        await upgraded.dm.getPouchDB()!.close();
+
+        const jsonOnly = create(false, 'unused', store);
+        await jsonOnly.dm.load();
+        expect(jsonOnly.dm.getAllCards()[0].fsrsData?.reps).toBe(1);
+        expect(jsonOnly.dm.getReviewHistory()).toHaveLength(1);
+    });
+});
+
+
+it('updates the vault copy after undo and backup import', async () => {
+    const store = { saved: undefined as unknown };
+    const { dm } = create(true, 'vault_copy_undo_import', store);
+    await dm.load();
+    const card = dm.getAllCards()[0];
+    dm.updateCard(card, Rating.Good);
+    const backup = parseBackup(dm.exportBackup());
+    dm.undoLastRating();
+    await dm.save();
+    expect((store.saved as { cardData: object }).cardData).toEqual({});
+    expect((store.saved as { reviewHistory: unknown[] }).reviewHistory).toEqual([]);
+    await settle();
+    await dm.importBackup(backup);
+    const saved = store.saved as { cardData: Record<string, unknown>; reviewHistory: unknown[] };
+    expect(Object.keys(saved.cardData)).toEqual([card.id]);
+    expect(saved.reviewHistory).toHaveLength(1);
+    await dm.getPouchDB()!.close();
 });

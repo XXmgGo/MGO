@@ -50,7 +50,7 @@ export class HelpModal extends Modal {
 
         this.renderSection('Tips', [
             'Use Custom Study to filter by tags or card state.',
-            'Enable PouchDB for better performance with large collections.',
+            'Review progress is saved automatically in the plugin’s data.json file in your vault.',
             'Use Sync to keep your data across devices via CouchDB.',
             'Full documentation is available in the plugin settings (About section).',
         ], []);

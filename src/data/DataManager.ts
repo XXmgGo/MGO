@@ -1,9 +1,10 @@
 import { FSRS, Rating, State, createEmptyCard, type Card as FSRSCard } from 'ts-fsrs';
 import { Notice, TFile, type CachedMetadata } from 'obsidian';
 import type { Card, Deck, DeckSettings, FSRSData, FSRSParameters, Gamification, NoteReviewData, PluginData, ReviewLog } from './types';
-import { isRecord, cyrb53hex, LEGACY_DATABASE_NAME, getDocsWritten, getErrorMessage, isLikelyCorsOrNetworkErrorMessage, buildAuthenticatedUrl, sanitizeUrlForDisplay } from './constants';
+import { DEFAULT_SETTINGS, isRecord, cyrb53hex, LEGACY_DATABASE_NAME, getDocsWritten, getErrorMessage, isLikelyCorsOrNetworkErrorMessage, buildAuthenticatedUrl, sanitizeUrlForDisplay } from './constants';
 import { PouchDBManager } from '../database/PouchDBManager';
 import { buildBackup, type BackupContent } from './backup';
+import { buildDeckFolders } from './deckFolders';
 
 type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 
@@ -22,6 +23,15 @@ export class DataManager {
     private lineStartsCache: { content: string; starts: number[] } | null = null;
     private firstReviewAt: Map<string, number> | null = null;
     private undoStack: Array<{ card: Card; previous: FSRSData | undefined; timestamp: number; gamification: Gamification }> = [];
+    private backgroundTasks = new Set<Promise<unknown>>();
+    private saveQueue: Promise<void> = Promise.resolve();
+    private syncRefreshQueue: Promise<void> | null = null;
+    private syncRevision = 0;
+    private reviewRevision = 0;
+    private saveError: string | null = null;
+    private databaseError: string | null = null;
+    private saveFailureNotice: Notice | null = null;
+    private dashboardScrollTop = 0;
 
     constructor(plugin: FSRSFlashcardsPlugin) {
         this.plugin = plugin;
@@ -31,14 +41,25 @@ export class DataManager {
         }
     }
 
-    private runInBackground(task: () => Promise<unknown> | undefined, message: string): void {
-        void (async () => {
+    private runInBackground(task: () => Promise<unknown> | undefined, message: string, persistence = true): void {
+        const pending = (async () => {
             try {
                 await task();
             } catch (error: unknown) {
                 console.error(message, error);
+                if (persistence) {
+                    this.databaseError = getErrorMessage(error);
+                    this.showSaveFailure();
+                }
             }
         })();
+        void this.trackOperation(pending);
+    }
+
+    private trackOperation<T>(pending: Promise<T>): Promise<T> {
+        this.backgroundTasks.add(pending);
+        void pending.then(() => this.backgroundTasks.delete(pending), () => this.backgroundTasks.delete(pending));
+        return pending;
     }
 
     private databaseName(): string {
@@ -72,6 +93,14 @@ export class DataManager {
                     if (docsWritten > 0) {
                         new Notice(`Synced ${docsWritten} changes`, 2000);
                     }
+                    const change = isRecord(info) && isRecord(info.change) ? info.change : null;
+                    const docs: unknown[] | null = change && Array.isArray(change.docs) ? change.docs : null;
+                    const hasReviewChanges = !docs || docs.some(doc => isRecord(doc) && doc._id !== 'settings' && doc._id !== 'sync_meta');
+                    if (isRecord(info) && info.direction === 'pull' && hasReviewChanges) {
+                        void this.refreshFromSync().catch((error: unknown) => {
+                            new Notice(`Could not apply synced progress: ${getErrorMessage(error)}`, 7000);
+                        });
+                    }
                 });
 
                 this.pouchDB.onSyncError((err) => {
@@ -81,7 +110,7 @@ export class DataManager {
 
                     if (isLikelyCorsOrNetworkErrorMessage(message)) {
                         new Notice('Sync stopped. Check cors settings and sync URL.', 7000);
-                        this.runInBackground(() => this.pouchDB?.stopSync(), 'Failed to stop sync after network/CORS error:');
+                        this.runInBackground(() => this.pouchDB?.stopSync(), 'Failed to stop sync after network/CORS error:', false);
                     }
                 });
 
@@ -111,19 +140,77 @@ export class DataManager {
     }
 
     async load() {
+        let restorePouchDB = false;
         if (this.plugin.settings.usePouchDB && this.pouchDB) {
             await this.loadFromPouchDB();
+            if (Object.keys(this.fsrsDataStore).length === 0 && this.reviewHistory.length === 0) {
+                await this.loadFromLegacyJSON();
+                restorePouchDB = true;
+            }
         } else {
             await this.loadFromLegacyJSON();
         }
         await this.buildIndex();
+        if (restorePouchDB && this.pouchDB) {
+            const states = Object.entries(this.fsrsDataStore).map(([cardId, fsrs]) => {
+                const card = this.cards.get(cardId);
+                return {
+                    cardId, fsrs,
+                    deckId: card?.deckId ?? '',
+                    filePath: card?.filePath ?? (cardId.startsWith('note::') ? cardId.slice(6) : ''),
+                };
+            });
+            await this.pouchDB.importData(states, this.reviewHistory);
+        }
         this.reconcileGamification();
-        void this.save();
         this.isLoaded = true;
+        await this.save().catch((error: unknown) => console.error('Failed to save loaded progress:', error));
     }
 
     isDataLoaded() {
         return this.isLoaded;
+    }
+
+    refreshFromSync(): Promise<void> {
+        this.syncRevision++;
+        if (this.syncRefreshQueue) return this.syncRefreshQueue;
+        const pending = Promise.resolve().then(async () => {
+            if (!this.pouchDB) return;
+            for (;;) {
+                await Promise.all(this.backgroundTasks);
+                if (this.databaseError) throw new Error('Retry saving local progress before applying sync changes.');
+                const revision = this.reviewRevision;
+                const syncRevision = this.syncRevision;
+                const [states, logs] = await Promise.all([
+                    this.pouchDB.getAllCardStates(), this.pouchDB.getReviewHistory(),
+                ]);
+                // A review made during the reads must reach IndexedDB before replacing memory.
+                if (revision !== this.reviewRevision || syncRevision !== this.syncRevision) continue;
+                const oldKeys = new Set(this.reviewHistory.map(log => `${log.cardId}|${log.timestamp}`));
+                const newKeys = new Set(logs.map(log => `${log.cardId}|${log.timestamp}`));
+                const logXp = (log: ReviewLog) => log.xp ?? 10 * log.rating;
+                const gained = logs.filter(log => !oldKeys.has(`${log.cardId}|${log.timestamp}`)).reduce((sum, log) => sum + logXp(log), 0);
+                const removed = this.reviewHistory.filter(log => !newKeys.has(`${log.cardId}|${log.timestamp}`)).reduce((sum, log) => sum + logXp(log), 0);
+                const totalXp = Math.max(0, this.plugin.settings.gamification.totalXp + gained - removed);
+                this.fsrsDataStore = states;
+                this.reviewHistory = logs.reverse();
+                this.firstReviewAt = null;
+                this.undoStack = [];
+                for (const card of this.cards.values()) card.fsrsData = states[card.id];
+                for (const note of this.noteReviews.values()) note.fsrsData = states[`note::${note.filePath}`];
+                this.plugin.settings.gamification = { ...DEFAULT_SETTINGS.gamification, totalXp: logs.length ? totalXp : 0 };
+                this.reconcileGamification();
+                this.recalculateAllDeckStats();
+                await this.save();
+                if (syncRevision !== this.syncRevision) continue;
+                this.plugin.refreshDashboardView?.();
+                return;
+            }
+        });
+        this.syncRefreshQueue = pending;
+        const clear = () => { this.syncRefreshQueue = null; };
+        void pending.then(clear, clear);
+        return pending;
     }
 
     private async loadFromPouchDB() {
@@ -153,19 +240,84 @@ export class DataManager {
         this.firstReviewAt = null;
     }
 
-    async save() {
-        await this.plugin.saveData({
+    save(): Promise<void> {
+        const snapshot = JSON.parse(JSON.stringify({
             settings: this.plugin.settings,
-            cardData: this.plugin.settings.usePouchDB ? {} : this.fsrsDataStore,
-            reviewHistory: this.plugin.settings.usePouchDB ? [] : this.reviewHistory,
+            cardData: this.fsrsDataStore,
+            reviewHistory: this.reviewHistory,
+        })) as PluginData;
+        // Serialize independent saves so an older write cannot overwrite newer review progress.
+        const pending = this.saveQueue.then(async () => {
+            try {
+                await this.plugin.saveData(snapshot);
+                const hadError = this.saveError !== null;
+                this.saveError = null;
+                if (hadError) this.updateSaveFeedback();
+            } catch (error: unknown) {
+                this.saveError = getErrorMessage(error);
+                this.showSaveFailure();
+                throw error;
+            }
         });
+        this.saveQueue = pending.catch(() => {});
+        return pending;
     }
+
+    private saveInBackground(): void {
+        this.runInBackground(() => this.save(), 'Failed to save vault progress:', false);
+    }
+
+    getSaveError(): string | null {
+        return this.saveError ?? this.databaseError;
+    }
+
+    private showSaveFailure(): void {
+        if (!this.saveFailureNotice) {
+            this.saveFailureNotice = new Notice('Lemma could not save progress. Open the dashboard and select retry save.', 0);
+        }
+        this.plugin.refreshDashboardView?.();
+    }
+
+    private updateSaveFeedback(): void {
+        if (!this.getSaveError()) {
+            this.saveFailureNotice?.hide();
+            this.saveFailureNotice = null;
+        }
+        this.plugin.refreshDashboardView?.();
+    }
+
+    retrySave(): Promise<void> {
+        return this.trackOperation(this.retrySaveProgress());
+    }
+
+    private async retrySaveProgress(): Promise<void> {
+        await Promise.all(this.backgroundTasks);
+        if (this.databaseError && this.pouchDB) {
+            const states = Object.entries(this.fsrsDataStore).map(([cardId, fsrs]) => {
+                const card = this.cards.get(cardId);
+                return { cardId, fsrs, deckId: card?.deckId ?? '', filePath: card?.filePath ?? (cardId.startsWith('note::') ? cardId.slice(6) : '') };
+            });
+            await this.pouchDB.replaceReviewProgress(states, this.reviewHistory);
+            this.databaseError = null;
+        }
+        await this.save();
+        this.updateSaveFeedback();
+    }
+
+    getDashboardScrollTop(): number { return this.dashboardScrollTop; }
+    setDashboardScrollTop(value: number): void { this.dashboardScrollTop = Math.max(0, value); }
 
     exportBackup(): string {
         return buildBackup(this.fsrsDataStore, this.reviewHistory, this.plugin.settings.gamification, this.plugin.manifest?.version ?? '');
     }
 
-    async importBackup(content: BackupContent): Promise<{ cards: number; matched: number; reviews: number; skipped: number }> {
+    importBackup(content: BackupContent): Promise<{ cards: number; matched: number; reviews: number; skipped: number }> {
+        return this.trackOperation(this.importBackupProgress(content));
+    }
+
+    private async importBackupProgress(content: BackupContent): Promise<{ cards: number; matched: number; reviews: number; skipped: number }> {
+        this.reviewRevision++;
+        await Promise.all(this.backgroundTasks);
         const states: Array<{ cardId: string; deckId: string; filePath: string; fsrs: FSRSData }> = [];
         let matched = 0;
         for (const [cardId, data] of Object.entries(content.cardData)) {
@@ -736,14 +888,54 @@ export class DataManager {
 
     removeDeck(deckId: string, fullDelete: boolean = true) {
         const deck = this.decks.get(deckId);
-        if (deck) {
+        if (!deck) return;
+        if (fullDelete) {
+            this.runInBackground(() => this.removePath(deck.filePath), 'Failed to remove deck progress:');
+        } else {
             this.fileMtimes.delete(deck.filePath);
-            deck.cardIds.forEach(cardId => {
-                this.cards.delete(cardId);
-                delete this.fsrsDataStore[cardId];
-            });
-            this.decks.delete(deckId);
-            if (fullDelete) void this.save();
+            this.dropDeckCards(deckId);
+        }
+    }
+
+    removePath(path: string): Promise<void> {
+        return this.trackOperation(this.removePathProgress(path));
+    }
+
+    private async removePathProgress(path: string): Promise<void> {
+        this.reviewRevision++;
+        const matches = (filePath: string) => filePath === path || filePath.startsWith(`${path}/`);
+        const ids = new Set<string>();
+        for (const deck of this.decks.values()) {
+            if (!matches(deck.filePath)) continue;
+            for (const id of deck.cardIds) ids.add(id);
+            this.fileMtimes.delete(deck.filePath);
+            this.dropDeckCards(deck.id);
+        }
+        for (const filePath of this.noteReviews.keys()) {
+            if (matches(filePath)) {
+                ids.add(`note::${filePath}`);
+                this.noteReviews.delete(filePath);
+                this.fileMtimes.delete(filePath);
+            }
+        }
+        for (const id of Object.keys(this.fsrsDataStore)) {
+            if (id.startsWith('note::') && matches(id.slice(6))) ids.add(id);
+        }
+        for (const id of ids) delete this.fsrsDataStore[id];
+        this.undoStack = this.undoStack.filter(entry => !matches(entry.card.filePath));
+        await Promise.all(this.backgroundTasks);
+        try {
+            if (this.pouchDB) {
+                const removed = await this.pouchDB.deleteFileStates(path, [...ids]);
+                for (const id of removed) delete this.fsrsDataStore[id];
+            }
+        } catch (error: unknown) {
+            this.databaseError = getErrorMessage(error);
+            this.showSaveFailure();
+            throw error;
+        } finally {
+            this.reviewRevision++;
+            await this.save();
         }
     }
 
@@ -804,7 +996,13 @@ export class DataManager {
         }
     }
 
-    async renameDeck(file: TFile, oldPath: string) {
+    renameDeck(file: TFile, oldPath: string): Promise<void> {
+        return this.trackOperation(this.renameDeckProgress(file, oldPath));
+    }
+
+    private async renameDeckProgress(file: TFile, oldPath: string): Promise<void> {
+        this.reviewRevision++;
+        await Promise.all(this.backgroundTasks);
         const oldDeckId = this.getDeckId(oldPath);
         await this.rekeyRenamedFile(file, oldPath);
         this.removeDeck(oldDeckId, false);
@@ -834,6 +1032,22 @@ export class DataManager {
 
     getDecks(): Deck[] {
         return Array.from(this.decks.values()).sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    getDeckFolders() {
+        return buildDeckFolders(this.getDecks());
+    }
+
+    isDashboardFolderExpanded(path: string): boolean {
+        return this.plugin.settings.expandedDashboardFolders?.includes(path) ?? false;
+    }
+
+    async setDashboardFolderExpanded(path: string, expanded: boolean): Promise<void> {
+        const paths = new Set(this.plugin.settings.expandedDashboardFolders ?? []);
+        if (expanded) paths.add(path);
+        else paths.delete(path);
+        this.plugin.settings.expandedDashboardFolders = [...paths];
+        await this.plugin.saveSettings();
     }
 
     getAllCards(): Card[] {
@@ -967,6 +1181,16 @@ export class DataManager {
         return finalQueue;
     }
 
+    getFolderReviewQueue(path: string): Card[] {
+        return this.getDecks()
+            .filter(deck => {
+                const slash = deck.filePath.lastIndexOf('/');
+                const folder = slash < 0 ? '' : deck.filePath.slice(0, slash);
+                return path === '' ? folder === '' : folder === path || folder.startsWith(`${path}/`);
+            })
+            .flatMap(deck => this.getReviewQueue(deck.id));
+    }
+
     getAllCardsForStudy(deckId: string): Card[] {
         const deck = this.decks.get(deckId);
         if (!deck) return [];
@@ -986,6 +1210,7 @@ export class DataManager {
     }
 
     undoLastRating(): Card | null {
+        this.reviewRevision++;
         const entry = this.undoStack.pop();
         if (!entry) return null;
         const { card, previous, timestamp, gamification } = entry;
@@ -1017,15 +1242,14 @@ export class DataManager {
                 'Failed to restore card state:',
             );
             this.runInBackground(() => db.deleteReviewLog(card.id, timestamp), 'Failed to remove review log:');
-            void this.save();
-        } else {
-            void this.save();
         }
+        this.saveInBackground();
         this.recalculateAllDeckStats();
         return card;
     }
 
     updateCard(card: Card, rating: Rating) {
+        this.reviewRevision++;
         const now = new Date();
         this.undoStack.push({
             card,
@@ -1046,18 +1270,16 @@ export class DataManager {
 
         const reviewLog: ReviewLog = { cardId: card.id, timestamp: now.getTime(), rating };
         this.reviewHistory.push(reviewLog);
+        reviewLog.xp = this.updateGamification(now, rating, newFsrsData);
         if (this.firstReviewAt && !this.firstReviewAt.has(card.id)) this.firstReviewAt.set(card.id, now.getTime());
 
         if (this.plugin.settings.usePouchDB && this.pouchDB) {
             const db = this.pouchDB;
             this.runInBackground(() => db.saveCardState(card.id, card.deckId, card.filePath, newFsrsData), 'Failed to save card state:');
-            this.runInBackground(() => db.addReviewLog(card.id, now.getTime(), rating), 'Failed to save review log:');
-        } else {
-            void this.save();
+            this.runInBackground(() => db.addReviewLog(card.id, now.getTime(), rating, reviewLog.xp), 'Failed to save review log:');
         }
 
-        this.updateGamification(now, rating, newFsrsData);
-        void this.save();
+        this.saveInBackground();
     }
 
     private toLocalDateString(date: Date): string {
@@ -1105,6 +1327,7 @@ export class DataManager {
         if (reviewsToday > g.mostReviewsInDay) {
             g.mostReviewsInDay = reviewsToday;
         }
+        return xpGained;
     }
 
     reconcileGamification() {
@@ -1121,7 +1344,7 @@ export class DataManager {
             reviewsPerDay[dateStr] = (reviewsPerDay[dateStr] || 0) + 1;
 
             const ratingMult = log.rating === Rating.Again ? 1 : log.rating === Rating.Hard ? 2 : log.rating === Rating.Good ? 3 : 4;
-            totalHistoricalXp += Math.round(10 * ratingMult);
+            totalHistoricalXp += log.xp ?? Math.round(10 * ratingMult);
         }
 
         if (g.totalXp === 0 && this.reviewHistory.length > 0) {
@@ -1390,25 +1613,31 @@ export class DataManager {
         };
     }
 
-    async resetAllProgress(): Promise<void> {
+    resetAllProgress(): Promise<void> {
+        return this.trackOperation(this.resetProgress());
+    }
+
+    private async resetProgress(): Promise<void> {
         console.debug('Nuclear option: Resetting all card progress...');
 
+        await Promise.all(this.backgroundTasks);
+        if (this.plugin.settings.usePouchDB && this.pouchDB) {
+            await this.pouchDB.clearReviewProgress();
+        }
+
+        this.reviewRevision++;
         this.fsrsDataStore = {};
         this.reviewHistory = [];
         this.firstReviewAt = null;
+        this.undoStack = [];
+        this.plugin.settings.gamification = { ...DEFAULT_SETTINGS.gamification };
 
         for (const card of this.cards.values()) {
             card.fsrsData = undefined;
         }
 
-        if (this.plugin.settings.usePouchDB && this.pouchDB) {
-            console.debug('Clearing PouchDB card states and review logs...');
-            await this.pouchDB.destroy();
-            const { PouchDBManager } = await import('../database/PouchDBManager');
-            this.pouchDB = new PouchDBManager(this.databaseName());
-            if (this.plugin.settings.syncEnabled) {
-                await this.initializeSync();
-            }
+        for (const note of this.noteReviews.values()) {
+            note.fsrsData = undefined;
         }
 
         await this.save();
@@ -1437,6 +1666,7 @@ export class DataManager {
     }
 
     rateNote(filePath: string, rating: Rating) {
+        this.reviewRevision++;
         const now = new Date();
         const existing = this.noteReviews.get(filePath);
         const fsrsCard = existing?.fsrsData || {
@@ -1452,16 +1682,14 @@ export class DataManager {
 
         const reviewLog: ReviewLog = { cardId: noteKey, timestamp: now.getTime(), rating };
         this.reviewHistory.push(reviewLog);
+        reviewLog.xp = this.updateGamification(now, rating, newFsrsData);
 
         if (this.plugin.settings.usePouchDB && this.pouchDB) {
             const db = this.pouchDB;
             this.runInBackground(() => db.saveCardState(noteKey, '', filePath, newFsrsData), 'Failed to save note review state:');
-            this.runInBackground(() => db.addReviewLog(noteKey, now.getTime(), rating), 'Failed to save note review log:');
-        } else {
-            void this.save();
+            this.runInBackground(() => db.addReviewLog(noteKey, now.getTime(), rating, reviewLog.xp), 'Failed to save note review log:');
         }
 
-        this.updateGamification(now, rating, newFsrsData);
-        void this.save();
+        this.saveInBackground();
     }
 }

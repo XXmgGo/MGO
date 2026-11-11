@@ -94,7 +94,10 @@ export function parseBackup(text: string): BackupContent {
     for (const entry of raw.reviewHistory as unknown[]) {
         if (isRecord(entry) && typeof entry.cardId === 'string' && isFiniteNumber(entry.timestamp)
             && isFiniteNumber(entry.rating) && entry.rating >= 1 && entry.rating <= 4) {
-            reviewHistory.push({ cardId: entry.cardId, timestamp: entry.timestamp, rating: entry.rating });
+            reviewHistory.push({
+                cardId: entry.cardId, timestamp: entry.timestamp, rating: entry.rating,
+                ...(isFiniteNumber(entry.xp) && entry.xp >= 0 ? { xp: entry.xp } : {}),
+            });
         } else {
             skipped++;
         }

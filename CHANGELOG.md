@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - Unreleased
+
+### Added
+- Study the current flashcard note from a play icon beside Obsidian's reading and editing controls. Pending edits are saved before the session starts, and daily limits apply.
+- Study a folder and its subfolders directly from the dashboard.
+- Show cards available within daily limits separately from total due and new cards.
+- Display persistent save-failure feedback with a retry action in the dashboard.
+
+### Fixed
+- Mirror the vault's nested folder hierarchy in the dashboard and remember expanded folders across refreshes and restarts.
+- Preserve dashboard scroll position during the session and support keyboard navigation for deck links and action buttons.
+- Save schedules, review history, XP, and streaks automatically in the plugin's data.json even with PouchDB enabled. Restore review progress from that file when IndexedDB is empty.
+- Apply incoming sync changes to live schedules, whole-note reviews, statistics, and data.json without restarting. Preserve local reviews made during sync and coalesce overlapping refreshes.
+- Record earned XP in new review logs so synced reviews and undo update XP accurately. Older review logs remain compatible.
+- Remove schedules for deleted notes and folders from both storage copies, including whole-note review schedules, while retaining historical reviews.
+- Clear XP, streaks, whole-note schedules, and undo history when resetting all progress. Retain deletion revisions so CouchDB sync does not restore reset progress.
+- Serialize data.json writes so older saves cannot overwrite newer progress, and surface database read and bulk-write failures instead of treating them as empty or successful results.
+
 ## [1.2.1] - 2026-10-31
 
 This release adds explicit card ending delimiters, sibling card burying, per-deck frontmatter settings overrides, leech detection, atomic review log batching, automatic streak and XP recovery from review logs, cloze hint support, and fixes review window button layout, comment-based breadcrumbs, and multi-cloze card formatting.

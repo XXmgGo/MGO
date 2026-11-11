@@ -1,5 +1,6 @@
 import PouchDB from 'pouchdb-browser';
 import { Card as FSRSCard, Rating } from 'ts-fsrs';
+import type { ReviewLog } from '../data/types';
 
 // --- Database Document Interfaces ---
 
@@ -34,6 +35,7 @@ export interface ReviewLogDoc {
     cardId: string;
     timestamp: number;
     rating: Rating;
+    xp?: number;
     created_at: string;
 }
 
@@ -240,7 +242,7 @@ export class PouchDBManager {
             return cardStates;
         } catch (error) {
             console.error('Error getting all card states:', error);
-            return {};
+            throw error;
         }
     }
 
@@ -302,6 +304,7 @@ export class PouchDBManager {
                 cardId: rename.newId,
                 timestamp: doc.timestamp,
                 rating: doc.rating,
+                xp: doc.xp,
                 created_at: doc.created_at
             });
             writes.push({ _id: doc._id, _rev: doc._rev, _deleted: true });
@@ -313,7 +316,7 @@ export class PouchDBManager {
 
     // --- Review Log Operations ---
 
-    async addReviewLog(cardId: string, timestamp: number, rating: Rating): Promise<void> {
+    async addReviewLog(cardId: string, timestamp: number, rating: Rating, xp?: number): Promise<void> {
         try {
             const doc: ReviewLogDoc = {
                 _id: `review_${timestamp}_${cardId}`,
@@ -321,6 +324,7 @@ export class PouchDBManager {
                 cardId,
                 timestamp,
                 rating,
+                xp,
                 created_at: new Date().toISOString()
             };
 
@@ -397,10 +401,12 @@ export class PouchDBManager {
 
     async importData(
         states: Array<{ cardId: string; deckId: string; filePath: string; fsrs: FSRSCard }>,
-        logs: Array<{ cardId: string; timestamp: number; rating: Rating }>
+        logs: ReviewLog[]
     ): Promise<void> {
         const now = new Date().toISOString();
-        const existing = await this.db.allDocs({ keys: states.map((s) => s.cardId) });
+        const existing = await this.db.allDocs({ keys: [
+            ...states.map(s => s.cardId), ...logs.map(log => `review_${log.timestamp}_${log.cardId}`),
+        ] });
         const revs = new Map<string, string>();
         for (const row of existing.rows) {
             if ('value' in row && row.value && !('deleted' in row.value && row.value.deleted)) revs.set(row.key, row.value.rev);
@@ -428,14 +434,20 @@ export class PouchDBManager {
         for (const log of logs) {
             docs.push({
                 _id: `review_${log.timestamp}_${log.cardId}`,
+                _rev: revs.get(`review_${log.timestamp}_${log.cardId}`),
                 type: 'review_log',
                 cardId: log.cardId,
                 timestamp: log.timestamp,
                 rating: log.rating,
+                xp: log.xp,
                 created_at: now
             });
         }
-        if (docs.length > 0) await this.db.bulkDocs(docs);
+        if (docs.length > 0) {
+            const results = await this.db.bulkDocs(docs);
+            const error = results.find(result => 'error' in result);
+            if (error) throw new Error(`Could not import progress: ${getErrorMessage(error)}`);
+        }
     }
 
     async deleteReviewLog(cardId: string, timestamp: number): Promise<void> {
@@ -447,7 +459,7 @@ export class PouchDBManager {
         }
     }
 
-    async getReviewHistory(limit?: number): Promise<Array<{ cardId: string; timestamp: number; rating: Rating }>> {
+    async getReviewHistory(limit?: number): Promise<ReviewLog[]> {
         try {
             const result = await this.db.allDocs<ReviewLogDoc>({
                 include_docs: true,
@@ -465,12 +477,13 @@ export class PouchDBManager {
                     return [{
                         cardId: row.doc.cardId,
                         timestamp: row.doc.timestamp,
-                        rating: row.doc.rating
+                        rating: row.doc.rating,
+                        ...(typeof row.doc.xp === 'number' && Number.isFinite(row.doc.xp) && row.doc.xp >= 0 ? { xp: row.doc.xp } : {}),
                     }];
                 });
         } catch (error) {
             console.error('Error getting review history:', error);
-            return [];
+            throw error;
         }
     }
 
@@ -818,6 +831,51 @@ export class PouchDBManager {
             this.syncHandler = null;
         }
         await this.db.close();
+    }
+
+    async replaceReviewProgress(
+        states: Array<{ cardId: string; deckId: string; filePath: string; fsrs: FSRSCard }>,
+        logs: ReviewLog[],
+    ): Promise<void> {
+        await this.importData(states, logs);
+        const desired = new Set([...states.map(state => state.cardId), ...logs.map(log => `review_${log.timestamp}_${log.cardId}`)]);
+        const result = await this.db.allDocs<CardStateDoc | ReviewLogDoc>({ include_docs: true });
+        const deletions = result.rows.flatMap(({ doc }) =>
+            doc && (doc.type === 'card_state' || doc.type === 'review_log') && !desired.has(doc._id)
+                ? [{ _id: doc._id, _rev: doc._rev, _deleted: true }] : []);
+        if (deletions.length > 0) {
+            const results = await this.db.bulkDocs(deletions);
+            const error = results.find(result => 'error' in result);
+            if (error) throw new Error(`Could not repair progress: ${getErrorMessage(error)}`);
+        }
+    }
+
+    async deleteFileStates(path: string, cardIds: string[]): Promise<string[]> {
+        const ids = new Set(cardIds);
+        const result = await this.db.allDocs<CardStateDoc>({ include_docs: true });
+        const docs = result.rows.flatMap(({ doc }) =>
+            doc?.type === 'card_state' && (ids.has(doc.cardId) || doc.filePath === path || doc.filePath.startsWith(`${path}/`))
+                ? [doc] : []);
+        if (docs.length > 0) {
+            const results = await this.db.bulkDocs(docs.map(doc => ({ _id: doc._id, _rev: doc._rev, _deleted: true })));
+            const error = results.find(result => 'error' in result);
+            if (error) throw new Error(`Could not delete schedules: ${getErrorMessage(error)}`);
+        }
+        return docs.map(doc => doc.cardId);
+    }
+
+    async clearReviewProgress(): Promise<void> {
+        const result = await this.db.allDocs<CardStateDoc | ReviewLogDoc>({ include_docs: true });
+        const deletions = result.rows.flatMap(({ doc }) =>
+            doc && (doc.type === 'card_state' || doc.type === 'review_log')
+                ? [{ _id: doc._id, _rev: doc._rev, _deleted: true as const }]
+                : []);
+        // Keep deletion revisions so sync removes remote progress instead of downloading it again.
+        if (deletions.length > 0) {
+            const results = await this.db.bulkDocs(deletions);
+            const error = results.find(result => 'error' in result);
+            if (error) throw new Error(`Could not clear review progress: ${getErrorMessage(error)}`);
+        }
     }
 
     async destroy(): Promise<void> {

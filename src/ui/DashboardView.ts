@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, ButtonComponent, Notice, setIcon } from 'obsidian';
 import { VIEW_TYPE_DASHBOARD, VIEW_ICON_NAME, getErrorMessage } from '../data/constants';
-import type { Deck } from '../data/types';
+import type { Deck, DeckFolder } from '../data/types';
 import { ReviewModal } from './ReviewModal';
 import { StatsModal } from './StatsModal';
 import { CustomStudyModal } from './CustomStudyModal';
@@ -20,10 +20,19 @@ export class DashboardView extends ItemView {
     getViewType(): string { return VIEW_TYPE_DASHBOARD; }
     getDisplayText(): string { return 'Lemma decks'; }
     getIcon(): string { return VIEW_ICON_NAME; }
-    async onOpen() { this.render(); }
+    async onOpen() {
+        this.registerDomEvent(this.contentEl, 'scroll', () => {
+            this.plugin.dataManager.setDashboardScrollTop(this.contentEl.scrollTop);
+        });
+        this.render();
+    }
 
     render() {
+        if (this.contentEl.childElementCount > 0) {
+            this.plugin.dataManager.setDashboardScrollTop(this.contentEl.scrollTop);
+        }
         this.contentEl.empty();
+        this.renderSaveError();
 
         if (!this.plugin.dataManager.isDataLoaded()) {
             this.renderLoading();
@@ -32,6 +41,25 @@ export class DashboardView extends ItemView {
 
         this.renderHeader();
         this.renderDecks();
+        this.contentEl.scrollTop = this.plugin.dataManager.getDashboardScrollTop();
+    }
+
+    private renderSaveError() {
+        const error = this.plugin.dataManager.getSaveError();
+        if (!error) return;
+        const banner = this.contentEl.createDiv({ cls: 'fsrs-save-error', attr: { role: 'alert' } });
+        banner.createSpan({ text: `Progress could not be saved: ${error}` });
+        const retry = new ButtonComponent(banner).setButtonText('Retry save').onClick(async () => {
+            retry.setDisabled(true);
+            try {
+                await this.plugin.dataManager.retrySave();
+                this.render();
+            } catch (error: unknown) {
+                new Notice(`Could not save progress: ${getErrorMessage(error)}`, 7000);
+            } finally {
+                retry.setDisabled(false);
+            }
+        });
     }
 
     private renderLoading() {
@@ -65,7 +93,7 @@ export class DashboardView extends ItemView {
             return btn;
         };
 
-        const studyAllBtn = createDashBtn('play', 'Study all due', () => {
+        const studyAllBtn = createDashBtn('play', 'Study all', () => {
             const allDueCards = this.plugin.dataManager.getDecks()
                 .flatMap((d: Deck) => this.plugin.dataManager.getReviewQueue(d.id));
             if (allDueCards.length === 0) {
@@ -77,10 +105,10 @@ export class DashboardView extends ItemView {
             }
             new ReviewModal(this.app, this.plugin, allDueCards).open();
         }, true);
-        const dueCount = this.plugin.dataManager.getDecks().reduce((acc: number, d: Deck) => acc + d.stats.due, 0);
-        if (dueCount > 0) {
-            studyAllBtn.buttonEl.createSpan({ text: dueCount.toString(), cls: 'fsrs-action-badge' });
-        }
+        const availableCount = this.plugin.dataManager.getDecks()
+            .reduce((sum, deck) => sum + this.plugin.dataManager.getReviewQueue(deck.id).length, 0);
+        studyAllBtn.buttonEl.createSpan({ text: availableCount.toString(), cls: 'fsrs-action-badge' });
+        studyAllBtn.buttonEl.setAttribute('aria-label', `Study all: ${availableCount} cards available within daily limits`);
 
         createDashBtn('folder-plus', 'New deck', () => new CreateDeckModal(this.app, this.plugin).open());
         createDashBtn('plus', 'New card', () => new CreateCardModal(this.app, this.plugin).open());
@@ -89,11 +117,11 @@ export class DashboardView extends ItemView {
 
         const iconRow = actionsRow.createDiv({ cls: 'fsrs-icon-row' });
 
-        const helpBtn = iconRow.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': 'Help & guide' } });
+        const helpBtn = iconRow.createEl('button', { cls: 'clickable-icon', attr: { 'aria-label': 'Help & guide' } });
         setIcon(helpBtn, 'help-circle');
         helpBtn.addEventListener('click', () => new HelpModal(this.app, this.plugin).open());
 
-        const refreshBtn = iconRow.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': 'Refresh' } });
+        const refreshBtn = iconRow.createEl('button', { cls: 'clickable-icon', attr: { 'aria-label': 'Refresh' } });
         setIcon(refreshBtn, 'refresh-cw');
         refreshBtn.addEventListener('click', () => {
             void (async () => {
@@ -109,7 +137,7 @@ export class DashboardView extends ItemView {
 
         const pouchDB = this.plugin.dataManager.getPouchDB();
         if (this.plugin.settings.syncEnabled && pouchDB) {
-            const syncBtn = iconRow.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': 'Sync' } });
+            const syncBtn = iconRow.createEl('button', { cls: 'clickable-icon', attr: { 'aria-label': 'Sync' } });
             setIcon(syncBtn, 'cloud');
             syncBtn.addEventListener('click', () => {
                 void (async () => {
@@ -155,6 +183,7 @@ export class DashboardView extends ItemView {
         createStatPill('layers', globalStats.total.toString(), 'total', 'neutral');
         createStatPill('clock', globalStats.due.toString(), 'due', 'due');
         createStatPill('sparkles', globalStats.new.toString(), 'new', 'new');
+        createStatPill('play', availableCount.toString(), 'available today', 'neutral');
 
         // Gamification widget
         const gamification = this.plugin.dataManager.getGamificationStats();
@@ -181,47 +210,31 @@ export class DashboardView extends ItemView {
         const decks = this.plugin.dataManager.getDecks();
         if (decks.length === 0) { this.renderEmptyState(); return; }
 
-        const groupedDecks = this.groupDecksByFolder(decks);
-
-        for (const [folderPath, folderDecks] of groupedDecks) {
-            this.renderFolderGroup(folderPath, folderDecks);
+        for (const folder of this.plugin.dataManager.getDeckFolders()) {
+            this.renderFolderGroup(this.contentEl, folder);
         }
     }
 
-    private groupDecksByFolder(decks: Deck[]): Map<string, Deck[]> {
-        const groups = new Map<string, Deck[]>();
+    private renderFolderGroup(container: HTMLElement, folder: DeckFolder) {
+        const folderContainer = container.createDiv({ cls: 'fsrs-folder-group' });
+        folderContainer.setAttribute('data-folder-path', folder.path);
+        const isExpanded = this.plugin.dataManager.isDashboardFolderExpanded(folder.path);
 
-        for (const deck of decks) {
-            const lastSlashIndex = deck.filePath.lastIndexOf('/');
-            const folderPath = lastSlashIndex > 0 ? deck.filePath.substring(0, lastSlashIndex) : 'Root';
-
-            if (!groups.has(folderPath)) {
-                groups.set(folderPath, []);
-            }
-            groups.get(folderPath)!.push(deck);
-        }
-
-        return new Map([...groups.entries()].sort((a, b) => a[0].localeCompare(b[0])));
-    }
-
-    private renderFolderGroup(folderPath: string, decks: Deck[]) {
-        const folderContainer = this.contentEl.createDiv({ cls: 'fsrs-folder-group' });
-
-        const folderHeader = folderContainer.createDiv({ cls: 'fsrs-folder-header' });
+        const heading = folderContainer.createDiv({ cls: 'fsrs-folder-heading' });
+        const folderHeader = heading.createDiv({ cls: 'fsrs-folder-header' });
         folderHeader.setAttribute('role', 'button');
         folderHeader.setAttribute('tabindex', '0');
-        folderHeader.setAttribute('aria-expanded', 'false');
+        folderHeader.setAttribute('aria-expanded', isExpanded.toString());
 
         const chevronIcon = folderHeader.createDiv({ cls: 'fsrs-folder-chevron' });
-        setIcon(chevronIcon, 'chevron-right');
+        setIcon(chevronIcon, isExpanded ? 'chevron-down' : 'chevron-right');
 
         const folderIcon = folderHeader.createDiv({ cls: 'fsrs-folder-icon' });
-        setIcon(folderIcon, 'folder-closed');
+        setIcon(folderIcon, isExpanded ? 'folder-open' : 'folder-closed');
 
-        const folderName = folderPath === 'Root' ? 'Root' : folderPath.substring(folderPath.lastIndexOf('/') + 1);
-        folderHeader.createSpan({ text: folderName, cls: 'fsrs-folder-name' });
+        folderHeader.createSpan({ text: folder.name, cls: 'fsrs-folder-name' });
 
-        const dueCardsInFolder = decks.reduce((sum, deck) => sum + deck.stats.due, 0);
+        const dueCardsInFolder = folder.dueCount;
 
         const countContainer = folderHeader.createDiv({ cls: 'fsrs-folder-count-container' });
 
@@ -232,18 +245,36 @@ export class DashboardView extends ItemView {
             });
         }
         countContainer.createSpan({
-            text: `${decks.length}`,
+            text: `${folder.deckCount}`,
             cls: 'fsrs-folder-count',
         });
 
-        const decksContainer = folderContainer.createDiv({ cls: 'fsrs-folder-decks' });
-        decksContainer.hide();
+        const available = this.plugin.dataManager.getFolderReviewQueue(folder.path).length;
+        const studyFolder = heading.createEl('button', {
+            cls: 'clickable-icon fsrs-folder-study',
+            attr: { 'aria-label': `Study folder ${folder.name}: ${available} cards available within daily limits` },
+        });
+        setIcon(studyFolder, 'play');
+        studyFolder.createSpan({ text: available.toString(), cls: 'fsrs-folder-available' });
+        studyFolder.addEventListener('click', () => {
+            const queue = this.plugin.dataManager.getFolderReviewQueue(folder.path);
+            if (queue.length === 0) {
+                new Notice('No cards available in this folder within daily limits. Use cram on a deck to keep studying.');
+                return;
+            }
+            new ReviewModal(this.app, this.plugin, queue, folder.name).open();
+        });
 
-        let isCollapsed = true;
-        folderHeader.addClass('is-collapsed');
+        const decksContainer = folderContainer.createDiv({ cls: 'fsrs-folder-decks' });
+        if (!isExpanded) decksContainer.hide();
+        folderHeader.toggleClass('is-collapsed', !isExpanded);
+        folderHeader.toggleClass('is-expanded', isExpanded);
 
         const toggleFolder = () => {
-            isCollapsed = !isCollapsed;
+            const isCollapsed = this.plugin.dataManager.isDashboardFolderExpanded(folder.path);
+            void this.plugin.dataManager.setDashboardFolderExpanded(folder.path, !isCollapsed).catch((error: unknown) => {
+                new Notice(`Could not save folder state: ${getErrorMessage(error)}`);
+            });
             folderHeader.toggleClass('is-collapsed', isCollapsed);
             folderHeader.toggleClass('is-expanded', !isCollapsed);
             folderHeader.setAttribute('aria-expanded', (!isCollapsed).toString());
@@ -260,19 +291,25 @@ export class DashboardView extends ItemView {
             }
         });
 
-        for (const deck of decks) {
+        for (const child of folder.folders) {
+            this.renderFolderGroup(decksContainer, child);
+        }
+        for (const deck of folder.decks) {
             this.renderDeckItem(decksContainer, deck);
         }
     }
 
     private renderDeckItem(container: HTMLElement, deck: Deck) {
         const hasDue = deck.stats.due > 0;
+        const available = this.plugin.dataManager.getReviewQueue(deck.id).length;
 
         const deckRow = container.createDiv({ cls: 'fsrs-deck-row' });
 
-        deckRow.addEventListener('click', () => {
+        const openDeck = () => {
+            this.plugin.dataManager.setDashboardScrollTop(this.contentEl.scrollTop);
             void this.app.workspace.openLinkText(deck.filePath, deck.filePath);
-        });
+        };
+        deckRow.addEventListener('click', openDeck);
 
         const iconEl = deckRow.createDiv({ cls: 'fsrs-deck-row-icon' });
         setIcon(iconEl, hasDue ? 'file-clock' : 'file-text');
@@ -280,9 +317,24 @@ export class DashboardView extends ItemView {
             iconEl.addClass('has-due');
         }
 
-        deckRow.createSpan({ text: deck.title, cls: 'fsrs-deck-row-title' });
+        const deckLink = deckRow.createEl('a', {
+            text: deck.title, cls: 'fsrs-deck-row-title', attr: { href: deck.filePath },
+        });
+        deckLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openDeck();
+        });
+        deckLink.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                event.stopPropagation();
+                openDeck();
+            }
+        });
 
         const statsEl = deckRow.createDiv({ cls: 'fsrs-deck-row-stats' });
+        statsEl.createSpan({ text: `${available} available`, cls: 'fsrs-stat-available' });
         if (deck.stats.due > 0) {
             statsEl.createSpan({
                 text: `${deck.stats.due}`,
@@ -296,8 +348,8 @@ export class DashboardView extends ItemView {
         const actionsEl = deckRow.createDiv({ cls: 'fsrs-deck-row-actions' });
 
         const studyBtn = actionsEl.createEl('button', {
-            cls: `clickable-icon${hasDue ? '' : ' fsrs-deck-muted'}`,
-            attr: { 'aria-label': hasDue ? `Study ${deck.stats.due} cards` : 'No cards due' },
+            cls: `clickable-icon${available > 0 ? '' : ' fsrs-deck-muted'}`,
+            attr: { 'aria-label': available > 0 ? `Study ${available} available cards` : 'No cards available within daily limits' },
         });
         setIcon(studyBtn, 'play');
         studyBtn.addEventListener('click', (e) => {

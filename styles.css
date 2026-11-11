@@ -233,6 +233,42 @@ svg.lemma-icon rect {
     margin-bottom: var(--size-4-1);
 }
 
+.fsrs-folder-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-1);
+}
+
+.fsrs-folder-heading > .fsrs-folder-header {
+    flex: 1;
+    min-width: 0;
+}
+
+.fsrs-folder-study {
+    gap: var(--size-4-1);
+    flex-shrink: 0;
+    min-width: var(--size-4-11);
+    min-height: var(--size-4-11);
+}
+
+.fsrs-folder-available,
+.fsrs-stat-available {
+    color: var(--text-muted);
+    font-size: var(--font-smallest);
+    white-space: nowrap;
+}
+
+.fsrs-save-error {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--size-4-2);
+    padding: var(--size-4-3);
+    margin-bottom: var(--size-4-3);
+    color: var(--text-error);
+    border: var(--border-width) solid var(--background-modifier-error);
+}
+
 .fsrs-folder-header {
     display: flex;
     align-items: center;
@@ -242,6 +278,7 @@ svg.lemma-icon rect {
     border-radius: var(--radius-s);
     color: var(--nav-item-color);
     font-size: var(--nav-item-size);
+    min-height: var(--size-4-11);
 }
 
 .fsrs-folder-header:hover {
@@ -260,10 +297,6 @@ svg.lemma-icon rect {
     width: 16px;
     height: 16px;
     color: var(--icon-color);
-}
-
-.fsrs-folder-header.is-expanded .fsrs-folder-chevron svg {
-    transform: rotate(90deg);
 }
 
 .fsrs-folder-chevron svg {
@@ -285,6 +318,10 @@ svg.lemma-icon rect {
 
 .fsrs-folder-name {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-weight: 500;
     color: var(--nav-item-color);
     font-size: var(--nav-item-size);
@@ -360,6 +397,13 @@ svg.lemma-icon rect {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-decoration: none;
+}
+
+.fsrs-deck-row-title:focus-visible,
+.fsrs-folder-study:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
 }
 
 .fsrs-deck-row-stats {
@@ -388,7 +432,8 @@ svg.lemma-icon rect {
     opacity: 0;
 }
 
-.fsrs-deck-row:hover .fsrs-deck-row-actions {
+.fsrs-deck-row:hover .fsrs-deck-row-actions,
+.fsrs-deck-row:focus-within .fsrs-deck-row-actions {
     opacity: 1;
 }
 
