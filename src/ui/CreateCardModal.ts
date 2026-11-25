@@ -181,19 +181,19 @@ export class CreateCardModal extends Modal {
         if (this.cardType === 'single') {
             const q = this.frontText.trim().replace(/\n+/g, ' ') || 'Question';
             const a = this.backText.trim().replace(/\n+/g, ' ') || 'Answer';
-            return `\n<mgo-card cardId="${cardId}"><mgo-card-front>${q}</mgo-card-front><mgo-card-back>${a}</mgo-card-back></mgo-card>\n`;
+            return `\n<mgo-card cardId="${cardId}">\n<mgo-card-front>\n${q}\n</mgo-card-front>\n<mgo-card-back>\n${a}\n</mgo-card-back>\n</mgo-card>\n`;
         }
 
         if (this.cardType === 'reversed') {
             const q = this.frontText.trim().replace(/\n+/g, ' ') || 'Question';
             const a = this.backText.trim().replace(/\n+/g, ' ') || 'Answer';
-            return `\n<mgo-card cardId="${cardId}" reverse><mgo-card-front>${q}</mgo-card-front><mgo-card-back>${a}</mgo-card-back></mgo-card>\n`;
+            return `\n<mgo-card cardId="${cardId}" reverse>\n<mgo-card-front>\n${q}\n</mgo-card-front>\n<mgo-card-back>\n${a}\n</mgo-card-back>\n</mgo-card>\n`;
         }
 
         if (this.cardType === 'typein') {
             const q = this.frontText.trim() || 'Question';
             const a = this.backText.trim() || 'Answer';
-            return `\n<mgo-card cardId="${cardId}" type="typein"><mgo-card-front>\n${q}\n</mgo-card-front>\n<mgo-card-back>\n${a}\n</mgo-card-back>\n</mgo-card>\n`;
+            return `\n<mgo-card cardId="${cardId}" type="typein">\n<mgo-card-front>\n${q}\n</mgo-card-front>\n<mgo-card-back>\n${a}\n</mgo-card-back>\n</mgo-card>\n`;
         }
 
         const q = this.frontText.trim() || 'Question';

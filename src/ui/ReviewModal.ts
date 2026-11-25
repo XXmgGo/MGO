@@ -1,7 +1,7 @@
 import { App, Modal, ButtonComponent, Component, MarkdownRenderer, Notice, setIcon } from 'obsidian';
 import { Rating, State } from 'ts-fsrs';
 import type { Card } from '../data/types';
-import { isInPlaceImageCard } from '../data/constants';
+import { isInPlaceImageCard, toHardBreaks } from '../data/constants';
 
 type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 
@@ -332,8 +332,8 @@ export class ReviewModal extends Modal {
         }
 
         this.frontEl.show();
-        await MarkdownRenderer.render(this.app, card.front, this.frontEl, card.filePath, this.renderComponent);
-        await MarkdownRenderer.render(this.app, card.back, this.backEl, card.filePath, this.renderComponent);
+        await MarkdownRenderer.render(this.app, toHardBreaks(card.front), this.frontEl, card.filePath, this.renderComponent);
+        await MarkdownRenderer.render(this.app, toHardBreaks(card.back), this.backEl, card.filePath, this.renderComponent);
 
         if (card.type === 'typein') {
             this.showAnswerButton.buttonEl.hide();

@@ -1511,6 +1511,7 @@ mgo-card-back {
     margin-top: var(--size-4-1);
     font-size: var(--font-ui-small);
     color: var(--text-muted);
+    white-space: pre-wrap;
 }
 
 /* ── Stats v2 ── */

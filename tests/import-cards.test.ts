@@ -10,8 +10,8 @@ describe('card import', () => {
         const out = convertToMGO(text, 'flashcards', id);
         expect(out.cards).toBe(2);
         expect(out.markdown).toContain('tags: [flashcards]');
-        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t1"><mgo-card-front>\nCapital of France?\n</mgo-card-front>\n<mgo-card-back>\nParis\n</mgo-card-back>\n</mgo-card>');
-        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t2"><mgo-card-front>\nWhat is 2+2?\n(easy)\n</mgo-card-front>\n<mgo-card-back>\n4 units\n</mgo-card-back>\n</mgo-card>');
+        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t1">\n<mgo-card-front>\nCapital of France?\n</mgo-card-front>\n<mgo-card-back>\nParis\n</mgo-card-back>\n</mgo-card>');
+        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t2">\n<mgo-card-front>\nWhat is 2+2?\n(easy)\n</mgo-card-front>\n<mgo-card-back>\n4 units\n</mgo-card-back>\n</mgo-card>');
     });
 
     it('converts Anki cloze notes and drops cloze hints', () => {

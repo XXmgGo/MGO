@@ -93,10 +93,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}"><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>`;
+                const template = `\n<mgo-card cardId="${blockId}">\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 1, ch: 30 }, { line: cursor.line + 1, ch: 38 });
+                editor.setSelection({ line: cursor.line + 3, ch: 0 }, { line: cursor.line + 3, ch: 8 });
             },
         });
         this.addCommand({
@@ -106,10 +106,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}" reverse><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>`;
+                const template = `\n<mgo-card cardId="${blockId}" reverse>\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 1, ch: 38 }, { line: cursor.line + 1, ch: 46 });
+                editor.setSelection({ line: cursor.line + 3, ch: 0 }, { line: cursor.line + 3, ch: 8 });
             },
         });
         this.addCommand({
@@ -170,10 +170,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}" type="typein"><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>`;
+                const template = `\n<mgo-card cardId="${blockId}" type="typein">\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 1, ch: 41 }, { line: cursor.line + 1, ch: 49 });
+                editor.setSelection({ line: cursor.line + 3, ch: 0 }, { line: cursor.line + 3, ch: 8 });
             },
         });
         this.addCommand({

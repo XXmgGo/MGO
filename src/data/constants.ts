@@ -197,3 +197,24 @@ export function isInPlaceImageCard(card: Card | null | undefined): boolean {
     return isImageOnlyContent(card.front) && isImageOnlyContent(card.back);
 }
 
+
+/**
+ * 把卡片文本里的普通换行转成 Markdown 硬换行（行尾双空格），
+ * 使笔记中 <mgo-card-front>/<mgo-card-back> 块内的换行在复习窗口也生效。
+ * 跳过代码围栏内部与本已是硬换行/空行/块级语法（列表、标题、表格、分隔线）的行。
+ */
+export function toHardBreaks(text: string): string {
+    const lines = text.split('\n');
+    let inCode = false;
+    return lines.map((line, i) => {
+        if (/^\s*(```|~~~)/.test(line)) { inCode = !inCode; return line; }
+        if (inCode) return line;
+        const next = lines[i + 1];
+        if (next === undefined || next.trim() === '') return line;          // 末行/空行后不需要
+        if (/[ \t]$/ .test(line)) return line;                              // 已是硬换行或尾随空格
+        if (/^\s{0,3}(#{1,6}\s|[-*+]\s|\d+\.\s|>|```|~~~|\|)/.test(line)) return line; // 标题/列表/引用/表格
+        if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) return line;         // 水平线
+        if (/^\s{0,3}(#{1,6}\s|[-*+]\s|\d+\.\s|>)/.test(next)) return line; // 下一行是块级语法，本行无需硬换行
+        return line + '  ';
+    }).join('\n');
+}
