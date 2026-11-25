@@ -313,7 +313,7 @@ IndexedDB (local)  ←PouchDB live sync→  CouchDB (remote)
 - General: PouchDB toggle/migration, deck tag, review limits, font size, reset progress
 - Sync: enable/disable, CouchDB URL/credentials, test/status
 - Advanced: FSRS parameters (retention, interval, weights), weight optimizer
-- About: version, inline quick reference guide, sponsorship link, repository link, and a license row linking to `LICENSE` (holder read from `manifest.author`)
+- About: version, inline quick reference guide, repository link, and a license row linking to `LICENSE` (holder read from `manifest.author`)
 - Also implements `getSettingDefinitions()` for declarative settings search on Obsidian 1.13+
 
 ---

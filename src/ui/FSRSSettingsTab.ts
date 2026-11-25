@@ -354,16 +354,6 @@ export class FSRSSettingsTab extends PluginSettingTab {
             .setDesc(`v${this.plugin.manifest.version} — 基于 Lemma（Fundaments Work 创作，MIT 协议）二次开发的 FSRS 间隔重复闪卡插件。`);
 
         new Setting(containerEl)
-            .setName('支持开发')
-            .setDesc('支持持续开发与后续新功能。')
-            .addButton((btn) => btn
-                .setButtonText('Buy me a momo')
-                .setCta()
-                .onClick(() => {
-                    activeWindow.open('https://buymemomo.com/usefundaments', '_blank');
-                }));
-
-        new Setting(containerEl)
             .setName('文档与指南')
             .setDesc('打开可交互的闪卡编写指南与使用技巧。')
             .addButton((btn) => btn

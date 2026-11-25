@@ -16,7 +16,6 @@ node deploy.mjs <vault-path>   # copy built files to vault
 
 - **Organization**: Fundaments Work
 - **Repository**: [Fundaments-Work/Lemma](https://github.com/Fundaments-Work/Lemma)
-- **Sponsorship**: [Buy Me Momo](https://buymemomo.com/usefundaments)
 
 ## Cross-repo contracts
 

@@ -31,14 +31,11 @@
   <a href="https://fundaments.work/docs/lemma/guide/flashcards-in-obsidian/">如何在 Obsidian 中制作闪卡</a> ·
   <a href="https://fundaments.work/docs/lemma/guide/compared-with-other-plugins/">与其他插件的对比</a> ·
   <a href="https://fundaments.work/docs/lemma/compare/vs-anki/">MGO vs Anki</a> ·
-  <a href="https://buymemomo.com/usefundaments">Buy Me a Momo</a> ·
   <a href="https://github.com/XXmgGo/MGO/issues/new?labels=bug">提交 Bug</a> ·
   <a href="https://github.com/XXmgGo/MGO/issues/new?labels=enhancement">申请新功能</a>
 </p>
 
 <p align="center">
-  <a href="https://buymemomo.com/usefundaments"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Momo-C6F135?style=for-the-badge&logoColor=12140F&labelColor=12140F" alt="Buy Me a Momo"></a>
-  &nbsp;
   <a href="https://github.com/XXmgGo/MGO/issues/new?labels=bug"><img src="https://img.shields.io/badge/Report%20Issue-ef4444?style=for-the-badge" alt="Report Bug"></a>
   &nbsp;
   <a href="https://github.com/XXmgGo/MGO/issues/new?labels=enhancement"><img src="https://img.shields.io/badge/Request%20Feature-22c55e?style=for-the-badge" alt="Request Feature"></a>
@@ -319,7 +316,6 @@ MGO 默认不发起任何网络请求，仅在下列情况下才会连接网络�
 | 目标 | 触发时机 | 用途 |
 |---|---|---|
 | 你的 CouchDB 服务器 | 仅在你启用同步之后 | 在自有设备之间复制复习数据 |
-| `buymemomo.com` | 仅当你点击赞助链接 | 在浏览器中打开支持页面 |
 | `github.com` | 仅当你点击仓库、许可证或 issue 链接 | 在浏览器中打开对应页面 |
 
 同步需要手动开启。CouchDB 密码保存在插件数据文件（`data.json`）中，以便重启后能够重新连接；
@@ -350,9 +346,8 @@ Obsidian 不会对该文件做静态加密。请为同步使用一个只能访�
 
 ## 支持
 
-如果 MGO 对你的学习和日常知识留存有帮助，欢迎支持本项目开发：
+如果 MGO 对你的学习和日常知识留存有帮助，欢迎：
 
-- [Buy Me a Momo](https://buymemomo.com/usefundaments)
 - 在 [GitHub](https://github.com/XXmgGo/MGO) 上给仓库点个 Star
 
 ---

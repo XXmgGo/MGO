@@ -89,7 +89,6 @@ The optimizer is an evolutionary search implemented inside Lemma, not the refere
 
 The About tab shows the plugin version, and these buttons:
 
-- **Buy me a momo** opens the support page in your browser.
 - **Open guide** opens the in-app **Help & guide** window.
 - **Open repository** opens the GitHub page.
 - **View license** opens the MIT license text on GitHub.

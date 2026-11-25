@@ -533,12 +533,13 @@ FSRS stands for ==c1::Free Spaced Repetition Scheduler==. ^sr-002
 
 ---
 
-## 支持开发
+## 支持
 
-如果 MGO 帮你学得更快、记得更牢，欢迎支持本项目的发展：
+如果 MGO 帮你学得更快、记得更牢，欢迎：
 
-- **Buy Me a Momo：** [buymemomo.com/usefundaments](https://buymemomo.com/usefundaments)
-- **GitHub：** [github.com/Fundaments-Work/Lemma](https://github.com/Fundaments-Work/Lemma)
+- **GitHub：** [github.com/XXmgGo/MGO](https://github.com/XXmgGo/MGO)
+
+MGO 基于 [Lemma](https://github.com/Fundaments-Work/Lemma) 二次开发，致谢原作者 Fundaments Work。
 
 ---
 

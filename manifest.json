@@ -6,6 +6,5 @@
   "description": "Create and review flashcards directly in notes using the FSRS spaced repetition algorithm. Supports cloze deletions, custom study sessions, learning analytics, and CouchDB sync.",
   "author": "Fundaments Work",
   "authorUrl": "https://github.com/Fundaments-Work",
-  "fundingUrl": "https://buymemomo.com/usefundaments",
   "isDesktopOnly": false
 }

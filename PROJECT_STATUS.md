@@ -37,7 +37,7 @@ All core features are implemented and functional:
 - [x] Guided card creation modal (`CreateCardModal` with type dropdown and live preview)
 - [x] Guided deck creation modal (`CreateDeckModal` with auto `#flashcards` tagging)
 - [x] Official custom MGO (原 Lemma) SVG brand icon registration via Obsidian API `addIcon` (native monochrome `currentColor`)
-- [x] Organization migration to `Fundaments-Work/Lemma` & Buy Me a Momo sponsorship integration
+- [x] Organization migration to `Fundaments-Work/Lemma`  integration
 - [x] Performance architecture:
   - Debounced vault event processing (350ms batching into `Set<TFile>`)
   - Zero-allocation tag cache checks (`hasTag` fast path)
