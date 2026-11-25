@@ -19,6 +19,8 @@ export class DataManager {
     private migrationCompleted: boolean = false;
     private isLoaded: boolean = false;
     private fileMtimes: Map<string, number> = new Map();
+    private fileCards: Map<string, Set<string>> = new Map();
+    private fileDeckPaths: Map<string, string> = new Map();
     private lineStartsCache: { content: string; starts: number[] } | null = null;
     private firstReviewAt: Map<string, number> | null = null;
     private undoStack: Array<{ card: Card; previous: FSRSData | undefined; timestamp: number; gamification: Gamification }> = [];
@@ -211,6 +213,8 @@ export class DataManager {
         this.cards.clear();
         this.noteReviews.clear();
         this.fileMtimes.clear();
+        this.fileCards.clear();
+        this.fileDeckPaths.clear();
         for (const file of this.plugin.app.vault.getMarkdownFiles()) {
             await this.updateFile(file);
         }
@@ -218,8 +222,46 @@ export class DataManager {
         console.debug(`FSRS: Index complete. Found ${this.decks.size} decks and ${this.cards.size} cards.`);
     }
 
-    getDeckId(path: string): string {
-        return cyrb53hex(path);
+    getDeckId(tagPath: string): string {
+        return cyrb53hex(tagPath);
+    }
+
+    /**
+     * 返回该文件唯一归属的牌组标签路径（小写，去掉前导 #）。
+     * 规则：命中 0 个牌组根标签 → null（不是牌组）；
+     * 命中 2 个及以上不同的牌组标签 → null（临时规则：多标签文件整篇不识别）。
+     */
+    getDeckTagPath(cache: CachedMetadata | null | undefined): string | null {
+        if (!cache) return null;
+        const roots = this.plugin.settings.deckTags
+            .map(t => t.replace(/^#/, '').trim().toLowerCase())
+            .filter(Boolean);
+        if (roots.length === 0) return null;
+
+        const matched = new Set<string>();
+        const collect = (raw: string) => {
+            const tag = raw.replace(/^#/, '').trim().toLowerCase();
+            if (!tag) return;
+            for (const root of roots) {
+                if (tag === root || tag.startsWith(root + '/')) { matched.add(tag); return; }
+            }
+        };
+
+        const frontmatter = isRecord(cache.frontmatter) ? cache.frontmatter : null;
+        if (frontmatter) {
+            const fmTags = frontmatter.tags ?? frontmatter.tag;
+            if (typeof fmTags === 'string') {
+                for (const part of fmTags.split(',')) collect(part);
+            } else if (Array.isArray(fmTags)) {
+                for (const item of fmTags) if (typeof item === 'string') collect(item);
+            }
+        }
+        if (cache.tags) {
+            for (const entry of cache.tags) collect(entry.tag);
+        }
+
+        if (matched.size !== 1) return null;
+        return matched.values().next().value as string;
     }
 
     private hasTag(cache: CachedMetadata | null | undefined, tagWithHash: string): boolean {
@@ -328,22 +370,20 @@ export class DataManager {
     }
 
     async updateFile(file: TFile): Promise<boolean> {
-        const deckId = this.getDeckId(file.path);
         const cache = this.plugin.app.metadataCache.getFileCache(file);
-        const deckTag = `#${this.plugin.settings.deckTag}`;
+        const deckPath = this.getDeckTagPath(cache);
         const reviewTag = '#review';
 
-        const isDeck = this.hasTag(cache, deckTag);
+        const isDeck = deckPath !== null;
         const isReview = this.hasTag(cache, reviewTag);
 
-        const hadDeck = this.decks.has(deckId);
+        const hadCards = this.fileCards.has(file.path);
         const hadReview = this.noteReviews.has(file.path);
+        const prevDeckPath = this.fileDeckPaths.get(file.path) ?? null;
 
         if (!isDeck && !isReview) {
-            if (!hadDeck && !hadReview) {
-                return false;
-            }
-            if (hadDeck) this.removeDeck(deckId, false);
+            if (!hadCards && !hadReview) return false;
+            if (hadCards) this.removeFileCards(file.path);
             if (hadReview) this.noteReviews.delete(file.path);
             this.fileMtimes.delete(file.path);
             return true;
@@ -351,30 +391,44 @@ export class DataManager {
 
         const currentMtime = file.stat?.mtime ?? 0;
         const previousMtime = this.fileMtimes.get(file.path);
-        if (currentMtime > 0 && previousMtime === currentMtime && (hadDeck === isDeck) && (hadReview === isReview)) {
+        if (currentMtime > 0 && previousMtime === currentMtime
+            && prevDeckPath === deckPath && hadReview === isReview) {
             return false;
         }
 
         let stateChanged = false;
 
         if (isDeck) {
-            this.dropDeckCards(deckId);
+            if (hadCards) this.removeFileCards(file.path);
+            const deckId = this.getDeckId(deckPath);
             const frontmatter = isRecord(cache?.frontmatter) ? cache.frontmatter : null;
-            const title = frontmatter && typeof frontmatter.title === 'string' ? frontmatter.title : file.basename;
             const settings = this.parseDeckSettings(frontmatter);
-            const newDeck: Deck = { id: deckId, title, filePath: file.path, cardIds: new Set(), stats: { new: 0, due: 0, learning: 0 }, settings };
+
+            let deck = this.decks.get(deckId);
+            if (!deck) {
+                deck = { id: deckId, title: deckPath, tagPath: deckPath, filePath: file.path, cardIds: new Set(), stats: { new: 0, due: 0, learning: 0 }, settings };
+                this.decks.set(deckId, deck);
+            } else if (settings) {
+                deck.settings = settings;
+            }
+
             const content = await this.plugin.app.vault.read(file);
             const lines = content.split('\n');
             const breadcrumbs = this.buildHeadingBreadcrumbs(lines);
 
-            const inBasicCard = this.parseBasicCards(content, lines, breadcrumbs, file.path, deckId, newDeck);
-            this.parseSingleLineCards(lines, breadcrumbs, file.path, deckId, newDeck, inBasicCard);
-            this.parseClozeCards(content, lines, breadcrumbs, file.path, deckId, newDeck, inBasicCard);
+            const scratch: Deck = { id: deckId, title: deckPath, tagPath: deckPath, filePath: file.path, cardIds: new Set(), stats: { new: 0, due: 0, learning: 0 } };
+            const inBasicCard = this.parseBasicCards(content, lines, breadcrumbs, file.path, deckId, scratch);
+            this.parseSingleLineCards(lines, breadcrumbs, file.path, deckId, scratch, inBasicCard);
+            this.parseClozeCards(content, lines, breadcrumbs, file.path, deckId, scratch, inBasicCard);
 
-            if (newDeck.cardIds.size > 0) this.decks.set(deckId, newDeck);
+            for (const cardId of scratch.cardIds) deck.cardIds.add(cardId);
+            this.fileCards.set(file.path, scratch.cardIds);
+            this.fileDeckPaths.set(file.path, deckPath);
+
+            if (deck.cardIds.size === 0) this.decks.delete(deckId);
             stateChanged = true;
-        } else if (hadDeck) {
-            this.removeDeck(deckId, false);
+        } else if (hadCards) {
+            this.removeFileCards(file.path);
             stateChanged = true;
         }
 
@@ -401,13 +455,13 @@ export class DataManager {
 
     public isFileDeck(file: TFile): boolean {
         const cache = this.plugin.app.metadataCache.getFileCache(file);
-        return this.hasTag(cache, `#${this.plugin.settings.deckTag}`);
+        return this.getDeckTagPath(cache) !== null;
     }
 
     public async ensureDeckTag(file: TFile): Promise<boolean> {
         if (this.isFileDeck(file)) return false;
 
-        const deckTagName = this.plugin.settings.deckTag.replace(/^#/, '');
+        const deckTagName = (this.plugin.settings.deckTags[0] ?? 'flashcards').replace(/^#/, '');
         if (this.plugin.app.fileManager?.processFrontMatter) {
             await this.plugin.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
                 const currentTags = fm.tags;
@@ -508,7 +562,7 @@ export class DataManager {
 
                 const rType = isTypeIn ? 'typein' : 'reversed';
                 const cardId = blockId
-                    ? `${deckId}::${blockId}`
+                    ? `${cyrb53hex(filePath)}::${blockId}`
                     : cyrb53hex(`${filePath}::${trimmed}::${rType}`);
                 const card: Card = {
                     id: cardId,
@@ -535,7 +589,7 @@ export class DataManager {
 
                 const bType = isTypeIn ? 'typein' : 'basic';
                 const cardId = blockId
-                    ? `${deckId}::${blockId}`
+                    ? `${cyrb53hex(filePath)}::${blockId}`
                     : cyrb53hex(`${filePath}::${trimmed}`);
                 const card: Card = {
                     id: cardId,
@@ -615,7 +669,7 @@ export class DataManager {
             let front = cleanFront.trim();
 
             if (blockIdMatch) {
-                cardId = `${deckId}::${blockIdMatch[1]}`;
+                cardId = `${cyrb53hex(filePath)}::${blockIdMatch[1]}`;
                 front = cleanFront.replace(/\^([a-zA-Z0-9-]+)\s*$/m, '').trim();
             } else {
                 cardId = cyrb53hex(filePath + '::' + front);
@@ -690,7 +744,7 @@ export class DataManager {
             clozeNumbers.forEach(clozeNum => {
                 let cardId: string;
                 if (blockIdMatch) {
-                    cardId = `${deckId}::${blockIdMatch[1]}-${clozeNum}`;
+                    cardId = `${cyrb53hex(filePath)}::${blockIdMatch[1]}-${clozeNum}`;
                 } else {
                     cardId = cyrb53hex(`${filePath}::${paragraph}::${clozeNum}`);
                 }
@@ -727,29 +781,62 @@ export class DataManager {
         }
     }
 
-    private dropDeckCards(deckId: string) {
-        const deck = this.decks.get(deckId);
-        if (!deck) return;
-        deck.cardIds.forEach(cardId => this.cards.delete(cardId));
-        this.decks.delete(deckId);
+    /** 收集牌组自身 + 所有子牌组（tagPath 以 `父/` 开头）的卡片 id。 */
+    private deckScopeIds(deck: Deck): Set<string> {
+        const ids = new Set<string>();
+        const prefix = deck.tagPath + '/';
+        for (const d of this.decks.values()) {
+            if (d.id === deck.id || d.tagPath.startsWith(prefix)) {
+                for (const cid of d.cardIds) ids.add(cid);
+            }
+        }
+        return ids;
+    }
+
+    /** 移除某文件贡献的全部卡片（保留 fsrsDataStore 进度，改标签/重建可恢复）。 */
+    private removeFileCards(filePath: string) {
+        const cardIds = this.fileCards.get(filePath);
+        if (!cardIds) return;
+        for (const cardId of cardIds) {
+            this.cards.delete(cardId);
+            for (const deck of this.decks.values()) {
+                if (deck.cardIds.delete(cardId) && deck.cardIds.size === 0) {
+                    this.decks.delete(deck.id);
+                }
+            }
+        }
+        this.fileCards.delete(filePath);
+        this.fileDeckPaths.delete(filePath);
+    }
+
+    /** 文件被删除时的公开入口。 */
+    handleFileDeleted(filePath: string) {
+        this.removeFileCards(filePath);
+        this.noteReviews.delete(filePath);
+        this.fileMtimes.delete(filePath);
+        void this.save();
     }
 
     removeDeck(deckId: string, fullDelete: boolean = true) {
         const deck = this.decks.get(deckId);
-        if (deck) {
-            this.fileMtimes.delete(deck.filePath);
-            deck.cardIds.forEach(cardId => {
-                this.cards.delete(cardId);
-                delete this.fsrsDataStore[cardId];
-            });
-            this.decks.delete(deckId);
-            if (fullDelete) void this.save();
+        if (!deck) return;
+        for (const cardId of deck.cardIds) {
+            this.cards.delete(cardId);
+            if (fullDelete) delete this.fsrsDataStore[cardId];
         }
+        for (const [path, ids] of this.fileCards) {
+            if (ids.size && [...ids].some(id => deck.cardIds.has(id))) {
+                this.fileCards.delete(path);
+                this.fileDeckPaths.delete(path);
+            }
+        }
+        this.decks.delete(deckId);
+        if (fullDelete) void this.save();
     }
 
     private collectCardIds(content: string, filePath: string): string[] {
         const deckId = this.getDeckId(filePath);
-        const scratch: Deck = { id: deckId, title: '', filePath, cardIds: new Set(), stats: { new: 0, due: 0, learning: 0 } };
+        const scratch: Deck = { id: deckId, title: '', tagPath: '', filePath, cardIds: new Set(), stats: { new: 0, due: 0, learning: 0 } };
         const lines = content.split('\n');
         const breadcrumbs = this.buildHeadingBreadcrumbs(lines);
 
@@ -768,11 +855,12 @@ export class DataManager {
     private async rekeyRenamedFile(file: TFile, oldPath: string) {
         const renames: Array<{ oldId: string; newId: string; deckId: string; filePath: string }> = [];
 
-        if (this.decks.has(this.getDeckId(oldPath))) {
+        if (this.fileCards.has(oldPath)) {
+            const deckPath = this.fileDeckPaths.get(oldPath) ?? '';
+            const newDeckId = this.getDeckId(deckPath);
             const content = await this.plugin.app.vault.read(file);
             const oldIds = this.collectCardIds(content, oldPath);
             const newIds = this.collectCardIds(content, file.path);
-            const newDeckId = this.getDeckId(file.path);
             oldIds.forEach((oldId, i) => {
                 const newId = newIds[i];
                 if (!newId || newId === oldId || !this.fsrsDataStore[oldId] || this.fsrsDataStore[newId]) return;
@@ -805,9 +893,8 @@ export class DataManager {
     }
 
     async renameDeck(file: TFile, oldPath: string) {
-        const oldDeckId = this.getDeckId(oldPath);
         await this.rekeyRenamedFile(file, oldPath);
-        this.removeDeck(oldDeckId, false);
+        this.removeFileCards(oldPath);
         this.fileMtimes.delete(oldPath);
         await this.updateFile(file);
         await this.save();
@@ -817,9 +904,9 @@ export class DataManager {
         const now = new Date();
         for (const deck of this.decks.values()) {
             deck.stats = { new: 0, due: 0, learning: 0 };
-            for (const cardId of deck.cardIds) {
+            for (const cardId of this.deckScopeIds(deck)) {
                 const card = this.cards.get(cardId);
-                if (!card || card.deckId !== deck.id) continue;
+                if (!card) continue;
 
                 const fsrsData = this.fsrsDataStore[cardId];
                 if (!fsrsData || fsrsData.state === State.New) {
@@ -847,11 +934,9 @@ export class DataManager {
     getCardsByDeck(deckId: string): Card[] {
         const deck = this.decks.get(deckId);
         if (!deck) return [];
-        return Array.from(deck.cardIds)
+        return Array.from(this.deckScopeIds(deck))
             .map(id => this.cards.get(id))
-            .filter((card): card is Card => {
-                return card !== undefined && card !== null && card.deckId === deckId;
-            });
+            .filter((card): card is Card => card !== undefined && card !== null);
     }
 
     private getTodayLogs(): ReviewLog[] {
@@ -875,10 +960,10 @@ export class DataManager {
         return this.firstReviewAt;
     }
 
-    private getReviewedTodayCount(deckId: string): number {
+    private getReviewedTodayCount(scopeIds: Set<string>): number {
         let count = 0;
         for (const log of this.getTodayLogs()) {
-            if (this.cards.get(log.cardId)?.deckId === deckId) count++;
+            if (scopeIds.has(log.cardId)) count++;
         }
         return count;
     }
@@ -906,13 +991,46 @@ export class DataManager {
         return (card.fsrsData?.lapses ?? 0) >= threshold;
     }
 
-    getReviewQueue(deckId: string): Card[] {
-        const deck = this.decks.get(deckId);
-        if (!deck) return [];
+    /** 按标签路径收集其自身 + 所有子牌组的卡片 id（不要求父路径本身是一个 deck）。 */
+    private scopeIdsByTagPath(tagPath: string): Set<string> {
+        const ids = new Set<string>();
+        const prefix = tagPath + '/';
+        for (const d of this.decks.values()) {
+            if (d.tagPath === tagPath || d.tagPath.startsWith(prefix)) {
+                for (const cid of d.cardIds) ids.add(cid);
+            }
+        }
+        return ids;
+    }
+
+    /** 子树聚合统计（父含子），供仪表盘文件夹组头显示。 */
+    getSubtreeStats(tagPath: string): { new: number; due: number; learning: number; total: number } {
         const now = new Date();
-        const allCards = Array.from(deck.cardIds)
+        const stats = { new: 0, due: 0, learning: 0, total: 0 };
+        for (const cardId of this.scopeIdsByTagPath(tagPath)) {
+            if (!this.cards.get(cardId)) continue;
+            stats.total++;
+            const fsrsData = this.fsrsDataStore[cardId];
+            if (!fsrsData || fsrsData.state === State.New) {
+                stats.new++;
+            } else {
+                if (fsrsData.state === State.Learning || fsrsData.state === State.Relearning) stats.learning++;
+                if (fsrsData.due <= now) stats.due++;
+            }
+        }
+        return stats;
+    }
+
+    /** 子树复习队列（父含子），用于父牌组节点的"复习"按钮。 */
+    getSubtreeQueue(tagPath: string): Card[] {
+        return this.composeQueue(this.scopeIdsByTagPath(tagPath), undefined);
+    }
+
+    private composeQueue(scopeIds: Set<string>, settings?: DeckSettings): Card[] {
+        const now = new Date();
+        const allCards = Array.from(scopeIds)
             .map(id => this.cards.get(id))
-            .filter((card): card is Card => card !== undefined && card !== null && card.deckId === deckId);
+            .filter((card): card is Card => card !== undefined && card !== null);
 
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -933,10 +1051,10 @@ export class DataManager {
             !c.fsrsData || c.fsrsData.state === State.New
         );
 
-        const deckMaxReviews = deck.settings?.reviewsPerDay ?? this.plugin.settings.reviewsPerDay;
-        const deckMaxNew = deck.settings?.newCardsPerDay ?? this.plugin.settings.newCardsPerDay;
+        const deckMaxReviews = settings?.reviewsPerDay ?? this.plugin.settings.reviewsPerDay;
+        const deckMaxNew = settings?.newCardsPerDay ?? this.plugin.settings.newCardsPerDay;
 
-        const reviewsRemaining = Math.max(0, deckMaxReviews - this.getReviewedTodayCount(deckId));
+        const reviewsRemaining = Math.max(0, deckMaxReviews - this.getReviewedTodayCount(scopeIds));
         const newCardsRemaining = Math.max(0, deckMaxNew - newIntroducedToday);
 
         const candidateCards = [
@@ -967,13 +1085,19 @@ export class DataManager {
         return finalQueue;
     }
 
+    getReviewQueue(deckId: string): Card[] {
+        const deck = this.decks.get(deckId);
+        if (!deck) return [];
+        return this.composeQueue(this.deckScopeIds(deck), deck.settings);
+    }
+
     getAllCardsForStudy(deckId: string): Card[] {
         const deck = this.decks.get(deckId);
         if (!deck) return [];
         const now = new Date();
-        const allCards = Array.from(deck.cardIds)
+        const allCards = Array.from(this.deckScopeIds(deck))
             .map(id => this.cards.get(id))
-            .filter((card): card is Card => card !== undefined && card !== null && card.deckId === deckId);
+            .filter((card): card is Card => card !== undefined && card !== null);
         const dueCards = allCards.filter(c =>
             c.fsrsData && c.fsrsData.state !== State.New && c.fsrsData.due <= now
         ).sort((a, b) => a.fsrsData!.due.getTime() - b.fsrsData!.due.getTime());

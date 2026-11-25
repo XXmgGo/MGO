@@ -328,8 +328,7 @@ class FSRSFlashcardsPlugin extends Plugin {
         }));
         this.registerEvent(this.app.vault.on('delete', (file) => {
             if (file instanceof TFile && file.extension === 'md') {
-                const deckId = this.dataManager.getDeckId(file.path);
-                this.dataManager.removeDeck(deckId);
+                this.dataManager.handleFileDeleted(file.path);
                 debouncedRefresh();
             }
         }));
@@ -362,6 +361,15 @@ class FSRSFlashcardsPlugin extends Plugin {
     async loadSettings() {
         const data = (await this.loadData()) as PluginData | null;
         this.settings = Object.assign({}, DEFAULT_SETTINGS, data?.settings);
+        // 旧版单标签设置迁移为多标签数组
+        const legacy = data?.settings as Record<string, unknown> | undefined;
+        if (legacy && typeof legacy.deckTag === 'string' && !Array.isArray(legacy.deckTags)) {
+            const name = legacy.deckTag.replace(/^#/, '').trim().toLowerCase();
+            this.settings.deckTags = name ? [name] : ['flashcards'];
+        }
+        if (!Array.isArray(this.settings.deckTags) || this.settings.deckTags.length === 0) {
+            this.settings.deckTags = ['flashcards'];
+        }
         this.settings.fsrsParams = Object.assign({}, DEFAULT_SETTINGS.fsrsParams, this.settings.fsrsParams);
         this.settings.gamification = Object.assign({}, DEFAULT_SETTINGS.gamification, this.settings.gamification);
         this.databaseNameIsNew = !data?.settings?.databaseName;

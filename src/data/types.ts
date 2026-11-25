@@ -16,7 +16,7 @@ export interface Gamification {
 }
 
 export interface FSRSSettings {
-    deckTag: string;
+    deckTags: string[];
     newCardsPerDay: number;
     reviewsPerDay: number;
     fontSize: number;
@@ -61,6 +61,7 @@ export interface DeckSettings {
 export interface Deck {
     id: string;
     title: string;
+    tagPath: string;
     filePath: string;
     cardIds: Set<string>;
     stats: { new: number; due: number; learning: number };

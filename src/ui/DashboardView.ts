@@ -181,60 +181,57 @@ export class DashboardView extends ItemView {
         const decks = this.plugin.dataManager.getDecks();
         if (decks.length === 0) { this.renderEmptyState(); return; }
 
-        const groupedDecks = this.groupDecksByFolder(decks);
-
-        for (const [folderPath, folderDecks] of groupedDecks) {
-            this.renderFolderGroup(folderPath, folderDecks);
-        }
-    }
-
-    private groupDecksByFolder(decks: Deck[]): Map<string, Deck[]> {
-        const groups = new Map<string, Deck[]>();
-
+        // 收集所有节点路径（牌组本身 + 其全部祖先前缀）
+        const deckByPath = new Map<string, Deck>();
+        const nodePaths = new Set<string>();
         for (const deck of decks) {
-            const lastSlashIndex = deck.filePath.lastIndexOf('/');
-            const folderPath = lastSlashIndex > 0 ? deck.filePath.substring(0, lastSlashIndex) : 'Root';
-
-            if (!groups.has(folderPath)) {
-                groups.set(folderPath, []);
+            deckByPath.set(deck.tagPath, deck);
+            const segs = deck.tagPath.split('/');
+            for (let i = 1; i <= segs.length; i++) {
+                nodePaths.add(segs.slice(0, i).join('/'));
             }
-            groups.get(folderPath)!.push(deck);
         }
 
-        return new Map([...groups.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+        // 根节点 = 不含 '/' 的路径
+        const roots = [...nodePaths].filter(p => !p.includes('/')).sort((a, b) => a.localeCompare(b));
+        for (const root of roots) {
+            this.renderTagNode(root, deckByPath, nodePaths);
+        }
     }
 
-    private renderFolderGroup(folderPath: string, decks: Deck[]) {
-        const folderContainer = this.contentEl.createDiv({ cls: 'fsrs-folder-group' });
+    /** 某节点下的直接子路径（再深一级、无额外斜杠）。 */
+    private childPaths(parent: string, nodePaths: Set<string>): string[] {
+        const prefix = parent + '/';
+        const children: string[] = [];
+        for (const p of nodePaths) {
+            if (p.startsWith(prefix) && !p.slice(prefix.length).includes('/')) children.push(p);
+        }
+        return children.sort((a, b) => a.localeCompare(b));
+    }
 
+    private renderTagNode(path: string, deckByPath: Map<string, Deck>, nodePaths: Set<string>) {
+        const folderContainer = this.contentEl.createDiv({ cls: 'fsrs-folder-group' });
         const folderHeader = folderContainer.createDiv({ cls: 'fsrs-folder-header' });
         folderHeader.setAttribute('role', 'button');
         folderHeader.setAttribute('tabindex', '0');
         folderHeader.setAttribute('aria-expanded', 'false');
 
         const chevronIcon = folderHeader.createDiv({ cls: 'fsrs-folder-chevron' });
-        setIcon(chevronIcon, 'chevron-right');
-
         const folderIcon = folderHeader.createDiv({ cls: 'fsrs-folder-icon' });
+        setIcon(chevronIcon, 'chevron-right');
         setIcon(folderIcon, 'folder-closed');
 
-        const folderName = folderPath === 'Root' ? '根目录' : folderPath.substring(folderPath.lastIndexOf('/') + 1);
-        folderHeader.createSpan({ text: folderName, cls: 'fsrs-folder-name' });
+        const lastSegment = path.substring(path.lastIndexOf('/') + 1);
+        folderHeader.createSpan({ text: lastSegment, cls: 'fsrs-folder-name' });
 
-        const dueCardsInFolder = decks.reduce((sum, deck) => sum + deck.stats.due, 0);
+        const subtree = this.plugin.dataManager.getSubtreeStats(path);
+        const childDecks = [...nodePaths].filter(p => p !== path && p.startsWith(path + '/')).length;
 
         const countContainer = folderHeader.createDiv({ cls: 'fsrs-folder-count-container' });
-
-        if (dueCardsInFolder > 0) {
-            countContainer.createSpan({
-                text: `${dueCardsInFolder}`,
-                cls: 'fsrs-folder-count fsrs-folder-due-count',
-            });
+        if (subtree.due > 0) {
+            countContainer.createSpan({ text: `${subtree.due}`, cls: 'fsrs-folder-count fsrs-folder-due-count' });
         }
-        countContainer.createSpan({
-            text: `${decks.length}`,
-            cls: 'fsrs-folder-count',
-        });
+        countContainer.createSpan({ text: `${childDecks + (deckByPath.has(path) ? 1 : 0)}`, cls: 'fsrs-folder-count' });
 
         const decksContainer = folderContainer.createDiv({ cls: 'fsrs-folder-decks' });
         decksContainer.hide();
@@ -260,18 +257,31 @@ export class DashboardView extends ItemView {
             }
         });
 
-        for (const deck of decks) {
+        // 本节点若本身是牌组，渲染其牌组行（复习/浏览走子树聚合）
+        const deck = deckByPath.get(path);
+        if (deck) {
             this.renderDeckItem(decksContainer, deck);
+        }
+
+        // 递归渲染子节点
+        for (const child of this.childPaths(path, nodePaths)) {
+            this.renderTagNode(child, deckByPath, nodePaths);
         }
     }
 
     private renderDeckItem(container: HTMLElement, deck: Deck) {
         const hasDue = deck.stats.due > 0;
+        const lastSegment = deck.tagPath.substring(deck.tagPath.lastIndexOf('/') + 1);
 
         const deckRow = container.createDiv({ cls: 'fsrs-deck-row' });
 
         deckRow.addEventListener('click', () => {
-            void this.app.workspace.openLinkText(deck.filePath, deck.filePath);
+            const cards = this.plugin.dataManager.getCardsByDeck(deck.id);
+            if (cards.length === 0) {
+                new Notice('该牌组没有可浏览的卡片。');
+                return;
+            }
+            new BrowseModal(this.app, this.plugin, cards, deck.tagPath).open();
         });
 
         const iconEl = deckRow.createDiv({ cls: 'fsrs-deck-row-icon' });
@@ -280,7 +290,7 @@ export class DashboardView extends ItemView {
             iconEl.addClass('has-due');
         }
 
-        deckRow.createSpan({ text: deck.title, cls: 'fsrs-deck-row-title' });
+        deckRow.createSpan({ text: lastSegment, cls: 'fsrs-deck-row-title' });
 
         const statsEl = deckRow.createDiv({ cls: 'fsrs-deck-row-stats' });
         if (deck.stats.due > 0) {
@@ -353,7 +363,7 @@ export class DashboardView extends ItemView {
         emptyStateEl.createEl('h3', { text: '准备好开始学习了吗？', cls: 'fsrs-empty-title' });
 
         emptyStateEl.createEl('p', {
-            text: `在任意笔记中添加标签 #${this.plugin.settings.deckTag} 即可创建闪卡，也可以直接在下方开始。`,
+            text: `在任意笔记中添加标签 #${this.plugin.settings.deckTags[0] ?? 'flashcards'} 即可创建闪卡，也可以直接在下方开始。`,
             cls: 'fsrs-empty-desc',
         });
 

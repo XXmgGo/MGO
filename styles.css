@@ -682,6 +682,16 @@
     max-height: 100%;
 }
 
+.fsrs-browse-open-row {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 4px;
+}
+
+.fsrs-browse-open-btn {
+    cursor: pointer;
+}
+
 /* ── Browse navigation buttons ── */
 
 .fsrs-browse-container > div > button {

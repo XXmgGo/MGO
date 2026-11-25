@@ -8,7 +8,7 @@ export const VIEW_ICON_NAME = MGO_ICON_ID;
 export const STATUS_ICON_NAME = MGO_ICON_ID;
 
 export const DEFAULT_SETTINGS: FSRSSettings = {
-    deckTag: 'flashcards',
+    deckTags: ['flashcards'],
     newCardsPerDay: 20,
     reviewsPerDay: 200,
     fontSize: 18,

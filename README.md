@@ -62,7 +62,7 @@
 
 大多数间隔重复工具都要求你离开知识库、导出笔记，另外维护一套数据库。MGO 把间隔重复直接嵌入 Markdown。
 
-> **笔记即牌组。** 给任意笔记加上 `#flashcards`，用普通 Markdown 写卡片，剩下的排期交给 FSRS。
+> **标签即牌组。** 给任意笔记加上 `#flashcards`（或你配置的任意牌组标签），用普通 Markdown 写卡片；相同标签的笔记合并成一个牌组，标签里的 `/` 表示子牌组层级，剩下的排期交给 FSRS。
 
 | 特性 | MGO | Anki | 常规间隔重复插件 |
 |---|:---:|:---:|:---:|
@@ -90,6 +90,19 @@ MGO 使用 **FSRS-5**（Free Spaced Repetition Scheduler，通过 `ts-fsrs` 实�
 What is the powerhouse of the cell?
 ---
 **Mitochondria** — produces ATP through cellular respiration.
+```
+
+### 标签即牌组
+牌组由标签决定，而非文件：
+- 相同标签的多篇笔记，其卡片**合并成同一个牌组**，一起排期与复习。
+- 标签里的 `/` 表示子牌组层级，例如 `#ja-card/文法` 归入 `ja-card` → `文法`；父牌组的复习队列包含其全部子牌组。
+- 可配置多个牌组根标签（如 `flashcards`、`ja-card`、`en-card`）。
+- 临时规则：一篇笔记若同时挂了 2 个及以上不同的牌组根标签，该笔记暂不识别为牌组。
+
+```markdown
+---
+tags: [ja-card/文法]
+---
 ```
 
 ### 完形填空
@@ -274,7 +287,7 @@ tags: [review]
 
 | 设置项 | 说明 |
 |---|---|
-| **牌组标签（Deck tag）** | 用于识别牌组文件的标签（默认：`flashcards`） |
+| **牌组标签（Deck tags）** | 用于识别牌组的根标签，可填多个（逗号分隔，默认：`flashcards`）。标签里的 `/` 表示子牌组层级 |
 | **每日新卡上限（Max new cards/day）** | 新卡数量上限，按每个牌组分别计算，并统计当天已开始学习的卡片 |
 | **每日复习上限（Max reviews/day）** | 每天复习卡片数量的上限 |
 | **复习字号（Review font size）** | 复习弹窗中的字体大小 |

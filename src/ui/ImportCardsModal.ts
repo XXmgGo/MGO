@@ -42,7 +42,7 @@ export class ImportCardsModal extends Modal {
                 const file = input.files?.[0];
                 if (!file) return;
                 this.text = await file.text();
-                preview = convertToMGO(this.text, this.plugin.settings.deckTag);
+                preview = convertToMGO(this.text, this.plugin.settings.deckTags[0] ?? 'flashcards');
                 summary.setText(`找到 ${preview.cards} 张卡片。` + (preview.skipped ? ` 其中 ${preview.skipped} 行不完整，将被跳过。` : ''));
                 importBtn.setDisabled(preview.cards === 0);
             })();

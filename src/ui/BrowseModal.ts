@@ -61,6 +61,25 @@ export class BrowseModal extends Modal {
             .setIcon('arrow-right')
             .setTooltip('下一张卡片（右方向键）')
             .onClick(() => this.showNextCard());
+
+        const openBtn = cardWrapper.createDiv({ cls: 'fsrs-browse-open-row' }).createEl('button', {
+            cls: 'fsrs-browse-open-btn',
+            text: '打开原文笔记',
+        });
+        openBtn.addEventListener('click', () => this.openCurrentCardFile());
+    }
+
+    private openCurrentCardFile() {
+        const card = this.cards[this.currentCardIndex];
+        if (!card) return;
+        let link = card.filePath;
+        const blockMatch = card.id.match(/::([a-zA-Z0-9-]+)$/);
+        if (blockMatch) {
+            const blockId = blockMatch[1].replace(/-\d+$/, '');
+            link += '#^' + blockId;
+        }
+        this.close();
+        void this.app.workspace.openLinkText(link, card.filePath, false);
     }
 
     private async displayCurrentCard() {

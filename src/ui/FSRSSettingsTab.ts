@@ -108,12 +108,17 @@ export class FSRSSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('牌组标签')
-            .setDesc('用于识别牌组笔记的标签（例如 "flashcards" 对应 #flashcards）。带此标签的笔记都会被识别为一个牌组。')
+            .setDesc('识别牌组笔记的根标签，多个用逗号分隔（例如 flashcards, ja-card, en-card）。标签里的 / 表示子牌组层级。')
             .addText((text) => text
-                .setPlaceholder('Flashcards')
-                .setValue(this.plugin.settings.deckTag)
+                .setPlaceholder('Flashcards, ja-card')
+                .setValue(this.plugin.settings.deckTags.join(', '))
                 .onChange(async (value) => {
-                    this.plugin.settings.deckTag = value.trim();
+                    const parsed = value.split(',')
+                        .map(t => t.trim().replace(/^#/, '').toLowerCase())
+                        .filter(Boolean);
+                    const next = parsed.length > 0 ? parsed : ['flashcards'];
+                    if (next.join(',') === this.plugin.settings.deckTags.join(',')) return;
+                    this.plugin.settings.deckTags = next;
                     await this.plugin.saveSettings();
                     await this.plugin.dataManager.buildIndex();
                     this.plugin.refreshDashboardView();
