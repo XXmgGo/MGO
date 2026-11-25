@@ -4,7 +4,7 @@
   "description": "Create and review flashcards with spaced repetition using the FSRS algorithm. Supports cloze deletions, custom study sessions, statistics, and CouchDB sync.",
   "main": "main.js",
   "scripts": {
-    "dev": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs watch",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "deploy": "npm run build && node deploy.mjs",
     "lint": "eslint main.ts src/**/*.ts",

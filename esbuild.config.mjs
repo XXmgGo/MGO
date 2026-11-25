@@ -10,8 +10,9 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = (process.argv[2] === 'production');
+const watch = (process.argv[2] === 'watch');
 
-await esbuild.build({
+const buildOptions = {
 	banner: {
 		js: banner,
 	},
@@ -40,4 +41,12 @@ await esbuild.build({
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
 	outfile: 'main.js',
-}).catch(() => process.exit(1));
+};
+
+if (watch) {
+	const ctx = await esbuild.context(buildOptions);
+	await ctx.watch();
+	console.log('MGO: watching for changes...');
+} else {
+	await esbuild.build(buildOptions).catch(() => process.exit(1));
+}
