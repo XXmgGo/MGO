@@ -80,7 +80,7 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n\n<mgo-card cardId="${blockId}">\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n\n`;
+                const template = `\n\n<mgo-card cardId="${blockId}">\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
                 editor.setCursor({ line: cursor.line + 4, ch: 8 });
@@ -93,7 +93,7 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}">\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n`;
+                const template = `\n<mgo-card cardId="${blockId}">\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
                 editor.setSelection({ line: cursor.line + 3, ch: 0 }, { line: cursor.line + 3, ch: 8 });
@@ -106,7 +106,7 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}" reverse>\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n`;
+                const template = `\n<mgo-card cardId="${blockId}" reverse>\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
                 editor.setSelection({ line: cursor.line + 3, ch: 0 }, { line: cursor.line + 3, ch: 8 });
@@ -157,7 +157,7 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n\n<mgo-card cardId="${blockId}" type="typein">\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n\n`;
+                const template = `\n\n<mgo-card cardId="${blockId}" type="typein">\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
                 editor.setCursor({ line: cursor.line + 4, ch: 8 });
@@ -170,7 +170,7 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}" type="typein">\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n`;
+                const template = `\n<mgo-card cardId="${blockId}" type="typein">\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
                 editor.setSelection({ line: cursor.line + 3, ch: 0 }, { line: cursor.line + 3, ch: 8 });

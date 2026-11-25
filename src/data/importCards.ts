@@ -72,7 +72,7 @@ function detectDelimiter(text: string): string {
 function cardMarkdown(card: ImportedCard, id: string): string {
     const cloze = /==c\d+::/.test(card.front) && !card.back;
     if (cloze) return `<mgo-card cardId="${id}">\n${card.front}\n</mgo-card>`;
-    return `<mgo-card cardId="${id}">\n<mgo-card-front>\n${card.front}\n</mgo-card-front>\n<mgo-card-back>\n${card.back}\n</mgo-card-back>\n</mgo-card>`;
+    return `<mgo-card cardId="${id}">\n<mgo-card-front>${card.front}</mgo-card-front>\n<mgo-card-back>${card.back}</mgo-card-back>\n</mgo-card>`;
 }
 
 // Accepts an Anki "Notes in Plain Text" export or a CSV/TSV file. The first column is the front and the

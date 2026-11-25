@@ -10,8 +10,8 @@ describe('card import', () => {
         const out = convertToMGO(text, 'flashcards', id);
         expect(out.cards).toBe(2);
         expect(out.markdown).toContain('tags: [flashcards]');
-        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t1">\n<mgo-card-front>\nCapital of France?\n</mgo-card-front>\n<mgo-card-back>\nParis\n</mgo-card-back>\n</mgo-card>');
-        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t2">\n<mgo-card-front>\nWhat is 2+2?\n(easy)\n</mgo-card-front>\n<mgo-card-back>\n4 units\n</mgo-card-back>\n</mgo-card>');
+        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t1">\n<mgo-card-front>Capital of France?</mgo-card-front>\n<mgo-card-back>Paris</mgo-card-back>\n</mgo-card>');
+        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t2">\n<mgo-card-front>What is 2+2?\n(easy)</mgo-card-front>\n<mgo-card-back>4 units</mgo-card-back>\n</mgo-card>');
     });
 
     it('converts Anki cloze notes and drops cloze hints', () => {
@@ -30,14 +30,14 @@ describe('card import', () => {
         ]);
         const out = convertToMGO(csv, 'flashcards', id);
         expect(out.cards).toBe(3);
-        expect(out.markdown).toContain('Front\n</mgo-card-front>\n<mgo-card-back>\nBack\n</mgo-card-back>');
-        expect(out.markdown).toContain('Say "hi", please\n</mgo-card-front>\n<mgo-card-back>\nline one\nline two\n</mgo-card-back>');
+        expect(out.markdown).toContain('Front</mgo-card-front>\n<mgo-card-back>Back</mgo-card-back>');
+        expect(out.markdown).toContain('Say "hi", please</mgo-card-front>\n<mgo-card-back>line one\nline two</mgo-card-back>');
     });
 
     it('keeps text that would break the old single-line syntax intact', () => {
         const out = convertToMGO('std::vector\tA C++ container\n', 'flashcards', id);
         expect(out.markdown).toContain('<mgo-card cardId="fsrs-');
-        expect(out.markdown).toContain('std::vector\n</mgo-card-front>\n<mgo-card-back>\nA C++ container\n</mgo-card-back>');
+        expect(out.markdown).toContain('std::vector</mgo-card-front>\n<mgo-card-back>A C++ container</mgo-card-back>');
     });
 
     it('skips empty or incomplete rows, handles Windows line endings and a BOM, and never repeats an id', () => {
