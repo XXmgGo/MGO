@@ -1,5 +1,6 @@
 import { MarkdownRenderer, MarkdownPostProcessorContext, MarkdownRenderChild } from 'obsidian';
 import { splitMgoCardSections, extractCardBody, parseCardDisplay, revealCloze } from '../data/cardText';
+import { toHardBreaks } from '../data/constants';
 
 type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 
@@ -36,13 +37,13 @@ export function makeCardPostProcessor(plugin: FSRSFlashcardsPlugin) {
             const isCloze = /==c\d+::/.test(body);
             if (isCloze) {
                 const c = cardEl.createDiv({ cls: 'mgo-cloze' });
-                void MarkdownRenderer.render(plugin.app, revealCloze(body.trim()), c, ctx.sourcePath, render);
+                void MarkdownRenderer.render(plugin.app, toHardBreaks(revealCloze(body.trim())), c, ctx.sourcePath, render);
             } else if (front || back) {
                 const f = cardEl.createDiv({ cls: 'mgo-front' });
-                void MarkdownRenderer.render(plugin.app, front, f, ctx.sourcePath, render);
+                void MarkdownRenderer.render(plugin.app, toHardBreaks(front), f, ctx.sourcePath, render);
                 if (back) {
                     const b = cardEl.createDiv({ cls: 'mgo-back' });
-                    void MarkdownRenderer.render(plugin.app, back, b, ctx.sourcePath, render);
+                    void MarkdownRenderer.render(plugin.app, toHardBreaks(back), b, ctx.sourcePath, render);
                 }
             }
         }
