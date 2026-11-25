@@ -310,6 +310,28 @@
 
 /* ── mgo-card 语法：阅读视图像普通段落一样渲染，标签隐形 ── */
 
+/* 阅读视图后处理器重建的卡片结构（Obsidian 净化未知标签后由此接管渲染） */
+
+.markdown-rendered .mgo-card-render {
+    display: block;
+    margin: 1em 0;
+    padding: 0.4em 0.9em;
+    border-left: 3px solid var(--background-modifier-border);
+    border-radius: var(--radius-s);
+    background: var(--background-secondary);
+}
+
+.markdown-rendered .mgo-card-render .mgo-front,
+.markdown-rendered .mgo-card-render .mgo-back,
+.markdown-rendered .mgo-card-render .mgo-cloze {
+    display: block;
+    margin: 0.35em 0;
+}
+
+.markdown-rendered .mgo-card-render .mgo-back {
+    color: var(--text-muted);
+}
+
 .markdown-rendered mgo-card,
 mgo-card {
     display: block !important;

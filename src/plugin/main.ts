@@ -1,5 +1,6 @@
 import { Editor, Notice, Plugin, TFile, addIcon, debounce, setIcon } from 'obsidian';
 import { DataManager } from '../data/DataManager';
+import { makeCardPostProcessor } from '../ui/cardPostProcessor';
 import { VIEW_TYPE_DASHBOARD, VIEW_ICON_NAME, STATUS_ICON_NAME, DEFAULT_SETTINGS, generateBlockId, resolveDatabaseName, getErrorMessage, getDocCount, MGO_ICON_ID, MGO_ICON_SVG, sanitizeUrlForDisplay } from '../data/constants';
 import type { FSRSSettings, PluginData } from '../data/types';
 import { DashboardView } from '../ui/DashboardView';
@@ -31,6 +32,7 @@ class FSRSFlashcardsPlugin extends Plugin {
 
         this.addSettingTab(new FSRSSettingsTab(this.app, this));
         this.registerView(VIEW_TYPE_DASHBOARD, (leaf) => new DashboardView(leaf, this));
+        this.registerMarkdownPostProcessor(makeCardPostProcessor(this));
 
         const ribbonIconEl = this.addRibbonIcon(VIEW_ICON_NAME, '打开 MGO 仪表盘', (evt: MouseEvent) => {
             void this.activateView();
