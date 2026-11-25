@@ -1,5 +1,5 @@
 {
-  "name": "lemma-flashcards",
+  "name": "mgo-flashcards",
   "version": "1.2.1",
   "description": "Create and review flashcards with spaced repetition using the FSRS algorithm. Supports cloze deletions, custom study sessions, statistics, and CouchDB sync.",
   "main": "main.js",
@@ -33,12 +33,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Fundaments-Work/Lemma.git"
+    "url": "https://github.com/XXmgGo/MGO.git"
   },
   "bugs": {
-    "url": "https://github.com/Fundaments-Work/Lemma/issues"
+    "url": "https://github.com/XXmgGo/MGO/issues"
   },
-  "homepage": "https://github.com/Fundaments-Work/Lemma#readme",
+  "homepage": "https://github.com/XXmgGo/MGO#readme",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@microsoft/eslint-plugin-sdl": "^1.1.0",

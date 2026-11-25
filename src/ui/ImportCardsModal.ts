@@ -1,5 +1,5 @@
 import { App, ButtonComponent, Modal, Notice, Setting, normalizePath } from 'obsidian';
-import { convertToLemma, type CardImportResult } from '../data/importCards';
+import { convertToMGO, type CardImportResult } from '../data/importCards';
 import { getErrorMessage } from '../data/constants';
 
 type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
@@ -42,7 +42,7 @@ export class ImportCardsModal extends Modal {
                 const file = input.files?.[0];
                 if (!file) return;
                 this.text = await file.text();
-                preview = convertToLemma(this.text, this.plugin.settings.deckTag);
+                preview = convertToMGO(this.text, this.plugin.settings.deckTag);
                 summary.setText(`Found ${preview.cards} cards.` + (preview.skipped ? ` ${preview.skipped} incomplete rows will be skipped.` : ''));
                 importBtn.setDisabled(preview.cards === 0);
             })();

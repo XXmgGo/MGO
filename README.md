@@ -1,7 +1,9 @@
-# Lemma
+# MGO
+
+> MGO 是基于 [Lemma](https://github.com/Fundaments-Work/Lemma) 的二次开发分支。Lemma 由 Fundaments Work 创作并以 MIT 协议授权，原始版权声明与许可全文保留在 [LICENSE](./LICENSE) 中。
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Fundaments-Work/Lemma/main/icon.svg" width="96" height="96" alt="Lemma logo" />
+  <img src="https://raw.githubusercontent.com/Fundaments-Work/Lemma/main/icon.svg" width="96" height="96" alt="MGO logo" />
 </p>
 
 <p align="center">
@@ -10,17 +12,17 @@
 </p>
 
 <p align="center">
-  <a href="obsidian://show-plugin?id=lemma-flashcards"><img src="https://img.shields.io/badge/install%20in%20obsidian-lemma--flashcards-c6f135?style=for-the-badge&labelColor=141416&logo=obsidian&logoColor=c6f135" alt="Install in Obsidian"></a>
-  <a href="https://github.com/Fundaments-Work/Lemma/releases"><img src="https://img.shields.io/github/v/release/Fundaments-Work/Lemma?include_prereleases&label=latest&style=for-the-badge&labelColor=141416&color=c6f135" alt="Latest release"></a>
-  <a href="https://github.com/Fundaments-Work/Lemma/releases"><img src="https://img.shields.io/github/downloads/Fundaments-Work/Lemma/total?style=for-the-badge&labelColor=141416&color=c6f135" alt="Downloads"></a>
+  <a href="obsidian://show-plugin?id=mgo-flashcards"><img src="https://img.shields.io/badge/install%20in%20obsidian-lemma--flashcards-c6f135?style=for-the-badge&labelColor=141416&logo=obsidian&logoColor=c6f135" alt="Install in Obsidian"></a>
+  <a href="https://github.com/XXmgGo/MGO/releases"><img src="https://img.shields.io/github/v/release/Fundaments-Work/Lemma?include_prereleases&label=latest&style=for-the-badge&labelColor=141416&color=c6f135" alt="Latest release"></a>
+  <a href="https://github.com/XXmgGo/MGO/releases"><img src="https://img.shields.io/github/downloads/Fundaments-Work/Lemma/total?style=for-the-badge&labelColor=141416&color=c6f135" alt="Downloads"></a>
 </p>
 
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-c6f135?style=flat-square&labelColor=141416" alt="MIT license"></a>
-  <a href="https://obsidian.md/plugins?id=lemma-flashcards"><img src="https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=c6f135&color=c6f135&labelColor=141416&label=obsidian%20downloads&query=%24%5B%27lemma-flashcards%27%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&style=flat-square" alt="Obsidian community downloads"></a>
-  <a href="https://github.com/Fundaments-Work/Lemma"><img src="https://img.shields.io/badge/algorithm-FSRS--5-c6f135?style=flat-square&labelColor=141416" alt="Algorithm: FSRS-5"></a>
-  <a href="https://github.com/Fundaments-Work/Lemma"><img src="https://img.shields.io/badge/platform-desktop%20%7C%20mobile-c6f135?style=flat-square&labelColor=141416" alt="Platform: Desktop | Mobile"></a>
-  <a href="https://github.com/Fundaments-Work/Lemma/actions"><img src="https://img.shields.io/github/actions/workflow/status/Fundaments-Work/Lemma/ci.yml?branch=main&label=ci&style=flat-square&labelColor=141416&color=c6f135" alt="CI status"></a>
+  <a href="https://obsidian.md/plugins?id=mgo-flashcards"><img src="https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=c6f135&color=c6f135&labelColor=141416&label=obsidian%20downloads&query=%24%5B%27mgo-flashcards%27%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&style=flat-square" alt="Obsidian community downloads"></a>
+  <a href="https://github.com/XXmgGo/MGO"><img src="https://img.shields.io/badge/algorithm-FSRS--5-c6f135?style=flat-square&labelColor=141416" alt="Algorithm: FSRS-5"></a>
+  <a href="https://github.com/XXmgGo/MGO"><img src="https://img.shields.io/badge/platform-desktop%20%7C%20mobile-c6f135?style=flat-square&labelColor=141416" alt="Platform: Desktop | Mobile"></a>
+  <a href="https://github.com/XXmgGo/MGO/actions"><img src="https://img.shields.io/github/actions/workflow/status/Fundaments-Work/Lemma/ci.yml?branch=main&label=ci&style=flat-square&labelColor=141416&color=c6f135" alt="CI status"></a>
   <a href="./CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-c6f135?style=flat-square&labelColor=141416" alt="Pull requests welcome"></a>
 </p>
 
@@ -28,18 +30,18 @@
   <a href="https://fundaments.work/docs/lemma/">Docs</a> ·
   <a href="https://fundaments.work/docs/lemma/guide/flashcards-in-obsidian/">How to make flashcards in Obsidian</a> ·
   <a href="https://fundaments.work/docs/lemma/guide/compared-with-other-plugins/">Compared with other plugins</a> ·
-  <a href="https://fundaments.work/docs/lemma/compare/vs-anki/">Lemma vs Anki</a> ·
+  <a href="https://fundaments.work/docs/lemma/compare/vs-anki/">MGO vs Anki</a> ·
   <a href="https://buymemomo.com/usefundaments">Buy Me a Momo</a> ·
-  <a href="https://github.com/Fundaments-Work/Lemma/issues/new?labels=bug">Report bug</a> ·
-  <a href="https://github.com/Fundaments-Work/Lemma/issues/new?labels=enhancement">Request feature</a>
+  <a href="https://github.com/XXmgGo/MGO/issues/new?labels=bug">Report bug</a> ·
+  <a href="https://github.com/XXmgGo/MGO/issues/new?labels=enhancement">Request feature</a>
 </p>
 
 <p align="center">
   <a href="https://buymemomo.com/usefundaments"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Momo-C6F135?style=for-the-badge&logoColor=12140F&labelColor=12140F" alt="Buy Me a Momo"></a>
   &nbsp;
-  <a href="https://github.com/Fundaments-Work/Lemma/issues/new?labels=bug"><img src="https://img.shields.io/badge/Report%20Issue-ef4444?style=for-the-badge" alt="Report Bug"></a>
+  <a href="https://github.com/XXmgGo/MGO/issues/new?labels=bug"><img src="https://img.shields.io/badge/Report%20Issue-ef4444?style=for-the-badge" alt="Report Bug"></a>
   &nbsp;
-  <a href="https://github.com/Fundaments-Work/Lemma/issues/new?labels=enhancement"><img src="https://img.shields.io/badge/Request%20Feature-22c55e?style=for-the-badge" alt="Request Feature"></a>
+  <a href="https://github.com/XXmgGo/MGO/issues/new?labels=enhancement"><img src="https://img.shields.io/badge/Request%20Feature-22c55e?style=for-the-badge" alt="Request Feature"></a>
 </p>
 
 ---
@@ -47,7 +49,7 @@
 ## Preview
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Fundaments-Work/Lemma/main/screenshots/lemma-dashboard.png" width="49%" alt="Lemma Dashboard — decks with due counts at a glance">
+  <img src="https://raw.githubusercontent.com/Fundaments-Work/Lemma/main/screenshots/lemma-dashboard.png" width="49%" alt="MGO Dashboard — decks with due counts at a glance">
   <img src="https://raw.githubusercontent.com/Fundaments-Work/Lemma/main/screenshots/lemma-review-modal.png" width="49%" alt="Immersive review mode with FSRS scheduling and LaTeX support">
 </p>
 <p align="center">
@@ -59,13 +61,13 @@
 
 ---
 
-## Why Lemma?
+## Why MGO?
 
-Most spaced repetition tools require leaving your knowledge base, exporting notes, and managing a secondary database. Lemma embeds spaced repetition directly in Markdown.
+Most spaced repetition tools require leaving your knowledge base, exporting notes, and managing a secondary database. MGO embeds spaced repetition directly in Markdown.
 
 > **Notes are decks.** Add `#flashcards` to any note, write cards in plain Markdown, and let FSRS handle scheduling.
 
-| Feature | Lemma | Anki | Standard SR Plugins |
+| Feature | MGO | Anki | Standard SR Plugins |
 |---|:---:|:---:|:---:|
 | Native Markdown workflow | Yes | No | Yes |
 | FSRS scheduling | Yes | Yes (built in) | Partial |
@@ -81,7 +83,7 @@ Most spaced repetition tools require leaving your knowledge base, exporting note
 ## Features
 
 ### FSRS Scheduling
-Lemma uses **FSRS-5** (Free Spaced Repetition Scheduler, via `ts-fsrs`), a modern scheduling algorithm developed from cognitive science research. It models memory stability and retrievability based on your individual recall patterns.
+MGO uses **FSRS-5** (Free Spaced Repetition Scheduler, via `ts-fsrs`), a modern scheduling algorithm developed from cognitive science research. It models memory stability and retrievability based on your individual recall patterns.
 
 ### Cards Live in Notes
 Write flashcards directly in any Markdown note without imports or app switching.
@@ -130,7 +132,7 @@ Review data is stored on each device (IndexedDB). Optionally connect your own Co
 
 ## Quick Start
 
-1. Install from Community Plugins: search for **Lemma**.
+1. Install from Community Plugins: search for **MGO**.
 2. Add `#flashcards` to any note's frontmatter or inline:
 
 ```yaml
@@ -148,7 +150,7 @@ What is spaced repetition?
 A learning technique that schedules reviews at increasing intervals to maximize long-term retention.
 ```
 
-4. Open the **Lemma dashboard** from the ribbon, the status bar (desktop), or the Command Palette (**Open dashboard**).
+4. Open the **MGO dashboard** from the ribbon, the status bar (desktop), or the Command Palette (**Open dashboard**).
 
 **Full syntax documentation:** [FLASHCARD_GUIDE.md](FLASHCARD_GUIDE.md)
 
@@ -156,7 +158,7 @@ A learning technique that schedules reviews at increasing intervals to maximize 
 
 ## Card Formats
 
-Lemma supports seven card and study formats:
+MGO supports seven card and study formats:
 
 ### 1. Basic Multi-Line Cards
 Multi-line format with full Markdown, LaTeX math blocks, and code formatting. Use `---end---` to explicitly close the card so subsequent headings or notes remain outside the answer.
@@ -260,7 +262,7 @@ tags: [review]
 | `Create cloze from selection` | Wrap selected text in cloze syntax |
 | `Add a type-in card` | Insert a type-in card template |
 | `Add a type-in single-line card` | Insert a single-line type-in template |
-| `Open dashboard` | Open the Lemma deck overview |
+| `Open dashboard` | Open the MGO deck overview |
 | `Sync now` | Trigger a manual CouchDB sync |
 | `Check sync status` | View sync connection status |
 | `Review due notes` | Start whole-note review session |
@@ -287,11 +289,11 @@ tags: [review]
 
 ## Privacy and network access
 
-Lemma is local-first. It has no telemetry, analytics, ads, or crash reporting.
+MGO is local-first. It has no telemetry, analytics, ads, or crash reporting.
 
 ### Vault access
 
-Lemma indexes Markdown notes only (`vault.getMarkdownFiles()`) so it can find notes tagged
+MGO indexes Markdown notes only (`vault.getMarkdownFiles()`) so it can find notes tagged
 `#flashcards` or `#review`. This is the Vault Enumeration disclosure reported by the community
 plugin scanner: indexing notes requires enumerating their paths. It does not enumerate or read
 non-Markdown files, attachments, or data belonging to other plugins.
@@ -302,20 +304,20 @@ Settings are saved through Obsidian's plugin data API (`data.json`). Scheduling 
 history are stored in IndexedDB through PouchDB, in a database that is named per vault for new
 installs (existing installs keep the original shared name, so no data is moved). PouchDB probes `localStorage` and uses a small
 cross-tab change marker; this is the Local Storage disclosure reported by the community plugin
-scanner. Lemma never stores vault content, settings, or review data in `localStorage` or
+scanner. MGO never stores vault content, settings, or review data in `localStorage` or
 `sessionStorage`.
 
-### Files Lemma writes and reads
+### Files MGO writes and reads
 
-Lemma creates files in your vault only when you run a command that says so: **Export review data
-(backup)** writes one `Lemma backup <date and time>.json` file to the vault root, **Import cards
+MGO creates files in your vault only when you run a command that says so: **Export review data
+(backup)** writes one `MGO backup <date and time>.json` file to the vault root, **Import cards
 from file** creates one new deck note, **Create new deck** and **Create card** create or edit the
 note you choose. The import commands read only the single file you select in the file picker.
-Lemma does not access files outside your vault.
+MGO does not access files outside your vault.
 
 ### Network access
 
-Lemma makes no network requests by default. It connects to the network only in these cases:
+MGO makes no network requests by default. It connects to the network only in these cases:
 
 | Destination | When | Purpose |
 |---|---|---|
@@ -334,14 +336,14 @@ credentials and review data in clear text.
 
 ### Community Plugin Directory
 1. Open **Settings → Community plugins**
-2. Click **Browse** and search for **Lemma**
+2. Click **Browse** and search for **MGO**
 3. Select **Install**, then **Enable**
 
 ### Manual Installation
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/Fundaments-Work/Lemma/releases/latest)
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/XXmgGo/MGO/releases/latest)
 2. Copy the files into:
    ```
-   <vault>/.obsidian/plugins/lemma-flashcards/
+   <vault>/.obsidian/plugins/mgo-flashcards/
    ```
 3. Reload Obsidian and enable the plugin under **Settings → Community plugins**
 
@@ -353,10 +355,10 @@ alongside the installed copy.
 
 ## Support
 
-If you find Lemma helpful for your studies and daily knowledge retention, you can support development:
+If you find MGO helpful for your studies and daily knowledge retention, you can support development:
 
 - [Buy Me a Momo](https://buymemomo.com/usefundaments)
-- Star the repository on [GitHub](https://github.com/Fundaments-Work/Lemma)
+- Star the repository on [GitHub](https://github.com/XXmgGo/MGO)
 
 ---
 
@@ -364,14 +366,14 @@ If you find Lemma helpful for your studies and daily knowledge retention, you ca
 
 Contributions, bug reports, and feature requests are welcome.
 
-- **Issue tracker:** [GitHub issues](https://github.com/Fundaments-Work/Lemma/issues)
+- **Issue tracker:** [GitHub issues](https://github.com/XXmgGo/MGO/issues)
 - **Pull requests:** Open a pull request against `main`
 
 ---
 
 ## License
 
-Lemma is released under the **MIT License**.
+MGO is released under the **MIT License**.
 
 Copyright (c) 2025-2026 Fundaments Work
 
@@ -380,7 +382,7 @@ sublicensing, and sale, provided the copyright notice and permission notice are 
 There is no warranty.
 
 > **License history:** releases up to and including **v1.1.3** were distributed under the
-> ISC License (also known as OBSD). From **v1.1.4** onward, Lemma is MIT. Both are
+> ISC License (also known as OBSD). From **v1.1.4** onward, MGO is MIT. Both are
 > permissive and materially equivalent; users of any version may use, modify, and
 > redistribute it under the terms of the release they received.
 

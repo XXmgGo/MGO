@@ -75,8 +75,8 @@ describe('backup format', () => {
 
     it('rejects files that are not backups and skips corrupt entries', () => {
         expect(() => parseBackup('not json')).toThrow(/valid JSON/);
-        expect(() => parseBackup('{"hello":1}')).toThrow(/not a Lemma backup/);
-        expect(() => parseBackup('[]')).toThrow(/not a Lemma backup/);
+        expect(() => parseBackup('{"hello":1}')).toThrow(/not a MGO backup/);
+        expect(() => parseBackup('[]')).toThrow(/not a MGO backup/);
         const parsed = parseBackup(JSON.stringify({
             cardData: {
                 ok: { due: '2026-01-01T00:00:00Z', stability: 1, difficulty: 1, elapsed_days: 0, scheduled_days: 1, reps: 1, lapses: 0, state: 2 },

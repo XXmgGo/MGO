@@ -1,6 +1,6 @@
-# Contributing to Lemma
+# Contributing to MGO
 
-Thank you for contributing to Lemma. We welcome bug reports, feature suggestions, and code contributions.
+Thank you for contributing to MGO (a fork of Lemma). We welcome bug reports, feature suggestions, and code contributions.
 
 ## Development Workflow
 
@@ -14,8 +14,8 @@ Thank you for contributing to Lemma. We welcome bug reports, feature suggestions
 1. Fork the repository on GitHub.
 2. Clone your fork locally:
    ```bash
-   git clone https://github.com/your-username/Lemma.git
-   cd Lemma
+   git clone https://github.com/your-username/MGO.git
+   cd MGO
    ```
 3. Install dependencies:
    ```bash
@@ -70,7 +70,7 @@ Before submitting a pull request:
 
 ## Licensing
 
-Lemma is licensed under the **MIT License**. Full text is in [LICENSE](LICENSE).
+MGO is a fork of Lemma, licensed under the **MIT License**. Full text is in [LICENSE](LICENSE).
 
 Releases up to and including **v1.1.3** were distributed under the ISC License (OBSD);
 from **v1.1.4** onward the plugin is MIT. Both are permissive, so this does not restrict

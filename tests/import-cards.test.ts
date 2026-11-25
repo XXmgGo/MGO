@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { convertToLemma, parseDelimited } from '../src/data/importCards';
+import { convertToMGO, parseDelimited } from '../src/data/importCards';
 
 let n = 0;
 const id = () => `fsrs-t${++n}`;
@@ -7,7 +7,7 @@ const id = () => `fsrs-t${++n}`;
 describe('card import', () => {
     it('converts a tab separated Anki plain text export', () => {
         const text = '#separator:tab\n#html:true\n#tags column:3\nCapital of France?\tParis\tgeo\nWhat is 2+2?<br>(easy)\t<b>4</b>&nbsp;units\tmath\n';
-        const out = convertToLemma(text, 'flashcards', id);
+        const out = convertToMGO(text, 'flashcards', id);
         expect(out.cards).toBe(2);
         expect(out.markdown).toContain('tags: [flashcards]');
         expect(out.markdown).toContain('Capital of France?::Paris ^fsrs-t1');
@@ -15,7 +15,7 @@ describe('card import', () => {
     });
 
     it('converts Anki cloze notes and drops cloze hints', () => {
-        const out = convertToLemma('The {{c1::mitochondria::organelle}} makes {{c2::ATP}}\n', 'flashcards', id);
+        const out = convertToMGO('The {{c1::mitochondria::organelle}} makes {{c2::ATP}}\n', 'flashcards', id);
         expect(out.markdown).toContain('The ==c1::mitochondria== makes ==c2::ATP== ^');
         expect(out.cards).toBe(1);
     });
@@ -27,14 +27,14 @@ describe('card import', () => {
             ['Say "hi", please', 'line one\nline two'],
             ['plain', 'answer'],
         ]);
-        const out = convertToLemma(csv, 'flashcards', id);
+        const out = convertToMGO(csv, 'flashcards', id);
         expect(out.cards).toBe(3);
         expect(out.markdown).toContain('Front::Back ^');
         expect(out.markdown).toContain('Say "hi", please\n---\nline one\nline two');
     });
 
     it('falls back to the block format when the text would break single-line syntax', () => {
-        const out = convertToLemma('std::vector\tA C++ container\n', 'flashcards', id);
+        const out = convertToMGO('std::vector\tA C++ container\n', 'flashcards', id);
         expect(out.markdown).toContain('---card--- ^');
         expect(out.markdown).not.toMatch(/std::vector/);
     });
@@ -42,7 +42,7 @@ describe('card import', () => {
     it('skips empty or incomplete rows, handles Windows line endings and a BOM, and never repeats an id', () => {
         let k = 0;
         const clashing = () => `fsrs-same${k++ < 2 ? '' : k}`;
-        const out = convertToLemma('﻿a\tb\r\n\r\nonlyfront\t\r\nc\td\r\n', 'flashcards', clashing);
+        const out = convertToMGO('﻿a\tb\r\n\r\nonlyfront\t\r\nc\td\r\n', 'flashcards', clashing);
         expect(out.cards).toBe(2);
         expect(out.skipped).toBe(1);
         const ids = [...out.markdown.matchAll(/\^(fsrs-\w+)/g)].map((m) => m[1]);
@@ -56,7 +56,7 @@ describe('card import', () => {
         const { DataManager } = await import('../src/data/DataManager');
         const { DEFAULT_SETTINGS } = await import('../src/data/constants');
         const text = 'Q1\tA1\n"Q2 with\nbreak"\tA2\nThe {{c1::sky}} is blue\nstd::map\tdictionary\n';
-        const out = convertToLemma(text, 'flashcards');
+        const out = convertToMGO(text, 'flashcards');
         expect(out.cards).toBe(4);
         const file = { path: 'Imported.md', basename: 'Imported', stat: { mtime: 1 } };
         const plugin = {

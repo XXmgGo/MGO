@@ -1,4 +1,4 @@
-# Lemma — Agent Guide
+# MGO — Agent Guide（基于 Lemma 二次开发）
 
 ## Quick start
 
@@ -90,7 +90,7 @@ src/
 ├── data/
 │   ├── DataManager.ts    # State orchestration, mtime caching, tag parsing, FSRS scheduling
 │   ├── backup.ts         # Backup file format: build, parse and validate (also reads old data.json)
-│   ├── importCards.ts    # Anki text / CSV -> Lemma Markdown converter
+│   ├── importCards.ts    # Anki text / CSV -> MGO Markdown converter
 │   ├── constants.ts      # Constants, defaults, database name resolution, Lucide-standard SVG icon, hash utilities
 │   └── types.ts          # Type definitions (Card, Deck, FSRS, Settings)
 ├── database/
@@ -116,7 +116,7 @@ src/
 
 ### Settings tab
 Use the 4-tab pattern from `FSRSSettingsTab`:
-- Tab nav uses `lemma-tab-*` CSS classes
+- Tab nav uses `mgo-tab-*` CSS classes
 - Each tab is a private `renderXxxTab(containerEl)` method
 - Use `new Setting(containerEl).setName(...).setHeading()` for section titles
 - No manual `<h3>` or HTML headings in settings
@@ -128,9 +128,9 @@ Use the 4-tab pattern from `FSRSSettingsTab`:
 - Heading breadcrumbs are pre-computed in a single $O(N)$ pass (`buildHeadingBreadcrumbs`) for $O(1)$ lookup per card
 
 ### In-app vector icon
-- Registered via `addIcon(LEMMA_ICON_ID, LEMMA_ICON_SVG)`
+- Registered via `addIcon(MGO_ICON_ID, MGO_ICON_SVG)`
 - Must follow Obsidian Lucide specification (`0 0 100 100` viewBox, `stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"`)
-- Do not apply `stroke: none` to `svg.lemma-icon` in `styles.css`
+- Do not apply `stroke: none` to `svg.mgo-icon` in `styles.css`
 
 ### Card syntax & formats
 1. **Basic**: `---card---` followed by `---` divider and optional `---end---`

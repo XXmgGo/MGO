@@ -16,7 +16,7 @@ export class HelpModal extends Modal {
         this.containerEl.addClass('fsrs-help-modal');
 
         const header = this.contentEl.createDiv({ cls: 'fsrs-help-header' });
-        header.createEl('h2', { text: 'Lemma' });
+        header.createEl('h2', { text: 'MGO' });
         header.createEl('p', { text: `v${this.plugin.manifest.version} — A spaced-repetition flashcard plugin powered by the FSRS algorithm.` });
 
         this.renderSection('Creating decks', [

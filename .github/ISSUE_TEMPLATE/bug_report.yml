@@ -10,7 +10,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Lemma Version
+      label: MGO Version
       placeholder: "e.g. 1.0.1"
     validations:
       required: true

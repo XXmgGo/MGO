@@ -24,7 +24,7 @@ export default defineConfig([
 				"error",
 				{
 					acronyms: ["FSRS", "URL", "JSON", "XP", "CRDT", "MIT"],
-					brands: ["Lemma", "Obsidian", "PouchDB", "CouchDB", "IndexedDB", "Fundaments"],
+					brands: ["MGO", "Lemma", "Obsidian", "PouchDB", "CouchDB", "IndexedDB", "Fundaments"],
 				},
 			],
 		},

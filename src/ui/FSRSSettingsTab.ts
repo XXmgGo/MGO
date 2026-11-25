@@ -21,8 +21,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        const tabNav = containerEl.createDiv({ cls: 'lemma-tab-nav' });
-        const tabContent = containerEl.createDiv({ cls: 'lemma-tab-content' });
+        const tabNav = containerEl.createDiv({ cls: 'mgo-tab-nav' });
+        const tabContent = containerEl.createDiv({ cls: 'mgo-tab-content' });
 
         const tabs = [
             { id: 'general', label: 'General' },
@@ -33,7 +33,7 @@ export class FSRSSettingsTab extends PluginSettingTab {
 
         const showTab = (tabId: string) => {
             tabContent.empty();
-            tabNav.querySelectorAll('.lemma-tab-button').forEach(b => b.removeClass('active'));
+            tabNav.querySelectorAll('.mgo-tab-button').forEach(b => b.removeClass('active'));
             tabNav.querySelector(`[data-tab="${tabId}"]`)?.addClass('active');
             switch (tabId) {
                 case 'general': this.renderGeneralTab(tabContent); break;
@@ -44,7 +44,7 @@ export class FSRSSettingsTab extends PluginSettingTab {
         };
 
         tabs.forEach(tab => {
-            const btn = tabNav.createEl('button', { cls: 'lemma-tab-button', text: tab.label });
+            const btn = tabNav.createEl('button', { cls: 'mgo-tab-button', text: tab.label });
             btn.setAttribute('data-tab', tab.id);
             btn.addEventListener('click', () => showTab(tab.id));
         });
@@ -204,10 +204,10 @@ export class FSRSSettingsTab extends PluginSettingTab {
             .setName('Database name')
             .setDesc('The name of the database on your CouchDB server')
             .addText(text => text
-                .setPlaceholder('Lemma')
+                .setPlaceholder('MGO')
                 .setValue(this.plugin.settings.syncDbName)
                 .onChange(async (value) => {
-                    this.plugin.settings.syncDbName = value.trim() || 'lemma';
+                    this.plugin.settings.syncDbName = value.trim() || 'mgo';
                     await this.plugin.saveSettings();
                 }));
 
@@ -350,7 +350,7 @@ export class FSRSSettingsTab extends PluginSettingTab {
         new Setting(containerEl).setName('About').setHeading();
 
         new Setting(containerEl)
-            .setName('Lemma')
+            .setName('MGO')
             .setDesc(`v${this.plugin.manifest.version} by Fundaments Work — FSRS spaced repetition flashcards for Obsidian.`);
 
         new Setting(containerEl)
@@ -379,7 +379,7 @@ export class FSRSSettingsTab extends PluginSettingTab {
             .addButton((btn) => btn
                 .setButtonText('Open repository')
                 .onClick(() => {
-                    activeWindow.open('https://github.com/Fundaments-Work/Lemma', '_blank');
+                    activeWindow.open('https://github.com/XXmgGo/MGO', '_blank');
                 }));
 
         new Setting(containerEl)
@@ -388,13 +388,13 @@ export class FSRSSettingsTab extends PluginSettingTab {
             .addButton((btn) => btn
                 .setButtonText('View license')
                 .onClick(() => {
-                    activeWindow.open('https://github.com/Fundaments-Work/Lemma/blob/main/LICENSE', '_blank');
+                    activeWindow.open('https://github.com/XXmgGo/MGO/blob/main/LICENSE', '_blank');
                 }));
 
         new Setting(containerEl).setName('Quick card cheatsheet').setHeading();
 
-        const cardBox = containerEl.createDiv({ cls: 'lemma-about-cheatsheet' });
-        const cardGrid = cardBox.createDiv({ cls: 'lemma-about-grid' });
+        const cardBox = containerEl.createDiv({ cls: 'mgo-about-cheatsheet' });
+        const cardGrid = cardBox.createDiv({ cls: 'mgo-about-grid' });
         const cardFormats: [string, string][] = [
             ['Basic block', '---card--- ^id \n Question \n --- \n Answer \n ---end---'],
             ['Single-line', 'Question::Answer ^id'],
@@ -405,14 +405,14 @@ export class FSRSSettingsTab extends PluginSettingTab {
             ['Whole-note', 'Tag note with #review for full-page study'],
         ];
         for (const [key, desc] of cardFormats) {
-            cardGrid.createSpan({ cls: 'lemma-about-key', text: key });
-            cardGrid.createSpan({ cls: 'lemma-about-val', text: desc });
+            cardGrid.createSpan({ cls: 'mgo-about-key', text: key });
+            cardGrid.createSpan({ cls: 'mgo-about-val', text: desc });
         }
 
         new Setting(containerEl).setName('Review shortcuts').setHeading();
 
-        const shortcutBox = containerEl.createDiv({ cls: 'lemma-about-cheatsheet' });
-        const shortcutGrid = shortcutBox.createDiv({ cls: 'lemma-about-grid' });
+        const shortcutBox = containerEl.createDiv({ cls: 'mgo-about-cheatsheet' });
+        const shortcutGrid = shortcutBox.createDiv({ cls: 'mgo-about-grid' });
         const shortcuts: [string, string][] = [
             ['Space / Enter', 'Reveal answer or toggle peek'],
             ['1 / 2 / 3 / 4', 'Rate card: Again (1), Hard (2), Good (3), Easy (4)'],
@@ -420,8 +420,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
             ['Swipe gestures', 'Left: Again · Down: Hard · Right: Good · Up: Easy'],
         ];
         for (const [key, desc] of shortcuts) {
-            shortcutGrid.createSpan({ cls: 'lemma-about-key', text: key });
-            shortcutGrid.createSpan({ cls: 'lemma-about-val', text: desc });
+            shortcutGrid.createSpan({ cls: 'mgo-about-key', text: key });
+            shortcutGrid.createSpan({ cls: 'mgo-about-val', text: desc });
         }
     }
 

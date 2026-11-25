@@ -23,7 +23,7 @@ function htmlToText(value: string): string {
         .trim();
 }
 
-function clozeToLemma(value: string): string {
+function clozeToMGO(value: string): string {
     return value.replace(/\{\{c(\d+)::(.*?)(?:::[^}]*)?\}\}/gs, '==c$1::$2==');
 }
 
@@ -82,7 +82,7 @@ function cardMarkdown(card: ImportedCard, id: string): string {
 
 // Accepts an Anki "Notes in Plain Text" export or a CSV/TSV file. The first column is the front and the
 // second the back; further columns (tags, extra fields) are ignored. Cloze notes need only one column.
-export function convertToLemma(text: string, deckTag: string, makeId: () => string = generateBlockId): CardImportResult {
+export function convertToMGO(text: string, deckTag: string, makeId: () => string = generateBlockId): CardImportResult {
     const clean = text.replace(/^\uFEFF/, '');
     const html = /^#html:true$/im.test(clean);
     const rows = parseDelimited(clean.split(/\r?\n/).filter((l) => !l.startsWith('#')).join('\n'), detectDelimiter(clean));
@@ -92,7 +92,7 @@ export function convertToLemma(text: string, deckTag: string, makeId: () => stri
     const blocks: string[] = [];
     let skipped = 0;
     for (const row of rows) {
-        const prepare = (v: string) => clozeToLemma(html || /<[a-z/][^>]*>/i.test(v) ? htmlToText(v) : v.trim());
+        const prepare = (v: string) => clozeToMGO(html || /<[a-z/][^>]*>/i.test(v) ? htmlToText(v) : v.trim());
         const front = prepare(row[0] ?? '');
         const back = prepare(row[1] ?? '');
         const isCloze = /==c\d+::/.test(front);

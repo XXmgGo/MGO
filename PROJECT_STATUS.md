@@ -1,4 +1,4 @@
-# Lemma — Project status
+# MGO — Project status
 
 ## Current state (v1.2.0)
 
@@ -36,7 +36,7 @@ All core features are implemented and functional:
 - [x] In-place image occlusion display (auto-detect, tap-to-flip/peek, responsive viewport containment)
 - [x] Guided card creation modal (`CreateCardModal` with type dropdown and live preview)
 - [x] Guided deck creation modal (`CreateDeckModal` with auto `#flashcards` tagging)
-- [x] Official custom Lemma SVG brand icon registration via Obsidian API `addIcon` (native monochrome `currentColor`)
+- [x] Official custom MGO (原 Lemma) SVG brand icon registration via Obsidian API `addIcon` (native monochrome `currentColor`)
 - [x] Organization migration to `Fundaments-Work/Lemma` & Buy Me a Momo sponsorship integration
 - [x] Performance architecture:
   - Debounced vault event processing (350ms batching into `Set<TFile>`)

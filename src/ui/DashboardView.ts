@@ -18,7 +18,7 @@ export class DashboardView extends ItemView {
         this.plugin = plugin;
     }
     getViewType(): string { return VIEW_TYPE_DASHBOARD; }
-    getDisplayText(): string { return 'Lemma decks'; }
+    getDisplayText(): string { return 'MGO decks'; }
     getIcon(): string { return VIEW_ICON_NAME; }
     async onOpen() { this.render(); }
 
@@ -52,7 +52,7 @@ export class DashboardView extends ItemView {
         const titleSection = headerTop.createDiv({ cls: 'fsrs-title-section' });
         const logoIcon = titleSection.createDiv({ cls: 'fsrs-logo-icon' });
         setIcon(logoIcon, VIEW_ICON_NAME);
-        titleSection.createEl('h2', { text: 'Lemma', cls: 'fsrs-title' });
+        titleSection.createEl('h2', { text: 'MGO', cls: 'fsrs-title' });
 
         const actionsRow = headerEl.createDiv({ cls: 'fsrs-quick-actions' });
 

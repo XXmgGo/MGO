@@ -1,6 +1,6 @@
 import { Editor, Notice, Plugin, TFile, addIcon, debounce, setIcon } from 'obsidian';
 import { DataManager } from '../data/DataManager';
-import { VIEW_TYPE_DASHBOARD, VIEW_ICON_NAME, STATUS_ICON_NAME, DEFAULT_SETTINGS, generateBlockId, resolveDatabaseName, getErrorMessage, getDocCount, LEMMA_ICON_ID, LEMMA_ICON_SVG, sanitizeUrlForDisplay } from '../data/constants';
+import { VIEW_TYPE_DASHBOARD, VIEW_ICON_NAME, STATUS_ICON_NAME, DEFAULT_SETTINGS, generateBlockId, resolveDatabaseName, getErrorMessage, getDocCount, MGO_ICON_ID, MGO_ICON_SVG, sanitizeUrlForDisplay } from '../data/constants';
 import type { FSRSSettings, PluginData } from '../data/types';
 import { DashboardView } from '../ui/DashboardView';
 import { FSRSSettingsTab } from '../ui/FSRSSettingsTab';
@@ -16,7 +16,7 @@ class FSRSFlashcardsPlugin extends Plugin {
     private databaseNameIsNew = false;
 
     async onload() {
-        addIcon(LEMMA_ICON_ID, LEMMA_ICON_SVG);
+        addIcon(MGO_ICON_ID, MGO_ICON_SVG);
         await this.loadSettings();
         this.dataManager = new DataManager(this);
 
@@ -32,18 +32,18 @@ class FSRSFlashcardsPlugin extends Plugin {
         this.addSettingTab(new FSRSSettingsTab(this.app, this));
         this.registerView(VIEW_TYPE_DASHBOARD, (leaf) => new DashboardView(leaf, this));
 
-        const ribbonIconEl = this.addRibbonIcon(VIEW_ICON_NAME, 'Open Lemma dashboard', (evt: MouseEvent) => {
+        const ribbonIconEl = this.addRibbonIcon(VIEW_ICON_NAME, 'Open MGO dashboard', (evt: MouseEvent) => {
             void this.activateView();
         });
-        ribbonIconEl.addClass('lemma-ribbon-icon');
+        ribbonIconEl.addClass('mgo-ribbon-icon');
 
         const statusButton = this.addStatusBarItem();
-        statusButton.addClass('lemma-status-button');
-        statusButton.setAttribute('aria-label', 'Open Lemma dashboard');
-        statusButton.setAttribute('title', 'Open Lemma dashboard');
-        const statusIcon = statusButton.createSpan({ cls: 'lemma-status-icon' });
+        statusButton.addClass('mgo-status-button');
+        statusButton.setAttribute('aria-label', 'Open MGO dashboard');
+        statusButton.setAttribute('title', 'Open MGO dashboard');
+        const statusIcon = statusButton.createSpan({ cls: 'mgo-status-icon' });
         setIcon(statusIcon, STATUS_ICON_NAME);
-        statusButton.createSpan({ text: 'Lemma', cls: 'lemma-status-label' });
+        statusButton.createSpan({ text: 'MGO', cls: 'mgo-status-label' });
         statusButton.addEventListener('click', () => {
             void this.activateView();
         });
@@ -240,14 +240,14 @@ class FSRSFlashcardsPlugin extends Plugin {
             name: 'Export review data (backup)',
             callback: async () => {
                 if (!this.dataManager.isDataLoaded()) {
-                    new Notice('Lemma is still loading. Try again in a moment.');
+                    new Notice('MGO is still loading. Try again in a moment.');
                     return;
                 }
                 const now = new Date();
                 const pad = (n: number) => String(n).padStart(2, '0');
                 const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}-${pad(now.getMinutes())}`;
                 try {
-                    const file = await this.app.vault.create(`Lemma backup ${stamp}.json`, this.dataManager.exportBackup());
+                    const file = await this.app.vault.create(`MGO backup ${stamp}.json`, this.dataManager.exportBackup());
                     new Notice(`Backup saved to ${file.path}`, 8000);
                 } catch (error: unknown) {
                     new Notice(`Backup failed: ${getErrorMessage(error)}`, 8000);

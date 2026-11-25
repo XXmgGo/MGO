@@ -1,6 +1,6 @@
-# Lemma - Flashcard Creation Guide
+# MGO - Flashcard Creation Guide
 
-A complete guide to creating flashcards in Obsidian using the Lemma plugin.
+A complete guide to creating flashcards in Obsidian using the MGO plugin.
 
 ---
 
@@ -45,8 +45,8 @@ Add cards to your deck using the syntax described below. The plugin will automat
 
 ### 3. Study
 
-Open the **Lemma dashboard** via:
-- Right-side status bar **Lemma** button
+Open the **MGO dashboard** via:
+- Right-side status bar **MGO** button
 - Command palette: `Open dashboard`
 
 ---
@@ -351,10 +351,10 @@ Study whole notes via the command `Review due notes`.
 
 ## Guided Card & Deck Creation
 
-Lemma includes interactive modals so you never have to memorize Markdown delimiters.
+MGO includes interactive modals so you never have to memorize Markdown delimiters.
 
 ### 1. Guided Card Creator Modal
-Run the command `Create card (guided modal)` or click **+ New card** on the Lemma dashboard:
+Run the command `Create card (guided modal)` or click **+ New card** on the MGO dashboard:
 - Pick the target deck note.
 - Select card type from the dropdown.
 - Fill in the Question and Answer fields.
@@ -362,13 +362,13 @@ Run the command `Create card (guided modal)` or click **+ New card** on the Lemm
 - Press `Ctrl + Enter` (or `Cmd + Enter`) to insert the card with an automatic block ID and auto-deck tag.
 
 ### 2. Guided Deck Creator Modal
-Click **+ New deck** on the Lemma dashboard or run the command `Create new deck`:
+Click **+ New deck** on the MGO dashboard or run the command `Create new deck`:
 - Enter deck title.
 - Optional folder path.
 - Automatically creates the note, tags it with `#flashcards`, and opens it.
 
 ### 3. Tag Note as Flashcard Deck
-Run the command `Tag current note as flashcard deck` on any existing note to immediately register it in Lemma.
+Run the command `Tag current note as flashcard deck` on any existing note to immediately register it in MGO.
 
 ---
 
@@ -535,7 +535,7 @@ FSRS stands for ==c1::Free Spaced Repetition Scheduler==. ^sr-002
 
 ## Support Development
 
-If Lemma helps you learn faster and retain more knowledge, consider supporting its development:
+If MGO helps you learn faster and retain more knowledge, consider supporting its development:
 
 - **Buy Me a Momo:** [buymemomo.com/usefundaments](https://buymemomo.com/usefundaments)
 - **GitHub:** [github.com/Fundaments-Work/Lemma](https://github.com/Fundaments-Work/Lemma)

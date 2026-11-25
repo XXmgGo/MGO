@@ -30,7 +30,7 @@ jobs:
           echo "Dispatching docs-updated event to Fundaments-Work/fundaments-landing..."
           gh api repos/Fundaments-Work/fundaments-landing/dispatches \
             -f event_type=docs-updated \
-            -F "client_payload[product]=lemma" \
+            -F "client_payload[product]=mgo" \
             -F "client_payload[ref]=${{ github.ref_name }}" \
             -F "client_payload[sha]=${{ github.sha }}" || echo "Failed to dispatch to fundaments-landing"
 

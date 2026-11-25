@@ -71,7 +71,7 @@ function parseGamification(raw: unknown): Gamification | undefined {
     };
 }
 
-// Accepts a Lemma backup or a plugin data.json from any released version (same cardData/reviewHistory shape).
+// Accepts a MGO backup or a plugin data.json from any released version (same cardData/reviewHistory shape).
 export function parseBackup(text: string): BackupContent {
     let raw: unknown;
     try {
@@ -80,7 +80,7 @@ export function parseBackup(text: string): BackupContent {
         throw new Error('This file is not valid JSON.');
     }
     if (!isRecord(raw) || !isRecord(raw.cardData) || !Array.isArray(raw.reviewHistory)) {
-        throw new Error('This file is not a Lemma backup or a Lemma data.json file.');
+        throw new Error('This file is not a MGO backup or a MGO data.json file.');
     }
 
     let skipped = 0;

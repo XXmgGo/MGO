@@ -1,6 +1,6 @@
 /* ── Status bar button ── */
 
-.lemma-status-button {
+.mgo-status-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -9,19 +9,19 @@
     cursor: pointer;
 }
 
-.lemma-status-icon {
+.mgo-status-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
-.lemma-status-icon svg {
+.mgo-status-icon svg {
     width: 14px;
     height: 14px;
 }
 
-svg.lemma-icon path,
-svg.lemma-icon rect {
+svg.mgo-icon path,
+svg.mgo-icon rect {
     stroke: currentColor;
     stroke-width: 8px;
     stroke-linecap: round;
@@ -29,13 +29,13 @@ svg.lemma-icon rect {
     fill: none;
 }
 
-.lemma-status-label {
+.mgo-status-label {
     font-size: var(--font-smaller);
     font-weight: 600;
     line-height: 1;
 }
 
-.lemma-status-button:hover {
+.mgo-status-button:hover {
     color: var(--text-accent);
 }
 
@@ -1330,7 +1330,7 @@ svg.lemma-icon rect {
 
 /* ── Settings tab navigation ── */
 
-.lemma-tab-nav {
+.mgo-tab-nav {
     display: flex;
     gap: 8px;
     margin-bottom: 20px;
@@ -1338,7 +1338,7 @@ svg.lemma-icon rect {
     padding-bottom: 0;
 }
 
-.lemma-tab-button {
+.mgo-tab-button {
     background: transparent;
     border: none;
     padding: 10px 20px;
@@ -1351,23 +1351,23 @@ svg.lemma-icon rect {
     transition: all 0.2s ease;
 }
 
-.lemma-tab-button:hover {
+.mgo-tab-button:hover {
     color: var(--text-normal);
     background: var(--background-modifier-hover);
 }
 
-.lemma-tab-button.active {
+.mgo-tab-button.active {
     color: var(--text-accent);
     border-bottom-color: var(--text-accent);
 }
 
-.lemma-tab-content {
+.mgo-tab-content {
     margin-top: 20px;
 }
 
 /* ── Cheatsheet (About tab) ── */
 
-.lemma-about-cheatsheet {
+.mgo-about-cheatsheet {
     margin-bottom: var(--size-4-4);
     padding: var(--size-4-4);
     background-color: var(--background-secondary);
@@ -1375,7 +1375,7 @@ svg.lemma-icon rect {
     border: 1px solid var(--background-modifier-border);
 }
 
-.lemma-about-grid {
+.mgo-about-grid {
     display: grid;
     grid-template-columns: minmax(130px, auto) 1fr;
     gap: var(--size-4-2) var(--size-4-4);
@@ -1383,7 +1383,7 @@ svg.lemma-icon rect {
     font-size: var(--font-ui-small);
 }
 
-.lemma-about-key {
+.mgo-about-key {
     display: inline-block;
     padding: var(--size-2-1) var(--size-4-2);
     background-color: var(--background-modifier-form-field);
@@ -1396,7 +1396,7 @@ svg.lemma-icon rect {
     line-height: var(--line-height-normal);
 }
 
-.lemma-about-val {
+.mgo-about-val {
     color: var(--text-muted);
     font-size: var(--font-ui-small);
     line-height: var(--line-height-normal);

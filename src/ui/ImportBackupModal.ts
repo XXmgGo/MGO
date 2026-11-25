@@ -16,7 +16,7 @@ export class ImportBackupModal extends Modal {
     onOpen() {
         this.titleEl.setText('Import review data');
         const intro = this.contentEl.createEl('p', {
-            text: 'Choose a Lemma backup or a data.json file. Schedules are merged: a card keeps whichever version was reviewed most recently, and nothing is deleted.',
+            text: 'Choose a MGO backup or a data.json file. Schedules are merged: a card keeps whichever version was reviewed most recently, and nothing is deleted.',
         });
         intro.addClass('fsrs-import-intro');
 
