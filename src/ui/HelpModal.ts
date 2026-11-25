@@ -12,47 +12,47 @@ export class HelpModal extends Modal {
 
     onOpen() {
         this.contentEl.empty();
-        this.titleEl.setText('Help & guide');
+        this.titleEl.setText('帮助与指南');
         this.containerEl.addClass('fsrs-help-modal');
 
         const header = this.contentEl.createDiv({ cls: 'fsrs-help-header' });
         header.createEl('h2', { text: 'MGO' });
-        header.createEl('p', { text: `v${this.plugin.manifest.version} — A spaced-repetition flashcard plugin powered by the FSRS algorithm.` });
+        header.createEl('p', { text: `v${this.plugin.manifest.version} — 基于 FSRS 算法的间隔重复闪卡插件。` });
 
-        this.renderSection('Creating decks', [
-            `Add the tag #${this.plugin.settings.deckTag} to any note to make it a deck.`,
-            'You can change the tag in plugin settings.',
-            'Each note with the deck tag becomes a separate deck.',
+        this.renderSection('创建牌组', [
+            `给任意笔记添加 #${this.plugin.settings.deckTag} 标签，即可把它变成一个牌组。`,
+            '可以在插件设置中修改该标签。',
+            '每个带牌组标签的笔记都会成为独立的牌组。',
         ], [
-            `Use frontmatter: tags: [${this.plugin.settings.deckTag}]`,
-            `Or inline: # My Note #${this.plugin.settings.deckTag}`,
+            `使用 frontmatter：tags: [${this.plugin.settings.deckTag}]`,
+            `或使用行内标签：# 我的笔记 #${this.plugin.settings.deckTag}`,
         ]);
 
-        this.renderSection('Card formats', [
-            'Basic cards have a front (question) and back (answer).',
-            'Cloze deletion cards hide specific words within a sentence.',
-            'Use the command palette to insert a card template.',
+        this.renderSection('卡片格式', [
+            '基础卡片分为正面（问题）与背面（答案）。',
+            '填空卡片会隐藏句子中的特定词语。',
+            '可以用命令面板插入卡片模板。',
         ], [
-            'Basic: ---card--- ^id / Front / --- / Back / ---end---',
-            'Cloze: ==c1::hidden text==',
-            'Use block IDs (^unique-id) to preserve review history when editing.',
+            '基础：---card--- ^id / 正面 / --- / 背面 / ---end---',
+            '填空：==c1::被隐藏的文本==',
+            '使用块 ID（^unique-id）可在编辑卡片时保留复习历史。',
         ]);
 
-        this.renderSection('Review hotkeys', [], [
-            ['Space / Enter', 'Show answer'],
-            ['1', 'Again'],
-            ['2', 'Hard'],
-            ['3', 'Good'],
-            ['4', 'Easy'],
-            ['Z', 'Undo the last rating'],
-            ['Esc', 'Exit review session'],
+        this.renderSection('复习快捷键', [], [
+            ['空格 / 回车', '显示答案'],
+            ['1', '重来'],
+            ['2', '困难'],
+            ['3', '良好'],
+            ['4', '简单'],
+            ['Z', '撤销上一次评分'],
+            ['Esc', '退出复习会话'],
         ]);
 
-        this.renderSection('Tips', [
-            'Use Custom Study to filter by tags or card state.',
-            'Enable PouchDB for better performance with large collections.',
-            'Use Sync to keep your data across devices via CouchDB.',
-            'Full documentation is available in the plugin settings (About section).',
+        this.renderSection('使用建议', [
+            '用自定义学习功能按标签或卡片状态筛选。',
+            '卡片数量较多时启用 PouchDB，可提升性能。',
+            '用同步功能通过 CouchDB 在多设备间保持数据一致。',
+            '完整文档见插件设置中的「关于」部分。',
         ], []);
     }
 

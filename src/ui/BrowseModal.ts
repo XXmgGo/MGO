@@ -21,14 +21,14 @@ export class BrowseModal extends Modal {
         super(app);
         this.plugin = plugin;
         this.cards = cards;
-        this.deckName = deckName || 'Unknown Deck';
+        this.deckName = deckName || '未知牌组';
     }
 
     onOpen() {
         this.renderComponent = new Component();
         this.containerEl.addClass('fsrs-review-modal-immersive');
         this.contentEl.empty();
-        this.titleEl.setText(`Browsing: ${this.deckName}`);
+        this.titleEl.setText(`浏览：${this.deckName}`);
         this.setupUI();
         void this.displayCurrentCard();
         for (const key of ['ArrowLeft', 'ArrowRight']) {
@@ -43,7 +43,7 @@ export class BrowseModal extends Modal {
         const leftControl = container.createDiv();
         this.prevButton = new ButtonComponent(leftControl)
             .setIcon('arrow-left')
-            .setTooltip('Previous card (left arrow)')
+            .setTooltip('上一张卡片（左方向键）')
             .onClick(() => this.showPrevCard());
 
         const cardWrapper = container.createDiv();
@@ -59,20 +59,20 @@ export class BrowseModal extends Modal {
         const rightControl = container.createDiv();
         this.nextButton = new ButtonComponent(rightControl)
             .setIcon('arrow-right')
-            .setTooltip('Next card (right arrow)')
+            .setTooltip('下一张卡片（右方向键）')
             .onClick(() => this.showNextCard());
     }
 
     private async displayCurrentCard() {
         const card = this.cards[this.currentCardIndex];
         this.titleEl.empty();
-        this.titleEl.createSpan({ text: `Browsing (${this.currentCardIndex + 1}/${this.cards.length})` });
+        this.titleEl.createSpan({ text: `浏览中（${this.currentCardIndex + 1}/${this.cards.length}）` });
         if (this.plugin.dataManager.isLeech?.(card)) {
             const lapses = card.fsrsData?.lapses ?? 0;
             this.titleEl.createSpan({
-                text: `Leech (${lapses} lapses)`,
+                text: `困难卡（遗忘 ${lapses} 次）`,
                 cls: 'fsrs-leech-badge',
-                attr: { title: 'This card has lapsed repeatedly. Consider simplifying, splitting, or rewriting it.' },
+                attr: { title: '这张卡片反复遗忘，建议简化、拆分或重写。' },
             });
         }
 

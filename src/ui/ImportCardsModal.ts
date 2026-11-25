@@ -6,7 +6,7 @@ type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 
 export class ImportCardsModal extends Modal {
     private plugin: FSRSFlashcardsPlugin;
-    private deckName = 'Imported cards';
+    private deckName = '导入的卡片';
     private text = '';
 
     constructor(app: App, plugin: FSRSFlashcardsPlugin) {
@@ -15,24 +15,24 @@ export class ImportCardsModal extends Modal {
     }
 
     onOpen() {
-        this.titleEl.setText('Import cards');
+        this.titleEl.setText('导入卡片');
         this.contentEl.createEl('p', {
-            text: 'Choose a plain text export from another flashcard app, or a comma or tab separated file. The first column becomes the front and the second the back. Cards start as new; scheduling data is not imported.',
+            text: '选择其他闪卡应用导出的纯文本文件，或逗号分隔、制表符分隔的文件。第一列作为正面，第二列作为背面。卡片将以新知识状态开始，不导入排程数据。',
         });
 
         new Setting(this.contentEl)
-            .setName('Deck note name')
-            .setDesc('A new note with this name is created in the vault root.')
+            .setName('牌组笔记名称')
+            .setDesc('将在仓库根目录创建一个使用该名称的新笔记。')
             .addText((text) => text
                 .setValue(this.deckName)
                 .onChange((value) => { this.deckName = value; }));
 
         const input = this.contentEl.createEl('input', {
-            attr: { type: 'file', accept: '.txt,.csv,.tsv,text/plain,text/csv', 'aria-label': 'Cards file' },
+            attr: { type: 'file', accept: '.txt,.csv,.tsv,text/plain,text/csv', 'aria-label': '卡片文件' },
         });
         const summary = this.contentEl.createDiv({ cls: 'fsrs-import-summary' });
         const actions = this.contentEl.createDiv({ cls: 'modal-button-container' });
-        const importBtn = new ButtonComponent(actions).setButtonText('Create deck').setCta().setDisabled(true);
+        const importBtn = new ButtonComponent(actions).setButtonText('创建牌组').setCta().setDisabled(true);
 
         let preview: CardImportResult | null = null;
         input.addEventListener('change', () => {
@@ -43,7 +43,7 @@ export class ImportCardsModal extends Modal {
                 if (!file) return;
                 this.text = await file.text();
                 preview = convertToMGO(this.text, this.plugin.settings.deckTag);
-                summary.setText(`Found ${preview.cards} cards.` + (preview.skipped ? ` ${preview.skipped} incomplete rows will be skipped.` : ''));
+                summary.setText(`找到 ${preview.cards} 张卡片。` + (preview.skipped ? ` 其中 ${preview.skipped} 行不完整，将被跳过。` : ''));
                 importBtn.setDisabled(preview.cards === 0);
             })();
         });
@@ -53,14 +53,14 @@ export class ImportCardsModal extends Modal {
                 if (!preview) return;
                 importBtn.setDisabled(true);
                 try {
-                    const base = this.deckName.trim().replace(/[\\/:*?"<>|#^[\]]/g, '') || 'Imported cards';
+                    const base = this.deckName.trim().replace(/[\\/:*?"<>|#^[\]]/g, '') || '导入的卡片';
                     let path = normalizePath(`${base}.md`);
                     for (let n = 2; this.app.vault.getAbstractFileByPath(path); n++) path = normalizePath(`${base} ${n}.md`);
                     const file = await this.app.vault.create(path, preview.markdown);
-                    new Notice(`Created ${file.path} with ${preview.cards} cards.`, 8000);
+                    new Notice(`已创建 ${file.path}，包含 ${preview.cards} 张卡片。`, 8000);
                     this.close();
                 } catch (error: unknown) {
-                    new Notice(`Import failed: ${getErrorMessage(error)}`, 8000);
+                    new Notice(`导入失败：${getErrorMessage(error)}`, 8000);
                     importBtn.setDisabled(false);
                 }
             })();

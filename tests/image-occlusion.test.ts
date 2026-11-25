@@ -450,19 +450,19 @@ describe('ReviewModal in-place occlusion interaction', () => {
         expect(frontEl.hasClass('is-hidden')).toBe(true);
         expect(answerContainer.hasClass('is-hidden')).toBe(false);
         expect(indicatorEl.hasClass('is-hidden')).toBe(false);
-        expect(indicatorEl.getText()).toBe('Answer (tap to peek question)');
+        expect(indicatorEl.getText()).toBe('答案（点击可回看问题）');
 
         (modal as unknown as { toggleInPlaceView: () => void }).toggleInPlaceView();
 
         expect(frontEl.hasClass('is-hidden')).toBe(false);
         expect(answerContainer.hasClass('is-hidden')).toBe(true);
-        expect(indicatorEl.getText()).toBe('Question (tap to see answer)');
+        expect(indicatorEl.getText()).toBe('问题（点击查看答案）');
 
         (modal as unknown as { toggleInPlaceView: () => void }).toggleInPlaceView();
 
         expect(frontEl.hasClass('is-hidden')).toBe(true);
         expect(answerContainer.hasClass('is-hidden')).toBe(false);
-        expect(indicatorEl.getText()).toBe('Answer (tap to peek question)');
+        expect(indicatorEl.getText()).toBe('答案（点击可回看问题）');
 
         modal.close();
     });

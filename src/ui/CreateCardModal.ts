@@ -21,7 +21,7 @@ export class CreateCardModal extends Modal {
     }
 
     onOpen() {
-        this.titleEl.setText('Create flashcard');
+        this.titleEl.setText('新建闪卡');
         this.modalEl.addClass('fsrs-create-card-modal');
         this.renderForm();
 
@@ -42,8 +42,8 @@ export class CreateCardModal extends Modal {
         }
 
         new Setting(container)
-            .setName('Deck note')
-            .setDesc('Note where this flashcard will be stored')
+            .setName('牌组笔记')
+            .setDesc('这张闪卡将存入的笔记')
             .addDropdown(dd => {
                 for (const f of markdownFiles) {
                     dd.addOption(f.path, f.basename);
@@ -60,15 +60,15 @@ export class CreateCardModal extends Modal {
             });
 
         new Setting(container)
-            .setName('Card type')
-            .setDesc('Format and review behavior')
+            .setName('卡片类型')
+            .setDesc('格式与复习方式')
             .addDropdown(dd => {
-                dd.addOption('basic', 'Basic (multi-line question & answer)');
-                dd.addOption('single', 'Single-line (q::a)');
-                dd.addOption('reversed', 'Reversed (q:::a two-way recall)');
-                dd.addOption('cloze', 'Cloze deletion (fill-in-the-blank)');
-                dd.addOption('occlusion', 'Image occlusion (in-place diagram swap)');
-                dd.addOption('typein', 'Type-in answer (active recall typing)');
+                dd.addOption('basic', '基础（多行问题与答案）');
+                dd.addOption('single', '单行（q::a）');
+                dd.addOption('reversed', '反向（q:::a 双向回忆）');
+                dd.addOption('cloze', '填空（句中挖空）');
+                dd.addOption('occlusion', '图形遮罩（原地切换图片）');
+                dd.addOption('typein', '输入作答（手动键入答案）');
                 dd.setValue(this.cardType);
                 dd.onChange(val => {
                     this.cardType = val as CardTypeOption;
@@ -80,10 +80,10 @@ export class CreateCardModal extends Modal {
 
         if (this.cardType === 'cloze') {
             new Setting(inputsSection)
-                .setName('Cloze sentence')
-                .setDesc('Use ==c1::text== syntax to wrap words you want to hide')
+                .setName('填空句子')
+                .setDesc('使用 ==c1::文本== 语法包裹需要隐藏的词')
                 .addTextArea(ta => {
-                    ta.setPlaceholder('E.g. The ==c1::mitochondria== is the powerhouse of the ==c2::cell==.')
+                    ta.setPlaceholder('例如：==c1::线粒体== 是细胞的 ==c2::动力工厂==。')
                         .setValue(this.clozeText)
                         .onChange(val => {
                             this.clozeText = val;
@@ -94,8 +94,8 @@ export class CreateCardModal extends Modal {
                 });
         } else if (this.cardType === 'occlusion') {
             new Setting(inputsSection)
-                .setName('Occluded diagram (question)')
-                .setDesc('Wiki-link or markdown embed to masked image')
+                .setName('遮罩图（问题）')
+                .setDesc('指向已遮盖图片的 wiki 链接或 Markdown 嵌入')
                 .addText(text => {
                     text.setPlaceholder('![[diagram-masked.png]]')
                         .setValue(this.frontText)
@@ -107,8 +107,8 @@ export class CreateCardModal extends Modal {
                 });
 
             new Setting(inputsSection)
-                .setName('Revealed diagram (answer)')
-                .setDesc('Wiki-link or markdown embed to unmasked image')
+                .setName('完整图（答案）')
+                .setDesc('指向未遮盖图片的 wiki 链接或 Markdown 嵌入')
                 .addText(text => {
                     text.setPlaceholder('![[diagram-unmasked.png]]')
                         .setValue(this.backText)
@@ -121,10 +121,10 @@ export class CreateCardModal extends Modal {
         } else {
             const isSingle = this.cardType === 'single' || this.cardType === 'reversed';
             new Setting(inputsSection)
-                .setName('Front / question')
-                .setDesc('Prompt shown during review')
+                .setName('正面 / 问题')
+                .setDesc('复习时显示的题目')
                 .addTextArea(ta => {
-                    ta.setPlaceholder('Enter question or prompt...')
+                    ta.setPlaceholder('输入问题或提示……')
                         .setValue(this.frontText)
                         .onChange(val => {
                             this.frontText = val;
@@ -135,10 +135,10 @@ export class CreateCardModal extends Modal {
                 });
 
             new Setting(inputsSection)
-                .setName('Back / answer')
-                .setDesc('Solution revealed on review')
+                .setName('背面 / 答案')
+                .setDesc('点击显示答案后呈现的内容')
                 .addTextArea(ta => {
-                    ta.setPlaceholder('Enter answer or explanation...')
+                    ta.setPlaceholder('输入答案或解释……')
                         .setValue(this.backText)
                         .onChange(val => {
                             this.backText = val;
@@ -150,16 +150,16 @@ export class CreateCardModal extends Modal {
         }
 
         const previewContainer = container.createDiv({ cls: 'fsrs-card-preview-container' });
-        previewContainer.createDiv({ text: 'Markdown preview', cls: 'fsrs-preview-heading' });
+        previewContainer.createDiv({ text: 'Markdown 预览', cls: 'fsrs-preview-heading' });
         this.previewEl = previewContainer.createEl('pre', { cls: 'fsrs-card-preview-code' });
         this.updatePreview();
 
         new Setting(container)
             .addButton(btn => btn
-                .setButtonText('Cancel')
+                .setButtonText('取消')
                 .onClick(() => this.close()))
             .addButton(btn => btn
-                .setButtonText('Insert card')
+                .setButtonText('插入卡片')
                 .setCta()
                 .onClick(() => void this.handleInsert()));
     }
@@ -208,17 +208,17 @@ export class CreateCardModal extends Modal {
 
     private async handleInsert() {
         if (!this.targetFile) {
-            new Notice('Please select a target note.');
+            new Notice('请先选择目标笔记。');
             return;
         }
 
         if (this.cardType === 'cloze' && !this.clozeText.trim()) {
-            new Notice('Please enter a cloze sentence.');
+            new Notice('请输入填空句子。');
             return;
         }
 
         if (this.cardType !== 'cloze' && (!this.frontText.trim() || !this.backText.trim())) {
-            new Notice('Please fill in both question and answer.');
+            new Notice('请同时填写问题与答案。');
             return;
         }
 
@@ -236,7 +236,7 @@ export class CreateCardModal extends Modal {
             await this.app.vault.process(this.targetFile, (existing) => `${existing.trimEnd()}\n\n${cardMarkdown}\n`);
         }
 
-        new Notice(`Card added to ${this.targetFile.basename}`);
+        new Notice(`已添加卡片到 ${this.targetFile.basename}`);
         this.close();
         this.plugin.refreshDashboardView();
     }

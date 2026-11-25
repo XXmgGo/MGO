@@ -25,10 +25,10 @@ export class FSRSSettingsTab extends PluginSettingTab {
         const tabContent = containerEl.createDiv({ cls: 'mgo-tab-content' });
 
         const tabs = [
-            { id: 'general', label: 'General' },
-            { id: 'sync', label: 'Sync' },
-            { id: 'advanced', label: 'Advanced' },
-            { id: 'about', label: 'About' },
+            { id: 'general', label: '通用' },
+            { id: 'sync', label: '同步' },
+            { id: 'advanced', label: '高级' },
+            { id: 'about', label: '关于' },
         ];
 
         const showTab = (tabId: string) => {
@@ -53,11 +53,11 @@ export class FSRSSettingsTab extends PluginSettingTab {
     }
 
     private renderGeneralTab(containerEl: HTMLElement) {
-        new Setting(containerEl).setName('Review defaults').setHeading();
+        new Setting(containerEl).setName('复习默认值').setHeading();
 
         new Setting(containerEl)
-            .setName('Max new cards per day')
-            .setDesc('Default limit of new cards to introduce each day per deck. You can override this per note using frontmatter (e.g. newCardsPerDay: 15).')
+            .setName('每日新卡上限')
+            .setDesc('每个牌组每天引入新卡的默认数量上限。你可以在单个笔记的 frontmatter 中覆盖此设置（例如 newCardsPerDay: 15）。')
             .addText((text) => text
                 .setValue(this.plugin.settings.newCardsPerDay.toString())
                 .onChange(async (value) => {
@@ -69,8 +69,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Max reviews per day')
-            .setDesc('Default limit of review cards per day per deck. You can override this per note using frontmatter (e.g. reviewsPerDay: 50).')
+            .setName('每日复习上限')
+            .setDesc('每个牌组每天复习卡的默认数量上限。你可以在单个笔记的 frontmatter 中覆盖此设置（例如 reviewsPerDay: 50）。')
             .addText((text) => text
                 .setValue(this.plugin.settings.reviewsPerDay.toString())
                 .onChange(async (value) => {
@@ -82,8 +82,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Bury siblings until next day')
-            .setDesc('When studying, defer sibling cards (such as other cloze deletions from the same note) until the next day to prevent recall cues.')
+            .setName('隐藏同辈卡至次日')
+            .setDesc('学习时，把同辈卡（例如同一条笔记的其他填空题卡）推迟到第二天再出现，避免回忆线索互相泄露。')
             .addToggle((toggle) => toggle
                 .setValue(this.plugin.settings.burySiblings ?? true)
                 .onChange(async (value) => {
@@ -92,8 +92,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Leech threshold')
-            .setDesc('Number of lapses (forgetting a card) before displaying a leech warning during review and browsing. Set to 0 to disable.')
+            .setName('顽固卡阈值')
+            .setDesc('一张卡累计失误（忘记）多少次后，在复习和浏览时给出顽固卡提醒。设为 0 表示关闭。')
             .addText((text) => text
                 .setValue((this.plugin.settings.leechThreshold ?? 8).toString())
                 .onChange(async (value) => {
@@ -104,11 +104,11 @@ export class FSRSSettingsTab extends PluginSettingTab {
                     }
                 }));
 
-        new Setting(containerEl).setName('Deck organization').setHeading();
+        new Setting(containerEl).setName('牌组组织方式').setHeading();
 
         new Setting(containerEl)
-            .setName('Deck tag')
-            .setDesc('The tag used to identify deck notes (e.g. "flashcards" for #flashcards). Any note with this tag is recognized as a deck.')
+            .setName('牌组标签')
+            .setDesc('用于识别牌组笔记的标签（例如 "flashcards" 对应 #flashcards）。带此标签的笔记都会被识别为一个牌组。')
             .addText((text) => text
                 .setPlaceholder('Flashcards')
                 .setValue(this.plugin.settings.deckTag)
@@ -119,11 +119,11 @@ export class FSRSSettingsTab extends PluginSettingTab {
                     this.plugin.refreshDashboardView();
                 }));
 
-        new Setting(containerEl).setName('Appearance').setHeading();
+        new Setting(containerEl).setName('外观').setHeading();
 
         new Setting(containerEl)
-            .setName('Review font size')
-            .setDesc('Text font size in the flashcard review window.')
+            .setName('复习字号')
+            .setDesc('闪卡复习窗口中的文字字号。')
             .addSlider((slider) => slider
                 .setLimits(12, 32, 1)
                 .setValue(this.plugin.settings.fontSize)
@@ -133,47 +133,47 @@ export class FSRSSettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        new Setting(containerEl).setName('Storage and database').setHeading();
+        new Setting(containerEl).setName('存储与数据库').setHeading();
 
         new Setting(containerEl)
-            .setName('Use PouchDB (IndexedDB)')
-            .setDesc('Store review progress in high-performance browser storage (IndexedDB) instead of a single data.json file. Recommended for vaults with over 500 cards or when using sync.')
+            .setName('使用 PouchDB（IndexedDB）')
+            .setDesc('把复习进度存放在高性能的浏览器存储（IndexedDB）中，而不是单个 data.json 文件。卡片数超过 500 或开启同步时推荐使用。')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.usePouchDB)
                 .onChange(async (value) => {
                     this.plugin.settings.usePouchDB = value;
                     await this.plugin.saveSettings();
-                    new Notice('Please reload Obsidian for this change to take effect');
+                    new Notice('请重新加载 Obsidian 以使此更改生效');
                 }));
 
         new Setting(containerEl)
-            .setName('Migrate to PouchDB')
-            .setDesc('Convert your existing data.json to PouchDB format (requires PouchDB to be enabled).')
+            .setName('迁移到 PouchDB')
+            .setDesc('把现有的 data.json 转换为 PouchDB 格式（需先启用 PouchDB）。')
             .setDisabled(!this.plugin.settings.usePouchDB)
             .addButton(btn => btn
-                .setButtonText('Migrate now')
+                .setButtonText('立即迁移')
                 .setCta()
                 .onClick(async () => {
                     await this.migrateData();
                 }));
 
-        new Setting(containerEl).setName('Reset progress').setHeading();
+        new Setting(containerEl).setName('重置进度').setHeading();
 
         new Setting(containerEl)
-            .setName('Reset all card progress')
-            .setDesc('Permanently delete all review history and start from scratch.')
+            .setName('重置全部卡片进度')
+            .setDesc('永久删除所有复习历史，从零开始。')
             .addButton(btn => btn
-                .setButtonText('Reset progress')
+                .setButtonText('重置进度')
                 .setWarning()
                 .onClick(() => new ResetProgressModal(this.app, this.plugin).open()));
     }
 
     private renderSyncTab(containerEl: HTMLElement) {
-        new Setting(containerEl).setName('Sync').setHeading();
+        new Setting(containerEl).setName('同步').setHeading();
 
         new Setting(containerEl)
-            .setName('Enable sync')
-            .setDesc('Sync your flashcard data with a CouchDB server')
+            .setName('启用同步')
+            .setDesc('将闪卡数据与 CouchDB 服务器同步')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.syncEnabled)
                 .onChange(async (value) => {
@@ -185,15 +185,15 @@ export class FSRSSettingsTab extends PluginSettingTab {
                         await this.setupSync();
                     } else if (!value && pouchDB) {
                         await pouchDB.stopSync();
-                        new Notice('Sync disabled');
+                        new Notice('同步已关闭');
                     }
                 }));
 
         new Setting(containerEl)
-            .setName('CouchDB server URL')
-            .setDesc('Your CouchDB server URL (for example, https://example.com:5984/db)')
+            .setName('CouchDB 服务器 URL')
+            .setDesc('你的 CouchDB 服务器 URL（例如 https://example.com:5984/db）')
             .addText(text => text
-                .setPlaceholder('Enter server URL (for example, https://example.com:5984/db)')
+                .setPlaceholder('输入服务器 URL（例如 https://example.com:5984/db）')
                 .setValue(this.plugin.settings.syncUrl)
                 .onChange(async (value) => {
                     this.plugin.settings.syncUrl = value.trim();
@@ -201,8 +201,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Database name')
-            .setDesc('The name of the database on your CouchDB server')
+            .setName('数据库名称')
+            .setDesc('CouchDB 服务器上使用的数据库名称')
             .addText(text => text
                 .setPlaceholder('MGO')
                 .setValue(this.plugin.settings.syncDbName)
@@ -212,8 +212,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Username')
-            .setDesc('CouchDB username for authentication')
+            .setName('用户名')
+            .setDesc('用于身份验证的 CouchDB 用户名')
             .addText(text => text
                 .setPlaceholder('Admin')
                 .setValue(this.plugin.settings.syncUsername)
@@ -223,10 +223,10 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Password')
-            .setDesc('CouchDB password (saved in this vault\'s plugin data file)')
+            .setName('密码')
+            .setDesc('CouchDB 密码（保存在此保险库的插件数据文件中）')
             .addText(text => {
-                text.setPlaceholder('Enter password')
+                text.setPlaceholder('请输入密码')
                     .setValue(this.plugin.settings.syncPassword)
                     .onChange(async (value) => {
                         this.plugin.settings.syncPassword = value;
@@ -237,45 +237,45 @@ export class FSRSSettingsTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName('Test sync')
-            .setDesc('Validate connection and run a one-time sync check from settings')
+            .setName('测试同步')
+            .setDesc('在设置页校验连接，并执行一次同步检查')
             .setDisabled(!this.plugin.settings.usePouchDB)
             .addButton((btn) => btn
-                .setButtonText('Run test')
+                .setButtonText('运行测试')
                 .onClick(async () => {
                     await this.testSyncConnection();
                 }));
 
         if (this.plugin.settings.syncEnabled && this.plugin.dataManager.getPouchDB()) {
             new Setting(containerEl)
-                .setName('Sync status')
-                .setDesc('Check your current sync status')
+                .setName('同步状态')
+                .setDesc('查看当前的同步状态')
                 .addButton(btn => btn
-                    .setButtonText('Check status')
+                    .setButtonText('检查状态')
                     .onClick(async () => {
                         const pouchDB = this.plugin.dataManager.getPouchDB();
                         if (pouchDB) {
                             const status = await pouchDB.getSyncStatus();
                             const info = await pouchDB.getDatabaseInfo();
                             const docCount = getDocCount(info);
-                            new Notice(`Sync status: ${status.enabled ? 'Active' : 'Inactive'}\nDocs: ${docCount}\nLast sync: ${status.lastSyncTime || 'Never'}`, 10000);
+                            new Notice(`同步状态：${status.enabled ? '进行中' : '未运行'}\n文档数：${docCount}\n上次同步：${status.lastSyncTime || '从未'}`, 10000);
                         }
                     }));
         }
     }
 
     private renderAdvancedTab(containerEl: HTMLElement) {
-        new Setting(containerEl).setName('FSRS parameters').setHeading();
+        new Setting(containerEl).setName('FSRS 参数').setHeading();
         containerEl.createEl('p', {
-            text: 'These settings control the scheduling algorithm. Change them only if you know what you are doing.',
+            text: '这些设置控制排程算法。只有在清楚自己在做什么的情况下才建议修改。',
             cls: 'setting-item-description',
         });
 
         new Setting(containerEl)
-            .setName('Reset FSRS parameters')
-            .setDesc('Reset to FSRS defaults.')
+            .setName('重置 FSRS 参数')
+            .setDesc('恢复为 FSRS 默认参数。')
             .addButton((btn) => btn
-                .setButtonText('Reset')
+                .setButtonText('重置')
                 .setWarning()
                 .onClick(async () => {
                     this.plugin.settings.fsrsParams = generatorParameters();
@@ -285,8 +285,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Request retention')
-            .setDesc('Target recall probability when a card is due (0.7 to 0.99). Higher values (e.g. 0.90 = 90%) create shorter intervals and more frequent reviews; lower values yield longer intervals. Override per note via frontmatter (e.g. requestRetention: 0.85).')
+            .setName('期望保留率')
+            .setDesc('卡片到期时希望达到的回忆概率（0.7 到 0.99）。取值越高（例如 0.90 = 90%），间隔越短、复习越频繁；取值越低则间隔越长。可在单个笔记的 frontmatter 中覆盖（例如 requestRetention: 0.85）。')
             .addText((text) => text
                 .setValue(this.plugin.settings.fsrsParams.request_retention.toString())
                 .onChange(async (value) => {
@@ -299,8 +299,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Maximum interval')
-            .setDesc('The maximum scheduling interval in days between reviews (default: 36500 days = 100 years).')
+            .setName('最大间隔')
+            .setDesc('两次复习之间的最大排程间隔（单位：天，默认 36500 天 = 100 年）。')
             .addText((text) => text
                 .setValue(this.plugin.settings.fsrsParams.maximum_interval.toString())
                 .onChange(async (value) => {
@@ -313,8 +313,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('FSRS weights')
-            .setDesc('FSRS model parameters (19 numbers) determining memory stability and difficulty. Can be automatically tuned with the optimizer below.')
+            .setName('FSRS 权重')
+            .setDesc('决定记忆稳定性和难度的 FSRS 模型参数（19 个数字）。可使用下方的优化器自动调优。')
             .addTextArea((text) => {
                 text.setValue(this.plugin.settings.fsrsParams.w.join(', '))
                     .onChange(async (value) => {
@@ -333,12 +333,12 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 text.inputEl.addClass('fsrs-weights-textarea');
             });
 
-        new Setting(containerEl).setName('Optimization').setHeading();
+        new Setting(containerEl).setName('参数优化').setHeading();
         new Setting(containerEl)
-            .setName('Optimize FSRS weights')
-            .setDesc('Automatically tune FSRS weights to your review history for more accurate scheduling.')
+            .setName('优化 FSRS 权重')
+            .setDesc('根据你的复习历史自动调优 FSRS 权重，让排程更准确。')
             .addButton(btn => btn
-                .setButtonText('Run optimizer')
+                .setButtonText('运行优化器')
                 .setCta()
                 .onClick(async () => {
                     const { OptimizerModal } = await import('./OptimizerModal');
@@ -347,15 +347,15 @@ export class FSRSSettingsTab extends PluginSettingTab {
     }
 
     private renderAboutTab(containerEl: HTMLElement) {
-        new Setting(containerEl).setName('About').setHeading();
+        new Setting(containerEl).setName('关于').setHeading();
 
         new Setting(containerEl)
             .setName('MGO')
-            .setDesc(`v${this.plugin.manifest.version} by Fundaments Work — FSRS spaced repetition flashcards for Obsidian.`);
+            .setDesc(`v${this.plugin.manifest.version} — 基于 Lemma（Fundaments Work 创作，MIT 协议）二次开发的 FSRS 间隔重复闪卡插件。`);
 
         new Setting(containerEl)
-            .setName('Support development')
-            .setDesc('Support continuous development and upcoming features.')
+            .setName('支持开发')
+            .setDesc('支持持续开发与后续新功能。')
             .addButton((btn) => btn
                 .setButtonText('Buy me a momo')
                 .setCta()
@@ -364,60 +364,60 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Documentation and guide')
-            .setDesc('Open the interactive flashcard authoring guide and tips.')
+            .setName('文档与指南')
+            .setDesc('打开可交互的闪卡编写指南与使用技巧。')
             .addButton((btn) => btn
-                .setButtonText('Open guide')
+                .setButtonText('打开指南')
                 .onClick(async () => {
                     const { HelpModal } = await import('./HelpModal');
                     new HelpModal(this.app, this.plugin).open();
                 }));
 
         new Setting(containerEl)
-            .setName('GitHub repository')
-            .setDesc('View source code, report issues, and follow releases on GitHub.')
+            .setName('GitHub 仓库')
+            .setDesc('在 GitHub 上查看源码、提交问题并跟进版本发布。')
             .addButton((btn) => btn
-                .setButtonText('Open repository')
+                .setButtonText('打开仓库')
                 .onClick(() => {
                     activeWindow.open('https://github.com/XXmgGo/MGO', '_blank');
                 }));
 
         new Setting(containerEl)
-            .setName('License')
-            .setDesc(`Released under the MIT license, copyright 2025-2026 ${this.plugin.manifest.author}.`)
+            .setName('许可证')
+            .setDesc(`以 MIT 协议发布，版权 2025-2026 ${this.plugin.manifest.author}。`)
             .addButton((btn) => btn
-                .setButtonText('View license')
+                .setButtonText('查看许可证')
                 .onClick(() => {
                     activeWindow.open('https://github.com/XXmgGo/MGO/blob/main/LICENSE', '_blank');
                 }));
 
-        new Setting(containerEl).setName('Quick card cheatsheet').setHeading();
+        new Setting(containerEl).setName('卡片语法速查').setHeading();
 
         const cardBox = containerEl.createDiv({ cls: 'mgo-about-cheatsheet' });
         const cardGrid = cardBox.createDiv({ cls: 'mgo-about-grid' });
         const cardFormats: [string, string][] = [
-            ['Basic block', '---card--- ^id \n Question \n --- \n Answer \n ---end---'],
-            ['Single-line', 'Question::Answer ^id'],
-            ['Reversed', 'Question:::Answer ^id (bidirectional)'],
-            ['Cloze deletion', 'Sentence with ==c1::hidden text=='],
-            ['Image occlusion', '![[mask.png]]::![[reveal.png]] (in-place)'],
-            ['Type-in answer', '?type Question::Answer'],
-            ['Whole-note', 'Tag note with #review for full-page study'],
+            ['基础代码块', '---card--- ^id \n Question \n --- \n Answer \n ---end---'],
+            ['单行格式', 'Question::Answer ^id'],
+            ['双向卡', 'Question:::Answer ^id（双向）'],
+            ['填空题', 'Sentence with ==c1::hidden text=='],
+            ['图片遮罩', '![[mask.png]]::![[reveal.png]]（原地覆盖）'],
+            ['输入式答案', '?type Question::Answer'],
+            ['整篇笔记', '给笔记加上 #review 标签即可整页学习'],
         ];
         for (const [key, desc] of cardFormats) {
             cardGrid.createSpan({ cls: 'mgo-about-key', text: key });
             cardGrid.createSpan({ cls: 'mgo-about-val', text: desc });
         }
 
-        new Setting(containerEl).setName('Review shortcuts').setHeading();
+        new Setting(containerEl).setName('复习快捷键').setHeading();
 
         const shortcutBox = containerEl.createDiv({ cls: 'mgo-about-cheatsheet' });
         const shortcutGrid = shortcutBox.createDiv({ cls: 'mgo-about-grid' });
         const shortcuts: [string, string][] = [
-            ['Space / Enter', 'Reveal answer or toggle peek'],
-            ['1 / 2 / 3 / 4', 'Rate card: Again (1), Hard (2), Good (3), Easy (4)'],
-            ['Esc', 'Close session and save progress'],
-            ['Swipe gestures', 'Left: Again · Down: Hard · Right: Good · Up: Easy'],
+            ['空格 / 回车', '显示答案，或切换预览'],
+            ['1 / 2 / 3 / 4', '评分：重来（1）、困难（2）、良好（3）、简单（4）'],
+            ['Esc', '结束本次学习并保存进度'],
+            ['滑动手势', '左：重来 · 下：困难 · 右：良好 · 上：简单'],
         ];
         for (const [key, desc] of shortcuts) {
             shortcutGrid.createSpan({ cls: 'mgo-about-key', text: key });
@@ -428,16 +428,16 @@ export class FSRSSettingsTab extends PluginSettingTab {
     async migrateData() {
         const pouchDB = this.plugin.dataManager.getPouchDB();
         if (!pouchDB) {
-            new Notice('PouchDB is not enabled');
+            new Notice('未启用 PouchDB');
             return;
         }
 
         try {
-            new Notice('Starting migration... This may take a while for large collections.');
+            new Notice('开始迁移……如果卡片数量很多，可能需要一些时间。');
 
             const legacyData = (await this.plugin.loadData()) as LegacyPluginData | null;
             if (!legacyData) {
-                new Notice('No legacy data found to migrate');
+                new Notice('没有找到可迁移的旧版数据');
                 return;
             }
 
@@ -455,41 +455,41 @@ export class FSRSSettingsTab extends PluginSettingTab {
             const verification = await migration.verifyMigration(legacyData);
 
             if (verification.success) {
-                new Notice(`Migration successful! Migrated ${verification.stats.migratedCards} cards and ${verification.stats.migratedLogs} reviews.`);
+                new Notice(`迁移成功！已迁移 ${verification.stats.migratedCards} 张卡片和 ${verification.stats.migratedLogs} 条复习记录。`);
                 this.plugin.settings.usePouchDB = true;
                 await this.plugin.saveSettings();
                 this.display();
             } else {
-                new Notice(`Migration completed with errors: ${verification.errors.join(', ')}`, 10000);
+                new Notice(`迁移完成但存在错误：${verification.errors.join(', ')}`, 10000);
             }
 
         } catch (error) {
             console.error('Migration failed:', error);
-            new Notice(`Migration failed: ${getErrorMessage(error)}`);
+            new Notice(`迁移失败：${getErrorMessage(error)}`);
         }
     }
 
     async setupSync() {
         const pouchDB = this.plugin.dataManager.getPouchDB();
         if (!pouchDB) {
-            new Notice('PouchDB is not enabled');
+            new Notice('未启用 PouchDB');
             return;
         }
 
         if (!this.plugin.settings.syncUrl) {
-            new Notice('Please enter a CouchDB server URL first');
+            new Notice('请先输入 CouchDB 服务器 URL');
             return;
         }
 
         if (!this.plugin.settings.syncUsername || !this.plugin.settings.syncPassword) {
-            new Notice('Please enter both username and password');
+            new Notice('请同时填写用户名和密码');
             return;
         }
 
         try {
-            new Notice('Setting up sync...');
+            new Notice('正在设置同步……');
             if (usesInsecureHttp(this.plugin.settings.syncUrl)) {
-                new Notice('Warning: this sync URL uses http. Credentials and review data will be sent unencrypted.', 8000);
+                new Notice('警告：此同步 URL 使用 http，凭据和复习数据将以明文发送。', 8000);
             }
             const syncUrl = buildAuthenticatedUrl(
                 this.plugin.settings.syncUrl,
@@ -498,10 +498,10 @@ export class FSRSSettingsTab extends PluginSettingTab {
                 this.plugin.settings.syncPassword,
             );
             await pouchDB.setupSync(syncUrl);
-            new Notice('Sync enabled successfully!');
+            new Notice('同步已成功启用！');
         } catch (error) {
             console.error('Sync setup failed:', error);
-            new Notice(`Sync setup failed: ${getErrorMessage(error)}`);
+            new Notice(`同步设置失败：${getErrorMessage(error)}`);
             this.plugin.settings.syncEnabled = false;
             await this.plugin.saveSettings();
         }
@@ -510,19 +510,19 @@ export class FSRSSettingsTab extends PluginSettingTab {
     async testSyncConnection() {
         const pouchDB = this.plugin.dataManager.getPouchDB();
         if (!pouchDB) {
-            new Notice('PouchDB is not enabled');
+            new Notice('未启用 PouchDB');
             return;
         }
 
         if (!this.plugin.settings.syncUrl) {
-            new Notice('Please enter a CouchDB server URL first');
+            new Notice('请先输入 CouchDB 服务器 URL');
             return;
         }
 
         try {
-            new Notice('Testing sync connection...');
+            new Notice('正在测试同步连接……');
             if (usesInsecureHttp(this.plugin.settings.syncUrl)) {
-                new Notice('Warning: this sync URL uses http. Credentials and review data will be sent unencrypted.', 8000);
+                new Notice('警告：此同步 URL 使用 http，凭据和复习数据将以明文发送。', 8000);
             }
             const syncUrl = buildAuthenticatedUrl(
                 this.plugin.settings.syncUrl,
@@ -535,20 +535,20 @@ export class FSRSSettingsTab extends PluginSettingTab {
             const localDocCount = getDocCount(localInfo);
             const remoteDocCount = getDocCount(remoteInfo);
 
-            let syncMessage = 'Connection check only (sync is disabled).';
+            let syncMessage = '仅检查连接（同步已关闭）。';
             if (this.plugin.settings.syncEnabled) {
                 await pouchDB.setupSync(syncUrl);
                 await pouchDB.manualSync();
-                syncMessage = 'Manual sync check passed.';
+                syncMessage = '手动同步检查通过。';
             }
 
             new Notice(
-                `Sync test passed.\nLocal docs: ${localDocCount}\nRemote docs: ${remoteDocCount}\n${syncMessage}`,
+                `同步测试通过。\n本地文档数：${localDocCount}\n远端文档数：${remoteDocCount}\n${syncMessage}`,
                 10000,
             );
         } catch (error) {
             console.error('Sync test failed:', error);
-            new Notice(`Sync test failed: ${getErrorMessage(error)}`, 8000);
+            new Notice(`同步测试失败：${getErrorMessage(error)}`, 8000);
         }
     }
 

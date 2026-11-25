@@ -14,18 +14,18 @@ export class ImportBackupModal extends Modal {
     }
 
     onOpen() {
-        this.titleEl.setText('Import review data');
+        this.titleEl.setText('导入复习数据');
         const intro = this.contentEl.createEl('p', {
-            text: 'Choose a MGO backup or a data.json file. Schedules are merged: a card keeps whichever version was reviewed most recently, and nothing is deleted.',
+            text: '选择一个 MGO 备份文件或 data.json 文件。排程会合并：每张卡片保留复习时间更晚的版本，不会删除任何内容。',
         });
         intro.addClass('fsrs-import-intro');
 
         const input = this.contentEl.createEl('input', {
-            attr: { type: 'file', accept: '.json,application/json', 'aria-label': 'Backup file' },
+            attr: { type: 'file', accept: '.json,application/json', 'aria-label': '备份文件' },
         });
         const summary = this.contentEl.createDiv({ cls: 'fsrs-import-summary' });
         const actions = this.contentEl.createDiv({ cls: 'modal-button-container' });
-        const importBtn = new ButtonComponent(actions).setButtonText('Import').setCta().setDisabled(true);
+        const importBtn = new ButtonComponent(actions).setButtonText('导入').setCta().setDisabled(true);
         importBtn.onClick(() => { void this.runImport(importBtn); });
 
         input.addEventListener('change', () => {
@@ -37,8 +37,8 @@ export class ImportBackupModal extends Modal {
                 try {
                     this.content = parseBackup(await file.text());
                     const cards = Object.keys(this.content.cardData).length;
-                    summary.setText(`Found ${cards} card schedules and ${this.content.reviewHistory.length} reviews.`
-                        + (this.content.skipped ? ` ${this.content.skipped} invalid entries will be skipped.` : ''));
+                    summary.setText(`找到 ${cards} 条卡片排程和 ${this.content.reviewHistory.length} 条复习记录。`
+                        + (this.content.skipped ? ` 其中 ${this.content.skipped} 条无效记录将被跳过。` : ''));
                     importBtn.setDisabled(cards === 0 && this.content.reviewHistory.length === 0);
                 } catch (error: unknown) {
                     summary.setText(getErrorMessage(error));
@@ -52,11 +52,11 @@ export class ImportBackupModal extends Modal {
         button.setDisabled(true);
         try {
             const result = await this.plugin.dataManager.importBackup(this.content);
-            new Notice(`Imported ${result.cards} schedules (${result.matched} match cards in this vault) and ${result.reviews} reviews.`, 8000);
+            new Notice(`已导入 ${result.cards} 条排程（其中 ${result.matched} 条匹配本仓库的卡片）和 ${result.reviews} 条复习记录。`, 8000);
             this.plugin.refreshDashboardView();
             this.close();
         } catch (error: unknown) {
-            new Notice(`Import failed: ${getErrorMessage(error)}`, 8000);
+            new Notice(`导入失败：${getErrorMessage(error)}`, 8000);
             button.setDisabled(false);
         }
     }

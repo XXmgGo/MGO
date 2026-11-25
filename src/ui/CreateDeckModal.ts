@@ -13,33 +13,33 @@ export class CreateDeckModal extends Modal {
     }
 
     onOpen() {
-        this.titleEl.setText('Create new deck');
+        this.titleEl.setText('新建牌组');
         const container = this.contentEl.createDiv({ cls: 'fsrs-create-deck-container' });
 
         new Setting(container)
-            .setName('Deck title')
-            .setDesc('Title of the deck note to create')
+            .setName('牌组标题')
+            .setDesc('要创建的牌组笔记的标题')
             .addText(text => text
-                .setPlaceholder('E.g. Neuroscience 101')
+                .setPlaceholder('例如：神经科学 101')
                 .onChange(val => {
                     this.deckName = val.trim();
                 }));
 
         new Setting(container)
-            .setName('Folder (optional)')
-            .setDesc('Leave blank to place at vault root')
+            .setName('文件夹（可选）')
+            .setDesc('留空则创建在仓库根目录')
             .addText(text => text
-                .setPlaceholder('E.g. Flashcards or study/decks')
+                .setPlaceholder('例如：Flashcards 或 study/decks')
                 .onChange(val => {
                     this.folderPath = val.trim();
                 }));
 
         new Setting(container)
             .addButton(btn => btn
-                .setButtonText('Cancel')
+                .setButtonText('取消')
                 .onClick(() => this.close()))
             .addButton(btn => btn
-                .setButtonText('Create deck')
+                .setButtonText('创建牌组')
                 .setCta()
                 .onClick(() => void this.handleCreate()));
 
@@ -52,7 +52,7 @@ export class CreateDeckModal extends Modal {
 
     private async handleCreate() {
         if (!this.deckName) {
-            new Notice('Please enter a deck title.');
+            new Notice('请输入牌组标题。');
             return;
         }
 
@@ -70,7 +70,7 @@ export class CreateDeckModal extends Modal {
 
         const existing = this.app.vault.getAbstractFileByPath(fullPath);
         if (existing) {
-            new Notice(`A file already exists at ${fullPath}`);
+            new Notice(`该路径下已存在文件：${fullPath}`);
             return;
         }
 
@@ -82,7 +82,7 @@ export class CreateDeckModal extends Modal {
 
         const leaf = this.app.workspace.getLeaf(false);
         await leaf.openFile(newFile);
-        new Notice(`Deck created: ${this.deckName}`);
+        new Notice(`牌组已创建：${this.deckName}`);
         this.plugin.refreshDashboardView();
     }
 }

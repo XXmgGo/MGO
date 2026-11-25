@@ -19,7 +19,7 @@ export class ReviewNoteModal extends Modal {
     onOpen() {
         this.renderComponent = new Component();
         this.containerEl.addClass('fsrs-review-modal-immersive');
-        this.titleEl.setText(`Reviewing notes (${this.currentIndex + 1}/${this.queue.length})`);
+        this.titleEl.setText(`复习笔记（${this.currentIndex + 1}/${this.queue.length}）`);
         this.contentEl.empty();
         this.setupUI();
         void this.showCurrentNote();
@@ -42,12 +42,12 @@ export class ReviewNoteModal extends Modal {
         const headerEl = noteContainer.createDiv({ cls: 'fsrs-note-review-header' });
         const noteData = this.getCurrentNote();
         setIcon(headerEl.createSpan({ cls: 'fsrs-note-review-icon' }), 'file-text');
-        headerEl.createSpan({ text: noteData.filePath.split('/').pop() || 'untitled', cls: 'fsrs-note-review-title' });
+        headerEl.createSpan({ text: noteData.filePath.split('/').pop() || '未命名', cls: 'fsrs-note-review-title' });
 
         noteContainer.createDiv({ cls: 'fsrs-note-review-content fsrs-note-preview' });
 
         new ButtonComponent(container)
-            .setButtonText('Open note in editor')
+            .setButtonText('在编辑器中打开笔记')
             .setCta()
             .onClick(() => {
                 const current = this.getCurrentNote();
@@ -57,10 +57,10 @@ export class ReviewNoteModal extends Modal {
         const ratingSection = container.createDiv({ cls: 'fsrs-review-controls fsrs-note-rating-section' });
 
         const ratings: Array<{ text: string; rating: Exclude<Rating, Rating.Manual>; cls: string }> = [
-            { text: 'Again', rating: Rating.Again, cls: 'fsrs-rating-again' },
-            { text: 'Hard', rating: Rating.Hard, cls: 'fsrs-rating-hard' },
-            { text: 'Good', rating: Rating.Good, cls: 'fsrs-rating-good' },
-            { text: 'Easy', rating: Rating.Easy, cls: 'fsrs-rating-easy' },
+            { text: '重来', rating: Rating.Again, cls: 'fsrs-rating-again' },
+            { text: '困难', rating: Rating.Hard, cls: 'fsrs-rating-hard' },
+            { text: '良好', rating: Rating.Good, cls: 'fsrs-rating-good' },
+            { text: '简单', rating: Rating.Easy, cls: 'fsrs-rating-easy' },
         ];
 
         for (const { text, rating, cls } of ratings) {
@@ -71,17 +71,17 @@ export class ReviewNoteModal extends Modal {
         }
 
         new ButtonComponent(container)
-            .setButtonText('Skip')
+            .setButtonText('跳过')
             .onClick(() => this.nextNote());
     }
 
     private async showCurrentNote() {
         const noteData = this.getCurrentNote();
-        this.titleEl.setText(`Reviewing notes (${this.currentIndex + 1}/${this.queue.length})`);
+        this.titleEl.setText(`复习笔记（${this.currentIndex + 1}/${this.queue.length}）`);
 
         const titleEl = this.contentEl.querySelector('.fsrs-note-review-title');
         if (titleEl) {
-            titleEl.textContent = noteData.filePath.split('/').pop() || 'untitled';
+            titleEl.textContent = noteData.filePath.split('/').pop() || '未命名';
         }
 
         const previewEl = this.contentEl.querySelector('.fsrs-note-preview');
@@ -110,7 +110,7 @@ export class ReviewNoteModal extends Modal {
         this.currentIndex++;
         if (this.currentIndex >= this.queue.length) {
             this.close();
-            new Notice('Note review session complete!');
+            new Notice('笔记复习完成！');
             return;
         }
         void this.showCurrentNote();

@@ -18,7 +18,7 @@ export class DashboardView extends ItemView {
         this.plugin = plugin;
     }
     getViewType(): string { return VIEW_TYPE_DASHBOARD; }
-    getDisplayText(): string { return 'MGO decks'; }
+    getDisplayText(): string { return 'MGO 牌组'; }
     getIcon(): string { return VIEW_ICON_NAME; }
     async onOpen() { this.render(); }
 
@@ -36,8 +36,8 @@ export class DashboardView extends ItemView {
 
     private renderLoading() {
         const container = this.contentEl.createDiv({ cls: 'fsrs-empty-state' });
-        container.createEl('h2', { text: 'Loading decks...' });
-        container.createEl('p', { text: 'Please wait while we scan your vault.' });
+        container.createEl('h2', { text: '正在加载牌组……' });
+        container.createEl('p', { text: '正在扫描你的仓库，请稍候。' });
         new ButtonComponent(container)
             .setIcon('loader')
             .setDisabled(true)
@@ -65,14 +65,14 @@ export class DashboardView extends ItemView {
             return btn;
         };
 
-        const studyAllBtn = createDashBtn('play', 'Study all due', () => {
+        const studyAllBtn = createDashBtn('play', '复习全部到期', () => {
             const allDueCards = this.plugin.dataManager.getDecks()
                 .flatMap((d: Deck) => this.plugin.dataManager.getReviewQueue(d.id));
             if (allDueCards.length === 0) {
                 const limited = this.plugin.dataManager.getDecks().some((d: Deck) => d.stats.new > 0 || d.stats.due > 0);
                 new Notice(limited
-                    ? 'Daily limits reached. Use cram on a deck to keep studying.'
-                    : 'No cards due for review!');
+                    ? '已达每日上限，可对某个牌组使用突击模式继续学习。'
+                    : '没有到期待复习的卡片！');
                 return;
             }
             new ReviewModal(this.app, this.plugin, allDueCards).open();
@@ -82,18 +82,18 @@ export class DashboardView extends ItemView {
             studyAllBtn.buttonEl.createSpan({ text: dueCount.toString(), cls: 'fsrs-action-badge' });
         }
 
-        createDashBtn('folder-plus', 'New deck', () => new CreateDeckModal(this.app, this.plugin).open());
-        createDashBtn('plus', 'New card', () => new CreateCardModal(this.app, this.plugin).open());
-        createDashBtn('bar-chart-2', 'Statistics', () => new StatsModal(this.app, this.plugin).open());
-        createDashBtn('filter', 'Custom study', () => new CustomStudyModal(this.app, this.plugin).open());
+        createDashBtn('folder-plus', '新建牌组', () => new CreateDeckModal(this.app, this.plugin).open());
+        createDashBtn('plus', '新建卡片', () => new CreateCardModal(this.app, this.plugin).open());
+        createDashBtn('bar-chart-2', '统计', () => new StatsModal(this.app, this.plugin).open());
+        createDashBtn('filter', '自定义学习', () => new CustomStudyModal(this.app, this.plugin).open());
 
         const iconRow = actionsRow.createDiv({ cls: 'fsrs-icon-row' });
 
-        const helpBtn = iconRow.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': 'Help & guide' } });
+        const helpBtn = iconRow.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': '帮助与指南' } });
         setIcon(helpBtn, 'help-circle');
         helpBtn.addEventListener('click', () => new HelpModal(this.app, this.plugin).open());
 
-        const refreshBtn = iconRow.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': 'Refresh' } });
+        const refreshBtn = iconRow.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': '刷新' } });
         setIcon(refreshBtn, 'refresh-cw');
         refreshBtn.addEventListener('click', () => {
             void (async () => {
@@ -109,23 +109,23 @@ export class DashboardView extends ItemView {
 
         const pouchDB = this.plugin.dataManager.getPouchDB();
         if (this.plugin.settings.syncEnabled && pouchDB) {
-            const syncBtn = iconRow.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': 'Sync' } });
+            const syncBtn = iconRow.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': '同步' } });
             setIcon(syncBtn, 'cloud');
             syncBtn.addEventListener('click', () => {
                 void (async () => {
                     if (pouchDB.isSyncing()) {
-                        new Notice('Sync in progress...');
+                        new Notice('正在同步……');
                         return;
                     }
                     syncBtn.addClass('is-busy');
                     try {
                         const syncTimeout = new Promise<never>((_, reject) => {
-                            window.setTimeout(() => reject(new Error('Sync request timed out')), 15000);
+                            window.setTimeout(() => reject(new Error('同步请求超时')), 15000);
                         });
                         await Promise.race([pouchDB.manualSync(), syncTimeout]);
-                        new Notice('Sync completed!', 3000);
+                        new Notice('同步完成！', 3000);
                     } catch (error: unknown) {
-                        new Notice(`Sync failed: ${getErrorMessage(error)}`, 5000);
+                        new Notice(`同步失败：${getErrorMessage(error)}`, 5000);
                     } finally {
                         syncBtn.removeClass('is-busy');
                         syncBtn.removeAttribute('disabled');
@@ -152,9 +152,9 @@ export class DashboardView extends ItemView {
             pill.createSpan({ text: label });
         };
 
-        createStatPill('layers', globalStats.total.toString(), 'total', 'neutral');
-        createStatPill('clock', globalStats.due.toString(), 'due', 'due');
-        createStatPill('sparkles', globalStats.new.toString(), 'new', 'new');
+        createStatPill('layers', globalStats.total.toString(), '总数', 'neutral');
+        createStatPill('clock', globalStats.due.toString(), '到期', 'due');
+        createStatPill('sparkles', globalStats.new.toString(), '新卡', 'new');
 
         // Gamification widget
         const gamification = this.plugin.dataManager.getGamificationStats();
@@ -164,17 +164,17 @@ export class DashboardView extends ItemView {
         setIcon(streakEl.createSpan({ cls: 'fsrs-gamification-icon' }), 'flame');
         const streakValue = streakEl.createSpan({ cls: 'fsrs-gamification-value' });
         streakValue.setText(gamification.currentStreak.toString());
-        streakEl.createSpan({ cls: 'fsrs-gamification-label', text: 'day streak' });
+        streakEl.createSpan({ cls: 'fsrs-gamification-label', text: '连续天数' });
 
         const xpEl = gamificationEl.createDiv({ cls: 'fsrs-gamification-item' });
         setIcon(xpEl.createSpan({ cls: 'fsrs-gamification-icon' }), 'star');
         xpEl.createSpan({ cls: 'fsrs-gamification-value', text: gamification.totalXp.toString() });
-        xpEl.createSpan({ cls: 'fsrs-gamification-label', text: 'XP' });
+        xpEl.createSpan({ cls: 'fsrs-gamification-label', text: '经验值' });
 
         const bestEl = gamificationEl.createDiv({ cls: 'fsrs-gamification-item' });
         setIcon(bestEl.createSpan({ cls: 'fsrs-gamification-icon' }), 'trophy');
         bestEl.createSpan({ cls: 'fsrs-gamification-value', text: gamification.longestStreak.toString() });
-        bestEl.createSpan({ cls: 'fsrs-gamification-label', text: 'best streak' });
+        bestEl.createSpan({ cls: 'fsrs-gamification-label', text: '最长连续天数' });
     }
 
     private renderDecks() {
@@ -218,7 +218,7 @@ export class DashboardView extends ItemView {
         const folderIcon = folderHeader.createDiv({ cls: 'fsrs-folder-icon' });
         setIcon(folderIcon, 'folder-closed');
 
-        const folderName = folderPath === 'Root' ? 'Root' : folderPath.substring(folderPath.lastIndexOf('/') + 1);
+        const folderName = folderPath === 'Root' ? '根目录' : folderPath.substring(folderPath.lastIndexOf('/') + 1);
         folderHeader.createSpan({ text: folderName, cls: 'fsrs-folder-name' });
 
         const dueCardsInFolder = decks.reduce((sum, deck) => sum + deck.stats.due, 0);
@@ -297,7 +297,7 @@ export class DashboardView extends ItemView {
 
         const studyBtn = actionsEl.createEl('button', {
             cls: `clickable-icon${hasDue ? '' : ' fsrs-deck-muted'}`,
-            attr: { 'aria-label': hasDue ? `Study ${deck.stats.due} cards` : 'No cards due' },
+            attr: { 'aria-label': hasDue ? `复习 ${deck.stats.due} 张卡片` : '没有到期卡片' },
         });
         setIcon(studyBtn, 'play');
         studyBtn.addEventListener('click', (e) => {
@@ -305,8 +305,8 @@ export class DashboardView extends ItemView {
             const queue = this.plugin.dataManager.getReviewQueue(deck.id);
             if (queue.length === 0) {
                 new Notice(deck.stats.new > 0 || deck.stats.due > 0
-                    ? 'Daily limit reached for this deck. Use cram to keep studying.'
-                    : 'No cards to review in this deck!');
+                    ? '该牌组已达每日上限，可使用突击模式继续学习。'
+                    : '该牌组没有可复习的卡片！');
                 return;
             }
             new ReviewModal(this.app, this.plugin, queue, deck.title).open();
@@ -314,14 +314,14 @@ export class DashboardView extends ItemView {
 
         const cramBtn = actionsEl.createEl('button', {
             cls: 'clickable-icon',
-            attr: { 'aria-label': 'Cram all cards' },
+            attr: { 'aria-label': '突击全部卡片' },
         });
         setIcon(cramBtn, 'zap');
         cramBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const cards = this.plugin.dataManager.getAllCardsForStudy(deck.id);
             if (cards.length === 0) {
-                new Notice('No cards in this deck!');
+                new Notice('该牌组没有卡片！');
                 return;
             }
             new ReviewModal(this.app, this.plugin, cards, deck.title).open();
@@ -329,14 +329,14 @@ export class DashboardView extends ItemView {
 
         const browseBtn = actionsEl.createEl('button', {
             cls: 'clickable-icon',
-            attr: { 'aria-label': 'Browse cards' },
+            attr: { 'aria-label': '浏览卡片' },
         });
         setIcon(browseBtn, 'list');
         browseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             const cards = this.plugin.dataManager.getCardsByDeck(deck.id);
             if (cards.length === 0) {
-                new Notice('This deck has no cards to browse.');
+                new Notice('该牌组没有可浏览的卡片。');
                 return;
             }
             new BrowseModal(this.app, this.plugin, cards, deck.title).open();
@@ -350,28 +350,28 @@ export class DashboardView extends ItemView {
         const iconEl = iconContainer.createDiv({ cls: 'fsrs-empty-icon' });
         setIcon(iconEl, 'sparkles');
 
-        emptyStateEl.createEl('h3', { text: 'Ready to learn?', cls: 'fsrs-empty-title' });
+        emptyStateEl.createEl('h3', { text: '准备好开始学习了吗？', cls: 'fsrs-empty-title' });
 
         emptyStateEl.createEl('p', {
-            text: `Create flashcards by adding the tag #${this.plugin.settings.deckTag} to any note, or start directly below.`,
+            text: `在任意笔记中添加标签 #${this.plugin.settings.deckTag} 即可创建闪卡，也可以直接在下方开始。`,
             cls: 'fsrs-empty-desc',
         });
 
         const emptyActions = emptyStateEl.createDiv({ cls: 'fsrs-empty-actions' });
         new ButtonComponent(emptyActions)
             .setIcon('folder-plus')
-            .setButtonText('Create new deck')
+            .setButtonText('新建牌组')
             .setCta()
             .onClick(() => new CreateDeckModal(this.app, this.plugin).open());
 
         new ButtonComponent(emptyActions)
             .setIcon('plus')
-            .setButtonText('Create flashcard')
+            .setButtonText('新建闪卡')
             .onClick(() => new CreateCardModal(this.app, this.plugin).open());
 
         const tipEl = emptyStateEl.createDiv({ cls: 'fsrs-empty-tip' });
         const tipIcon = tipEl.createDiv({ cls: 'fsrs-tip-icon' });
         setIcon(tipIcon, 'lightbulb');
-        tipEl.createSpan({ text: 'Pro tip: Use ---card--- or Q::A in any tagged note to add cards instantly.' });
+        tipEl.createSpan({ text: '小技巧：在任意带标签的笔记中使用 ---card--- 或 Q::A，即可立刻添加卡片。' });
     }
 }

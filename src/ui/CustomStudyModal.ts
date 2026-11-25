@@ -19,22 +19,22 @@ export class CustomStudyModal extends Modal {
 
     onOpen() {
         this.contentEl.empty();
-        this.titleEl.setText('Custom study session');
-        new Setting(this.contentEl).setName('Filter by tags').setDesc('Comma-separated, e.g., #calculus, #chapter1').addText(text => text.setValue(this.tags).onChange(val => this.tags = val));
-        new Setting(this.contentEl).setName('Filter by card state').addDropdown((dropdown) => dropdown
-            .addOption('due', 'Due')
-            .addOption('new', 'New')
-            .addOption('learning', 'Learning')
-            .addOption('all', 'All cards (cram mode)')
+        this.titleEl.setText('自定义学习会话');
+        new Setting(this.contentEl).setName('按标签筛选').setDesc('用英文逗号分隔，例如 #高数, #第一章').addText(text => text.setValue(this.tags).onChange(val => this.tags = val));
+        new Setting(this.contentEl).setName('按卡片状态筛选').addDropdown((dropdown) => dropdown
+            .addOption('due', '到期')
+            .addOption('new', '新卡')
+            .addOption('learning', '学习中')
+            .addOption('all', '全部卡片（临时抱佛脚模式）')
             .setValue(this.state)
             .onChange((value) => {
                 if (value === 'due' || value === 'new' || value === 'learning' || value === 'all') {
                     this.state = value;
                 }
             }));
-        new Setting(this.contentEl).setName('Card limit').setDesc('Set to 0 or enable unlimited for no limit').addText(text => text.setValue(this.limit.toString()).onChange(val => this.limit = parseInt(val) || 0));
-        new Setting(this.contentEl).setName('Unlimited cards').setDesc('Ignore card limit - study all matching cards (for exam prep)').addToggle(toggle => toggle.setValue(this.unlimited).onChange(val => this.unlimited = val));
-        new Setting(this.contentEl).addButton(btn => btn.setButtonText('Start studying').setCta().onClick(() => this.startSession()));
+        new Setting(this.contentEl).setName('卡片数量上限').setDesc('设为 0 或开启不限量即为不限制').addText(text => text.setValue(this.limit.toString()).onChange(val => this.limit = parseInt(val) || 0));
+        new Setting(this.contentEl).setName('不限量卡片').setDesc('忽略数量上限，学习所有匹配的卡片（适用于考前冲刺）').addToggle(toggle => toggle.setValue(this.unlimited).onChange(val => this.unlimited = val));
+        new Setting(this.contentEl).addButton(btn => btn.setButtonText('开始学习').setCta().onClick(() => this.startSession()));
     }
 
     startSession() {
@@ -65,7 +65,7 @@ export class CustomStudyModal extends Modal {
             queue = queue.slice(0, this.limit);
         }
 
-        if (queue.length === 0) { new Notice('No cards found matching your criteria.'); return; }
+        if (queue.length === 0) { new Notice('没有找到符合条件的卡片。'); return; }
         this.close();
         new ReviewModal(this.app, this.plugin, queue).open();
     }

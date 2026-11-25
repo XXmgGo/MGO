@@ -70,17 +70,17 @@ export class DataManager {
                     const docsWritten = getDocsWritten(info);
                     console.debug('Synced changes:', info);
                     if (docsWritten > 0) {
-                        new Notice(`Synced ${docsWritten} changes`, 2000);
+                        new Notice(`已同步 ${docsWritten} 条变更`, 2000);
                     }
                 });
 
                 this.pouchDB.onSyncError((err) => {
                     const message = getErrorMessage(err);
                     console.error('Sync error:', err);
-                    new Notice(`Sync error: ${message}`, 5000);
+                    new Notice(`同步错误：${message}`, 5000);
 
                     if (isLikelyCorsOrNetworkErrorMessage(message)) {
-                        new Notice('Sync stopped. Check cors settings and sync URL.', 7000);
+                        new Notice('同步已停止。请检查 CORS 设置与同步 URL。', 7000);
                         this.runInBackground(() => this.pouchDB?.stopSync(), 'Failed to stop sync after network/CORS error:');
                     }
                 });
@@ -96,10 +96,10 @@ export class DataManager {
                 });
 
                 await this.pouchDB.setupSync(syncUrl);
-                new Notice('Sync initialized successfully');
+                new Notice('同步初始化成功');
             } catch (error) {
                 console.error('Failed to initialize sync:', error);
-                new Notice(`Sync initialization failed: ${getErrorMessage(error)}`);
+                new Notice(`同步初始化失败：${getErrorMessage(error)}`);
             }
         }
     }
@@ -422,7 +422,7 @@ export class DataManager {
                 }
             });
         }
-        new Notice(`Tagged note as #${deckTagName} deck`);
+        new Notice(`已将笔记标记为 #${deckTagName} 牌组`);
         return true;
     }
 
@@ -1196,10 +1196,10 @@ export class DataManager {
         const fsrs = this.getFsrsForCard(card);
         const schedulingCards = fsrs.repeat(fsrsCard, now);
         const formatInterval = (days: number): string => {
-            if (days < 1) return '<1d';
-            if (days < 30) return `${Math.round(days)}d`;
-            if (days < 365) return `${(days / 30).toFixed(1)}m`;
-            return `${(days / 365).toFixed(1)}y`;
+            if (days < 1) return '<1天';
+            if (days < 30) return `${Math.round(days)}天`;
+            if (days < 365) return `${(days / 30).toFixed(1)}个月`;
+            return `${(days / 365).toFixed(1)}年`;
         };
         return {
             [Rating.Again]: formatInterval(schedulingCards[Rating.Again].card.scheduled_days),
@@ -1354,14 +1354,14 @@ export class DataManager {
         }
 
         const buckets = [
-            { max: 1, label: '<1d' },
-            { max: 2, label: '1d' },
-            { max: 3, label: '2d' },
-            { max: 4, label: '3d' },
-            { max: 7, label: '4-6d' },
-            { max: 14, label: '1-2w' },
-            { max: 30, label: '2-4w' },
-            { max: Infinity, label: '>30d' },
+            { max: 1, label: '<1天' },
+            { max: 2, label: '1天' },
+            { max: 3, label: '2天' },
+            { max: 4, label: '3天' },
+            { max: 7, label: '4-6天' },
+            { max: 14, label: '1-2周' },
+            { max: 30, label: '2-4周' },
+            { max: Infinity, label: '>30天' },
         ];
         const intervalBuckets = buckets.map(b => ({ label: b.label, count: 0 }));
         for (const d of intervalDeltas) {

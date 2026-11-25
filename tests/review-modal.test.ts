@@ -109,11 +109,11 @@ describe('ReviewModal card info', () => {
         await new Promise((r) => setTimeout(r, 0));
 
         const title = modal.modalEl.querySelector('.modal-title') as HTMLElement;
-        const pencil = () => modal.modalEl.querySelector('[aria-label="Edit this card"]') as HTMLElement;
+        const pencil = () => modal.modalEl.querySelector('[aria-label="编辑此卡片"]') as HTMLElement;
 
         title.click();
         pencil().click();
-        expect(notices.at(-1)).toBe('This is a new card.');
+        expect(notices.at(-1)).toBe('这是一张新卡片。');
         expect(openLinkText).toHaveBeenLastCalledWith('first.md', 'first.md');
 
         (modal.contentEl.querySelector('.fsrs-show-answer-btn') as HTMLElement).click();
@@ -122,7 +122,7 @@ describe('ReviewModal card info', () => {
 
         title.click();
         pencil().click();
-        expect(notices.at(-1)).toContain('Stability: 7.50');
+        expect(notices.at(-1)).toContain('稳定性：7.50');
         expect(openLinkText).toHaveBeenLastCalledWith('second.md', 'second.md');
     });
 });
@@ -179,7 +179,7 @@ describe('ReviewModal learning flow with the real scheduler', () => {
     it('undoes the last rating with the button and the Z key, restoring the card and queue', async () => {
         const { dm, modal, click, counter, front, queue } = await open();
         const first = front();
-        const undoBtn = () => modal.modalEl.querySelector('[aria-label="Undo last rating"]') as HTMLElement;
+        const undoBtn = () => modal.modalEl.querySelector('[aria-label="撤销上次评分"]') as HTMLElement;
         expect(undoBtn().style.display).toBe('none');
 
         await click('.fsrs-show-answer-btn');
@@ -252,7 +252,7 @@ describe('ReviewModal learning flow with the real scheduler', () => {
         // Sibling card 2 should be buried (removed from remaining queue)
         expect(queue.map((c) => c.id)).not.toContain(cards[1].id);
 
-        const undoBtn = modal.modalEl.querySelector('[aria-label="Undo last rating"]') as HTMLElement;
+        const undoBtn = modal.modalEl.querySelector('[aria-label="撤销上次评分"]') as HTMLElement;
         undoBtn.click();
         await new Promise((r) => setTimeout(r, 0));
 

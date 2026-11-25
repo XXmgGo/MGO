@@ -77,10 +77,10 @@ export function parseBackup(text: string): BackupContent {
     try {
         raw = JSON.parse(text);
     } catch {
-        throw new Error('This file is not valid JSON.');
+        throw new Error('该文件不是有效的 JSON。');
     }
     if (!isRecord(raw) || !isRecord(raw.cardData) || !Array.isArray(raw.reviewHistory)) {
-        throw new Error('This file is not a MGO backup or a MGO data.json file.');
+        throw new Error('该文件不是 MGO 备份文件，也不是 MGO 的 data.json 文件。');
     }
 
     let skipped = 0;

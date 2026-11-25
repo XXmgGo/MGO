@@ -1,61 +1,61 @@
-# MGO - Flashcard Creation Guide
+# MGO - 闪卡制作指南
 
-A complete guide to creating flashcards in Obsidian using the MGO plugin.
-
----
-
-## Table of Contents
-
-1. [Getting Started](#getting-started)
-2. [Basic Cards](#basic-cards)
-3. [Single-Line & Reversed Cards](#single-line--reversed-cards)
-4. [Cloze Deletion Cards](#cloze-deletion-cards)
-5. [Image Occlusion Cards](#image-occlusion-cards-in-place-display)
-6. [Type-In Active Recall Cards](#type-in-active-recall-cards)
-7. [Whole-Note Review](#whole-note-review)
-8. [Guided Card & Deck Creation](#guided-card--deck-creation)
-9. [Card IDs & Editing](#card-ids--editing)
-10. [Markdown Support](#markdown-support)
-11. [Quick Commands & Shortcuts](#quick-commands)
-12. [Best Practices](#best-practices)
+一份在 Obsidian 中使用 MGO 插件制作闪卡的完整指南。
 
 ---
 
-## Getting Started
+## 目录
 
-### 1. Create a Deck
+1. [开始使用](#开始使用)
+2. [基础卡片](#基础卡片)
+3. [单行卡片与反向卡片](#单行卡片与反向卡片)
+4. [完形填空卡片](#完形填空卡片)
+5. [图片遮挡卡片](#图片遮挡卡片)
+6. [输入式主动回忆卡片](#输入式主动回忆卡片)
+7. [整篇笔记复习](#整篇笔记复习)
+8. [引导式卡片与牌组创建](#引导式卡片与牌组创建)
+9. [卡片 ID 与编辑](#卡片-id-与编辑)
+10. [Markdown 支持](#markdown-支持)
+11. [快捷命令](#快捷命令)
+12. [最佳实践](#最佳实践)
 
-Any note with the `#flashcards` tag (default) becomes a deck. Add the tag to frontmatter or as an inline tag:
+---
 
-**Frontmatter method:**
+## 开始使用
+
+### 1. 创建牌组
+
+任何带有 `#flashcards` 标签（默认标签）的笔记都会成为一个牌组。可以把标签写在 frontmatter 里，也可以写在正文中作为内联标签：
+
+**frontmatter 方式：**
 ```yaml
 ---
 tags: [flashcards]
 ---
 ```
 
-**Inline method:**
+**内联方式：**
 ```markdown
 # My Study Notes #flashcards
 ```
 
-### 2. Add Cards
+### 2. 添加卡片
 
-Add cards to your deck using the syntax described below. The plugin will automatically detect and index them.
+按照下文介绍的语法把卡片写进牌组。插件会自动识别并建立索引。
 
-### 3. Study
+### 3. 开始学习
 
-Open the **MGO dashboard** via:
-- Right-side status bar **MGO** button
-- Command palette: `Open dashboard`
+通过以下方式打开 **MGO 仪表板**：
+- 右侧状态栏的 **MGO** 按钮
+- 命令面板：`Open dashboard`
 
 ---
 
-## Basic Cards
+## 基础卡片
 
-Basic cards have a **front** (question) and **back** (answer).
+基础卡片由**正面**（问题）和**背面**（答案）组成。
 
-### Syntax
+### 语法
 
 ```markdown
 ---card--- ^block-id
@@ -65,9 +65,9 @@ Back content here
 ---end---
 ```
 
-### Examples
+### 示例
 
-**Simple Q&A:**
+**简单问答：**
 ```markdown
 ---card--- ^fsrs-abc123
 What is the capital of France?
@@ -75,7 +75,7 @@ What is the capital of France?
 Paris
 ```
 
-**With Markdown Formatting:**
+**带 Markdown 排版：**
 ```markdown
 ---card--- ^fsrs-def456
 What is the formula for **Einstein's mass-energy equivalence**?
@@ -88,7 +88,7 @@ Where:
 - $c$ = speed of light
 ```
 
-**With Lists:**
+**带列表：**
 ```markdown
 ---card--- ^fsrs-ghi789
 Name the three states of matter
@@ -100,7 +100,7 @@ Name the three states of matter
 *Bonus: Plasma is the fourth state*
 ```
 
-**Multi-line Back:**
+**多行背面：**
 ```markdown
 ---card--- ^fsrs-jkl012
 Explain the process of photosynthesis
@@ -113,87 +113,87 @@ The basic equation:
 $$6CO_2 + 6H_2O + light \rightarrow C_6H_{12}O_6 + 6O_2$$
 ```
 
-### Card Delimiter
+### 卡片分隔符
 
-- Start with `---card---` (case insensitive)
-- Separate front/back with a single `---` line
-- End the card explicitly with `---end---` (or `---card-end---`) to keep subsequent headings and note text out of the card
-- The `^block-id` is optional but recommended for stable card identities
+- 以 `---card---` 开头（不区分大小写）
+- 用单独一行 `---` 分隔正面与背面
+- 用 `---end---`（或 `---card-end---`）显式结束卡片，从而把后续的标题和正文排除在卡片之外
+- `^block-id` 不是必需的，但建议加上，以便卡片拥有稳定的身份标识
 
 ---
 
-## Cloze Deletion Cards
+## 完形填空卡片
 
-Cloze cards hide specific words/phrases within a sentence. Great for:
-- Fill-in-the-blank style learning
-- Memorizing definitions in context
-- Language learning
+完形填空卡片会隐藏句子中的某些词或短语。特别适合：
+- 填空式学习
+- 在语境中记忆定义
+- 语言学习
 
-### Syntax
+### 语法
 
 ```markdown
 ==c1::hidden text==
 ```
 
-- `c1` = cloze number (supports c1, c2, c3, etc.)
-- `hidden text` = the content to be hidden during review
+- `c1` = 填空编号（支持 c1、c2、c3 等）
+- `hidden text` = 复习时需要隐藏的内容
 
-### Examples
+### 示例
 
-**Single Cloze:**
+**单个填空：**
 ```markdown
 The capital of France is ==c1::Paris==.
 ```
 
-**Multiple Clozes (same paragraph):**
+**多个填空（同一段落）：**
 ```markdown
 ==c1::Mitochondria== is the powerhouse of the cell, producing ==c2::ATP== through cellular respiration.
 ```
 
-**Sequential Learning (c1, c2, c3):**
+**循序渐进学习（c1、c2、c3）：**
 ```markdown
 The three branches of the US government are: ==c1::Legislative==, ==c2::Executive==, and ==c3::Judicial==.
 ```
 
-**With Block ID for editing:**
+**带块 ID 便于编辑：**
 ```markdown
 The quadratic formula is ==c1::x = (-b ± √(b² - 4ac)) / 2a==. ^my-math-card
 ```
 
-### How Cloze Cards Display
+### 完形填空卡片的显示方式
 
-| Original | Front Shows | Back Shows |
+| 原文 | 正面显示 | 背面显示 |
 |----------|-------------|------------|
 | `The ==c1::capital== of France` | `The [...] of France` | `The capital of France` |
 
-### Important Notes
+### 重要说明
 
-- Each cloze number creates a **separate card**
-- `==c1::text==` and `==c2::text==` in the same paragraph = 2 cards
-- Clozes must be in the **same paragraph** to be grouped
-- Empty lines break paragraphs (creates separate cards)
+- 每个填空编号都会生成一张**独立的卡片**
+- 同一段落中的 `==c1::text==` 和 `==c2::text==` = 2 张卡片
+- 填空必须位于**同一段落**内才会被归为同一组
+- 空行会切断段落（从而生成各自独立的卡片）
 
 ---
 
-## Card IDs & Editing
+## 卡片 ID 与编辑
 
-### Why Use Block IDs?
+### 为什么要用块 ID
 
-Block IDs (`^unique-id`) ensure your cards maintain their review history even when you edit them.
+块 ID（`^unique-id`）可以保证卡片在编辑之后仍然保留自己的复习记录。
 
-**Without Block ID:**
-- Card ID is generated from file path and front content hash
-- Editing the front resets your review history
+**不使用块 ID：**
+- 卡片 ID 由文件路径与正面内容的哈希值生成
+- 修改正面内容会让复习记录归零
 
-**With Block ID:**
-- Card ID is based on the persistent block ID
-- Edit freely without losing review history
+**使用块 ID：**
+- 卡片 ID 基于这个持久化的块 ID
+- 可以放心编辑，不会丢失复习记录
 
-### Generating Block IDs
+### 生成块 ID
 
-Use the command palette: **`Add a new flashcard`**
+使用命令面板：**`Add a new flashcard`**
 
-This inserts a template with a pre-generated ID:
+它会插入一个自带预生成 ID 的模板：
 ```markdown
 ---card--- ^fsrs-a1b2c3
 Question: 
@@ -202,32 +202,32 @@ Answer:
 ---end---
 ```
 
-### Manual ID Format
+### 手写 ID 的格式
 
-- Start with `fsrs-` (recommended) or use any alphanumeric string
-- Example valid IDs: `^fsrs-abc123`, `^my-card-001`, `^chemistry-5`
-- Place at the end of the front section, after `---card---`
+- 以 `fsrs-` 开头（推荐），或使用任意字母数字组合
+- 合法 ID 示例：`^fsrs-abc123`、`^my-card-001`、`^chemistry-5`
+- 写在正面部分末尾，即 `---card---` 之后
 
 ---
 
-## Markdown Support
+## Markdown 支持
 
-All Obsidian Markdown features work in cards:
+Obsidian 的全部 Markdown 功能都能在卡片中使用：
 
-| Feature | Example |
+| 功能 | 示例 |
 |---------|---------|
-| **Bold/Italic** | `**bold**`, `*italic*` |
-| **Links** | `[[Internal Link]]`, `[External](url)` |
-| **Images** | `![[image.png]]` |
-| **Math (LaTeX)** | `$inline$`, `$$block$$` |
-| **Code** | `` `inline` `` or code blocks |
-| **Tables** | Standard Markdown tables |
-| **Lists** | `- bullet`, `1. numbered` |
-| **Highlight** | `==highlight==` (except cloze syntax) |
-| **Embeds** | `![[Another Note]]` |
-| **Callouts** | `> [!info]` |
+| **加粗/斜体** | `**bold**`, `*italic*` |
+| **链接** | `[[Internal Link]]`, `[External](url)` |
+| **图片** | `![[image.png]]` |
+| **公式（LaTeX）** | `$inline$`, `$$block$$` |
+| **代码** | `` `inline` `` 或代码块 |
+| **表格** | 标准 Markdown 表格 |
+| **列表** | `- bullet`, `1. numbered` |
+| **高亮** | `==highlight==`（填空语法除外） |
+| **嵌入** | `![[Another Note]]` |
+| **标注块（Callout）** | `> [!info]` |
 
-### Example with Full Formatting
+### 完整排版示例
 
 ```markdown
 ---card--- ^fsrs-full-example
@@ -250,22 +250,22 @@ See also: [[Geometry Basics]]
 
 ---
 
-## Single-Line & Reversed Cards
+## 单行卡片与反向卡片
 
-Single-line cards let you author atomic question-answer pairs quickly on a single line.
+单行卡片让你在一行内快速写出原子化的问答对。
 
-### Syntax
+### 语法
 
 ```markdown
 Question::Answer ^block-id
 Reversed Question:::Reversed Answer ^block-id
 ```
 
-- `::` creates a standard flashcard (prompt front, reveal back).
-- `:::` creates one reversed card (prompts the back, tests the front). For two-way recall such as vocabulary, write a `::` line and a `:::` line, each with its own block ID.
-- An optional `^block-id` stabilizes card history.
+- `::` 创建一张标准闪卡（正面出题，背面揭晓答案）。
+- `:::` 创建一张反向卡（以背面出题，考查正面）。如果是单词这类需要双向记忆的内容，请写一行 `::` 再加一行 `:::`，并各自使用自己的块 ID。
+- 可选的 `^block-id` 能让卡片的历史记录保持稳定。
 
-### Examples
+### 示例
 
 ```markdown
 What is the speed of sound in air?::Approximately 343 m/s ^snd-001
@@ -274,19 +274,19 @@ Neuron Soma:::Cell body containing the nucleus and organelles ^neuro-002
 
 ---
 
-## Image Occlusion Cards (In-Place Display)
+## 图片遮挡卡片
 
-Image occlusion cards swap occluded diagrams with unmasked answer diagrams directly in-place without vertical displacement.
+图片遮挡卡片会把被遮挡的示意图与完整答案图在**原位置**直接互换，不会造成页面纵向跳动。
 
-### Syntax
+### 语法
 
-Single-line or block syntax where both front and back contain image embeds:
+单行语法或块语法，只要正面与背面都是图片嵌入即可：
 
 ```markdown
 ![[diagram-masked.png]]::![[diagram-revealed.png]] ^occlusion-001
 ```
 
-Or block format:
+也可以用块格式：
 ```markdown
 ---card--- ^occlusion-002
 ![[anatomy-masked.svg|500]]
@@ -294,26 +294,26 @@ Or block format:
 ![[anatomy-revealed.svg|500]]
 ```
 
-### Review Interactions
-- **In-place swap**: Revealing the answer replaces the occluded diagram with the revealed diagram at the exact same position.
-- **Tap to peek**: Tap/click the diagram or press `Space` / `P` / `F` to toggle back and forth between the occluded question and revealed answer masks before submitting your rating.
-- **Responsive scaling**: Tall diagrams are contained within viewport limits (`70vh` desktop, `45vh` landscape) with drag and text selection disabled on mobile.
+### 复习交互
+- **原位互换**：揭晓答案时，被遮挡的示意图会在完全相同的位置被完整图替换。
+- **点击预览**：点击图片，或按 `Space` / `P` / `F`，在提交评级之前于遮挡题图与答案图之间来回切换。
+- **自适应缩放**：过长的图片会被限制在视口范围内（桌面端 `70vh`，横屏 `45vh`），移动端会禁用拖动与文本选择。
 
 ---
 
-## Type-In Active Recall Cards
+## 输入式主动回忆卡片
 
-Type-in cards require you to actively type your answer before viewing the correct answer and rating options.
+输入式卡片要求你先亲手输入答案，然后才能看到正确答案和评级选项。
 
-### Syntax
+### 语法
 
-Add `?type` to single-line or block cards:
+在单行卡片或块卡片上添加 `?type`：
 
 ```markdown
 ?type What is the capital of Canada?::Ottawa ^type-001
 ```
 
-Or block format:
+也可以用块格式：
 ```markdown
 ---card--- ?type ^type-002
 What is the SI unit of force?
@@ -321,22 +321,22 @@ What is the SI unit of force?
 Newton
 ```
 
-### Review Experience
-During review, an input box appears. Press `Enter` or click `Check` to receive instant feedback:
-- **Correct** (exact match)
-- **Close match** (keyword match)
-- **Not correct**
-Full rating buttons (`Again`, `Hard`, `Good`, `Easy`) are revealed for honest self-assessment.
+### 复习体验
+复习时会出现一个输入框。按 `Enter` 或点击 `Check` 即可获得即时反馈：
+- **正确**（完全匹配）
+- **接近**（关键词匹配）
+- **错误**
+随后会展开完整的评级按钮（`Again`、`Hard`、`Good`、`Easy`），供你诚实地自评。
 
 ---
 
-## Whole-Note Review
+## 整篇笔记复习
 
-Apply FSRS spaced repetition to entire notes instead of breaking them into flashcards.
+不拆分卡片，直接对整篇笔记应用 FSRS 间隔重复。
 
-### Syntax
+### 语法
 
-Add `#review` to frontmatter or anywhere in the note body:
+把 `#review` 加在 frontmatter 中，或笔记正文的任意位置：
 
 ```yaml
 ---
@@ -345,82 +345,82 @@ tags: [review]
 # Quantum Mechanics Summary
 ```
 
-Study whole notes via the command `Review due notes`.
+通过命令 `Review due notes` 来复习整篇笔记。
 
 ---
 
-## Guided Card & Deck Creation
+## 引导式卡片与牌组创建
 
-MGO includes interactive modals so you never have to memorize Markdown delimiters.
+MGO 内置了交互式弹窗，你完全不必死记 Markdown 分隔符。
 
-### 1. Guided Card Creator Modal
-Run the command `Create card (guided modal)` or click **+ New card** on the MGO dashboard:
-- Pick the target deck note.
-- Select card type from the dropdown.
-- Fill in the Question and Answer fields.
-- View live Markdown syntax preview.
-- Press `Ctrl + Enter` (or `Cmd + Enter`) to insert the card with an automatic block ID and auto-deck tag.
+### 1. 引导式卡片创建弹窗
+运行命令 `Create card (guided modal)`，或点击 MGO 仪表板上的 **+ New card**：
+- 选择目标牌组笔记。
+- 通过下拉菜单选择卡片类型。
+- 填写问题（Question）与答案（Answer）字段。
+- 查看实时的 Markdown 语法预览。
+- 按 `Ctrl + Enter`（或 `Cmd + Enter`）插入卡片，自动带上块 ID 并自动打上牌组标签。
 
-### 2. Guided Deck Creator Modal
-Click **+ New deck** on the MGO dashboard or run the command `Create new deck`:
-- Enter deck title.
-- Optional folder path.
-- Automatically creates the note, tags it with `#flashcards`, and opens it.
+### 2. 引导式牌组创建弹窗
+点击 MGO 仪表板上的 **+ New deck**，或运行命令 `Create new deck`：
+- 输入牌组标题。
+- 可选填存放的文件夹路径。
+- 自动创建笔记、打上 `#flashcards` 标签并为你打开它。
 
-### 3. Tag Note as Flashcard Deck
-Run the command `Tag current note as flashcard deck` on any existing note to immediately register it in MGO.
+### 3. 把当前笔记标记为牌组
+在任意已有笔记上运行命令 `Tag current note as flashcard deck`，即可立刻把它注册进 MGO。
 
 ---
 
-## Quick Commands
+## 快捷命令
 
-| Command | Action | Hotkey |
+| 命令 | 作用 | 快捷键 |
 |---------|--------|--------|
-| `Create card (guided modal)` | Open interactive card creator | - |
-| `Create new deck` | Create note pre-tagged as a deck | - |
-| `Tag current note as flashcard deck` | Add deck tag to active file | - |
-| `Add a new flashcard` | Insert basic card template | - |
-| `Add a single-line card` | Insert `Q::A` template | - |
-| `Add a reversed card` | Insert `Q:::A` template | - |
-| `Add a cloze card` | Insert cloze template | - |
-| `Create cloze from selection` | Wrap selected text in `==c1::...==` | - |
-| `Add a type-in card` | Insert type-in block card template | - |
-| `Add a type-in single-line card` | Insert `Q::A ?type` template | - |
-| `Open dashboard` | Open study dashboard | - |
-| `Review due notes` | Start whole-note review queue | - |
-| `Sync Now` | Manual sync (if enabled) | - |
-| `Check Sync Status` | View sync status | - |
+| `Create card (guided modal)` | 打开交互式卡片创建器 | - |
+| `Create new deck` | 创建已预打牌组标签的笔记 | - |
+| `Tag current note as flashcard deck` | 给当前文件加上牌组标签 | - |
+| `Add a new flashcard` | 插入基础卡片模板 | - |
+| `Add a single-line card` | 插入 `Q::A` 模板 | - |
+| `Add a reversed card` | 插入 `Q:::A` 模板 | - |
+| `Add a cloze card` | 插入填空模板 | - |
+| `Create cloze from selection` | 用 `==c1::...==` 包裹选中文本 | - |
+| `Add a type-in card` | 插入输入式块卡片模板 | - |
+| `Add a type-in single-line card` | 插入 `Q::A ?type` 模板 | - |
+| `Open dashboard` | 打开学习仪表板 | - |
+| `Review due notes` | 开始整篇笔记复习队列 | - |
+| `Sync Now` | 手动同步（需已启用） | - |
+| `Check Sync Status` | 查看同步状态 | - |
 
-### Review Session Hotkeys & Gestures
+### 复习会话的快捷键与手势
 
-| Key / Gesture | Action |
+| 按键 / 手势 | 作用 |
 |---------------|--------|
-| `Space` / `Enter` | Show answer |
-| `Space` / `P` / `F` | Peek / toggle between occluded & answer masks (image cards) |
-| `1` | Rate: Again |
-| `2` | Rate: Hard |
-| `3` | Rate: Good |
-| `4` | Rate: Easy |
-| `Z` | Undo the last rating |
-| `Esc` | Exit review session |
-| `←` / `→` | Navigate (Browse mode) |
-| `Swipe left` | Rate: Again |
-| `Swipe down` | Rate: Hard |
-| `Swipe right` | Rate: Good |
-| `Swipe up` | Rate: Easy |
+| `Space` / `Enter` | 显示答案 |
+| `Space` / `P` / `F` | 在遮挡题图与答案图之间来回预览（图片卡片） |
+| `1` | 评级：重来 |
+| `2` | 评级：困难 |
+| `3` | 评级：良好 |
+| `4` | 评级：简单 |
+| `Z` | 撤销上一次评级 |
+| `Esc` | 退出复习会话 |
+| `←` / `→` | 翻页浏览（浏览模式） |
+| 向左滑动 | 评级：重来 |
+| 向下滑动 | 评级：困难 |
+| 向右滑动 | 评级：良好 |
+| 向上滑动 | 评级：简单 |
 
 ---
 
-## Best Practices
+## 最佳实践
 
-### Card Design
+### 卡片设计
 
-1. **One concept per card** - Don't overload cards with information
-2. **Be specific** - "What is 2+2?" > "What are some math facts?"
-3. **Use your own words** - Aids comprehension and retention
-4. **Include context** - Brief context helps trigger memory
+1. **一张卡片只考一个概念** —— 不要往卡片里塞太多信息
+2. **问得具体** —— 「2+2 等于几？」优于「列举一些数学常识」
+3. **用自己的话写** —— 有助于理解与长期记忆
+4. **带上必要语境** —— 简短的语境能更好地唤起记忆
 
-### Cloze Tips
+### 填空技巧
 
 ```markdown
 Avoid: The ==c1::quick brown fox jumps over the lazy dog==.
@@ -430,7 +430,7 @@ Avoid: ==c1::Paris== is the capital of ==c2::France== and has ==c3::2.1 million=
 Better: Split into focused clozes or separate cards
 ```
 
-### Organization
+### 组织方式
 
 ```markdown
 ---
@@ -458,9 +458,9 @@ Only **single covalent bonds** (C-C and C-H)
 This makes them ==c1::saturated== hydrocarbons. ^chem-003
 ```
 
-### Tagging for Custom Study
+### 用标签支持自定义学习
 
-Use tags in your deck notes to enable filtered study sessions:
+在牌组笔记里使用标签，即可启用筛选式学习会话：
 
 ```markdown
 ---
@@ -468,33 +468,33 @@ tags: [flashcards, biology, chapter-1, exam-prep]
 ---
 ```
 
-Then use **Custom Study Session** → Filter by Tags: `#biology, #exam-prep`
+然后在 **Custom Study Session**（自定义学习会话）→ Filter by Tags 中使用：`#biology, #exam-prep`
 
 ---
 
-## Troubleshooting
+## 常见问题排查
 
-### Cards Not Appearing?
+### 卡片没有出现？
 
-1. Check that the file has the `#flashcards` tag
-2. Verify syntax (especially `---` separators for basic cards)
-3. Check the **Dashboard** → Refresh button
-4. Look for console errors (Ctrl+Shift+I)
+1. 确认文件已带上 `#flashcards` 标签
+2. 检查语法（尤其是基础卡片的 `---` 分隔符）
+3. 打开 **仪表板** → 点击 Refresh（刷新）按钮
+4. 查看控制台报错（Ctrl+Shift+I）
 
-### Review Progress Reset?
+### 复习进度被重置了？
 
-- You likely edited a card without a block ID
-- Always use `^block-id` for cards you plan to edit
+- 很可能你编辑了一张没有块 ID 的卡片
+- 对于打算后续修改的卡片，请务必使用 `^block-id`
 
-### Cloze Not Working?
+### 填空不生效？
 
-- Ensure syntax is exactly `==c1::text==` (no spaces)
-- Check that clozes are in the same paragraph
-- Verify the paragraph is in a `#flashcards` tagged file
+- 确保语法严格是 `==c1::text==`（中间没有空格）
+- 检查这些填空是否位于同一段落
+- 确认该段落所在的文件已打上 `#flashcards` 标签
 
 ---
 
-## Examples Deck
+## 示例牌组
 
 ```markdown
 ---
@@ -533,13 +533,13 @@ FSRS stands for ==c1::Free Spaced Repetition Scheduler==. ^sr-002
 
 ---
 
-## Support Development
+## 支持开发
 
-If MGO helps you learn faster and retain more knowledge, consider supporting its development:
+如果 MGO 帮你学得更快、记得更牢，欢迎支持本项目的发展：
 
-- **Buy Me a Momo:** [buymemomo.com/usefundaments](https://buymemomo.com/usefundaments)
-- **GitHub:** [github.com/Fundaments-Work/Lemma](https://github.com/Fundaments-Work/Lemma)
+- **Buy Me a Momo：** [buymemomo.com/usefundaments](https://buymemomo.com/usefundaments)
+- **GitHub：** [github.com/Fundaments-Work/Lemma](https://github.com/Fundaments-Work/Lemma)
 
 ---
 
-Happy studying!
+祝学习愉快！

@@ -32,15 +32,15 @@ class FSRSFlashcardsPlugin extends Plugin {
         this.addSettingTab(new FSRSSettingsTab(this.app, this));
         this.registerView(VIEW_TYPE_DASHBOARD, (leaf) => new DashboardView(leaf, this));
 
-        const ribbonIconEl = this.addRibbonIcon(VIEW_ICON_NAME, 'Open MGO dashboard', (evt: MouseEvent) => {
+        const ribbonIconEl = this.addRibbonIcon(VIEW_ICON_NAME, '打开 MGO 仪表盘', (evt: MouseEvent) => {
             void this.activateView();
         });
         ribbonIconEl.addClass('mgo-ribbon-icon');
 
         const statusButton = this.addStatusBarItem();
         statusButton.addClass('mgo-status-button');
-        statusButton.setAttribute('aria-label', 'Open MGO dashboard');
-        statusButton.setAttribute('title', 'Open MGO dashboard');
+        statusButton.setAttribute('aria-label', '打开 MGO 仪表盘');
+        statusButton.setAttribute('title', '打开 MGO 仪表盘');
         const statusIcon = statusButton.createSpan({ cls: 'mgo-status-icon' });
         setIcon(statusIcon, STATUS_ICON_NAME);
         statusButton.createSpan({ text: 'MGO', cls: 'mgo-status-label' });
@@ -49,21 +49,21 @@ class FSRSFlashcardsPlugin extends Plugin {
         });
         this.addCommand({
             id: 'create-card-modal',
-            name: 'Create card (guided modal)',
+            name: '创建闪卡（引导弹窗）',
             callback: () => {
                 new CreateCardModal(this.app, this).open();
             },
         });
         this.addCommand({
             id: 'create-deck',
-            name: 'Create new deck',
+            name: '新建牌组',
             callback: () => {
                 new CreateDeckModal(this.app, this).open();
             },
         });
         this.addCommand({
             id: 'tag-note-as-deck',
-            name: 'Tag current note as flashcard deck',
+            name: '将当前笔记标记为闪卡牌组',
             checkCallback: (checking: boolean) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (!activeFile) return false;
@@ -75,7 +75,7 @@ class FSRSFlashcardsPlugin extends Plugin {
         });
         this.addCommand({
             id: 'add-fsrs-flashcard',
-            name: 'Add a new flashcard',
+            name: '新建闪卡',
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
@@ -88,7 +88,7 @@ class FSRSFlashcardsPlugin extends Plugin {
         });
         this.addCommand({
             id: 'add-single-line-card',
-            name: 'Add a single-line card',
+            name: '新建单行卡',
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
@@ -101,7 +101,7 @@ class FSRSFlashcardsPlugin extends Plugin {
         });
         this.addCommand({
             id: 'add-reversed-card',
-            name: 'Add a reversed card',
+            name: '新建反向卡',
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
@@ -114,7 +114,7 @@ class FSRSFlashcardsPlugin extends Plugin {
         });
         this.addCommand({
             id: 'add-cloze-card',
-            name: 'Add a cloze card',
+            name: '新建填空卡',
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
@@ -126,7 +126,7 @@ class FSRSFlashcardsPlugin extends Plugin {
         });
         this.addCommand({
             id: 'cloze-from-selection',
-            name: 'Create cloze from selection',
+            name: '由选中文本创建填空',
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
@@ -146,7 +146,7 @@ class FSRSFlashcardsPlugin extends Plugin {
         });
         this.addCommand({
             id: 'add-typein-card',
-            name: 'Add a type-in card',
+            name: '新建输入作答卡',
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
@@ -159,7 +159,7 @@ class FSRSFlashcardsPlugin extends Plugin {
         });
         this.addCommand({
             id: 'add-typein-single-line',
-            name: 'Add a type-in single-line card',
+            name: '新建单行输入作答卡',
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
@@ -172,7 +172,7 @@ class FSRSFlashcardsPlugin extends Plugin {
         });
         this.addCommand({
             id: 'open-fsrs-dashboard',
-            name: 'Open dashboard',
+            name: '打开仪表盘',
             callback: () => {
                 void this.activateView();
             },
@@ -181,45 +181,45 @@ class FSRSFlashcardsPlugin extends Plugin {
         if (this.settings.usePouchDB) {
             this.addCommand({
                 id: 'sync-now',
-                name: 'Sync now',
+                name: '立即同步',
                 callback: async () => {
                     if (!this.settings.syncEnabled) {
-                        new Notice('Sync is not enabled. Enable it in settings.');
+                        new Notice('尚未开启同步功能，请在设置中启用。');
                         return;
                     }
                     if (!this.settings.syncUrl) {
-                        new Notice('Sync URL not configured. Set it in settings.');
+                        new Notice('尚未配置同步 URL，请在设置中填写。');
                         return;
                     }
-                    new Notice('Syncing...');
+                    new Notice('正在同步……');
                     await this.dataManager.initializeSync();
                 },
             });
 
             this.addCommand({
                 id: 'check-sync-status',
-                name: 'Check sync status',
+                name: '检查同步状态',
                 callback: async () => {
                     const pouchDB = this.dataManager.getPouchDB();
                     if (!pouchDB) {
-                        new Notice('PouchDB is not enabled');
+                        new Notice('未启用 PouchDB');
                         return;
                     }
                     const status = await pouchDB.getSyncStatus();
                     const info = await pouchDB.getDatabaseInfo();
                     const docCount = getDocCount(info);
-                    new Notice(`Sync status:\n${status.enabled ? '✓ Active' : '✗ Inactive'}\nURL: ${status.remoteUrl ? sanitizeUrlForDisplay(status.remoteUrl) : 'Not set'}\nDocuments: ${docCount}\nLast sync: ${status.lastSyncTime ? new Date(status.lastSyncTime).toLocaleString() : 'Never'}`, 10000);
+                    new Notice(`同步状态：\n${status.enabled ? '✓ 已激活' : '✗ 未激活'}\nURL: ${status.remoteUrl ? sanitizeUrlForDisplay(status.remoteUrl) : '未设置'}\n文档数：${docCount}\n上次同步：${status.lastSyncTime ? new Date(status.lastSyncTime).toLocaleString() : '从未'}`, 10000);
                 },
             });
         }
 
         this.addCommand({
             id: 'review-notes',
-            name: 'Review due notes',
+            name: '复习到期笔记',
             callback: async () => {
                 const dueNotes = this.dataManager.getDueNotes();
                 if (dueNotes.length === 0) {
-                    new Notice('No notes due for review.');
+                    new Notice('没有需要复习的笔记。');
                     return;
                 }
                 const { ReviewNoteModal } = await import('../ui/ReviewNoteModal');
@@ -229,7 +229,7 @@ class FSRSFlashcardsPlugin extends Plugin {
 
         this.addCommand({
             id: 'import-cards',
-            name: 'Import cards from file',
+            name: '从文件导入卡片',
             callback: () => {
                 new ImportCardsModal(this.app, this).open();
             },
@@ -237,27 +237,27 @@ class FSRSFlashcardsPlugin extends Plugin {
 
         this.addCommand({
             id: 'export-review-data',
-            name: 'Export review data (backup)',
+            name: '导出复习数据（备份）',
             callback: async () => {
                 if (!this.dataManager.isDataLoaded()) {
-                    new Notice('MGO is still loading. Try again in a moment.');
+                    new Notice('MGO 仍在加载中，请稍后再试。');
                     return;
                 }
                 const now = new Date();
                 const pad = (n: number) => String(n).padStart(2, '0');
                 const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}-${pad(now.getMinutes())}`;
                 try {
-                    const file = await this.app.vault.create(`MGO backup ${stamp}.json`, this.dataManager.exportBackup());
-                    new Notice(`Backup saved to ${file.path}`, 8000);
+                    const file = await this.app.vault.create(`MGO备份-${stamp}.json`, this.dataManager.exportBackup());
+                    new Notice(`备份已保存到 ${file.path}`, 8000);
                 } catch (error: unknown) {
-                    new Notice(`Backup failed: ${getErrorMessage(error)}`, 8000);
+                    new Notice(`备份失败：${getErrorMessage(error)}`, 8000);
                 }
             },
         });
 
         this.addCommand({
             id: 'import-review-data',
-            name: 'Import review data from backup',
+            name: '从备份导入复习数据',
             callback: () => {
                 new ImportBackupModal(this.app, this).open();
             },
@@ -265,7 +265,7 @@ class FSRSFlashcardsPlugin extends Plugin {
 
         this.addCommand({
             id: 'reset-all-card-progress',
-            name: 'Reset all card progress (nuclear option)',
+            name: '重置全部卡片进度（危险操作）',
             callback: async () => {
                 new ResetProgressModal(this.app, this).open();
             },
@@ -275,7 +275,7 @@ class FSRSFlashcardsPlugin extends Plugin {
             const selection = editor.getSelection();
             if (selection) {
                 menu.addItem((item) => {
-                    item.setTitle('Create cloze from selection')
+                    item.setTitle('由选中文本创建填空')
                         .setIcon('highlighter')
                         .onClick(() => {
                             const line = editor.getLine(editor.getCursor().line);

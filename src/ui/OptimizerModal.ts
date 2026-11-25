@@ -17,7 +17,7 @@ export class OptimizerModal extends Modal {
 
     onOpen() {
         this.contentEl.empty();
-        this.titleEl.setText('FSRS weight optimizer');
+        this.titleEl.setText('FSRS 权重优化器');
         this.containerEl.addClass('fsrs-optimizer-modal');
 
         const reviewHistory = this.plugin.dataManager.getReviewHistory();
@@ -30,17 +30,17 @@ export class OptimizerModal extends Modal {
 
         const overviewEl = this.contentEl.createDiv({ cls: 'fsrs-optimizer-overview' });
         overviewEl.createEl('p', {
-            text: `Dataset: ${totalReviews} reviews across ${cardsWithHistory} cards (avg ${avgReviewsPerCard}/card)`,
+            text: `样本数据：${cardsWithHistory} 张卡片共 ${totalReviews} 次复习（平均每张 ${avgReviewsPerCard} 次）`,
         });
         overviewEl.createEl('p', {
             text: cardsWithHistory < 5
-                ? 'Need at least 5 cards with review history to optimize.'
-                : 'The optimizer will tune the 19 FSRS weights to match your memory patterns. This may take a few seconds.',
+                ? '至少需要 5 张有复习记录的卡片才能进行优化。'
+                : '优化器会调整 19 个 FSRS 权重以匹配你的记忆规律，这可能需要几秒钟。',
             cls: cardsWithHistory < 5 ? 'mod-warning' : '',
         });
 
         const weightsContainer = this.contentEl.createDiv({ cls: 'fsrs-optimizer-weights' });
-        weightsContainer.createEl('h4', { text: 'Current weights' });
+        weightsContainer.createEl('h4', { text: '当前权重' });
         this.renderWeightTable(weightsContainer, this.currentWeights);
 
         const resultContainer = this.contentEl.createDiv({ cls: 'fsrs-optimizer-result' });
@@ -52,20 +52,20 @@ export class OptimizerModal extends Modal {
 
         new Setting(actionsEl)
             .addButton(btn => btn
-                .setButtonText('Run optimization')
+                .setButtonText('开始优化')
                 .setCta()
                 .setDisabled(cardsWithHistory < 5 || this.isRunning)
                 .onClick(() => this.runOptimization(sequences, resultContainer, statusEl, weightsContainer)))
             .addButton(btn => btn
-                .setButtonText('Cancel')
+                .setButtonText('取消')
                 .onClick(() => this.close()));
     }
 
     private renderWeightTable(container: HTMLElement, weights: readonly number[]) {
         const table = container.createEl('table', { cls: 'fsrs-optimizer-table' });
         const headerRow = table.createEl('tr');
-        headerRow.createEl('th', { text: 'Index' });
-        headerRow.createEl('th', { text: 'Value' });
+        headerRow.createEl('th', { text: '序号' });
+        headerRow.createEl('th', { text: '数值' });
 
         for (let i = 0; i < weights.length; i++) {
             const row = table.createEl('tr');
@@ -81,7 +81,7 @@ export class OptimizerModal extends Modal {
         weightsContainer: HTMLElement,
     ) {
         this.isRunning = true;
-        statusEl.setText('Running optimization...');
+        statusEl.setText('正在运行优化……');
         statusEl.addClass('fsrs-optimizer-status-running');
 
         const { request_retention, maximum_interval } = this.plugin.settings.fsrsParams;
@@ -90,7 +90,7 @@ export class OptimizerModal extends Modal {
 
         try {
             const onProgress = (r: OptimizerResult) => {
-                statusEl.setText(`Epoch ${r.epoch}/30 — loss: ${r.loss.toFixed(4)}`);
+                statusEl.setText(`第 ${r.epoch}/30 轮 — 损失值：${r.loss.toFixed(4)}`);
             };
 
             this.result = optimize(sequences, this.currentWeights, request_retention, maximum_interval, {
@@ -103,7 +103,7 @@ export class OptimizerModal extends Modal {
 
             this.showResults(resultContainer, statusEl);
         } catch (error) {
-            statusEl.setText(`Optimization failed: ${error}`);
+            statusEl.setText(`优化失败：${error}`);
             statusEl.removeClass('fsrs-optimizer-status-running');
             statusEl.addClass('mod-warning');
         } finally {
@@ -117,13 +117,13 @@ export class OptimizerModal extends Modal {
     ) {
         if (!this.result) return;
 
-        statusEl.setText(`Done! Final loss: ${this.result.loss.toFixed(4)}`);
+        statusEl.setText(`完成！最终损失值：${this.result.loss.toFixed(4)}`);
         statusEl.removeClass('fsrs-optimizer-status-running');
 
         resultContainer.empty();
         resultContainer.show();
 
-        resultContainer.createEl('h4', { text: 'Optimized weights' });
+        resultContainer.createEl('h4', { text: '优化后的权重' });
         this.renderWeightTable(resultContainer, this.result.weights);
 
         // Compute current loss for comparison
@@ -136,31 +136,31 @@ export class OptimizerModal extends Modal {
 
         if (currentLoss !== null) {
             const comparisonContainer = resultContainer.createDiv({ cls: 'fsrs-optimizer-comparison' });
-            comparisonContainer.createEl('h4', { text: 'Comparison' });
+            comparisonContainer.createEl('h4', { text: '对比' });
             comparisonContainer.createEl('p', {
-                text: `Current weights loss: ${currentLoss.toFixed(4)} → Optimized: ${this.result.loss.toFixed(4)}`,
+                text: `当前权重的损失值：${currentLoss.toFixed(4)} → 优化后：${this.result.loss.toFixed(4)}`,
             });
             const improvement = ((currentLoss - this.result.loss) / currentLoss * 100).toFixed(1);
             comparisonContainer.createEl('p', {
-                text: `Improvement: ${improvement}%`,
+                text: `改善幅度：${improvement}%`,
                 cls: parseFloat(improvement) > 0 ? 'fsrs-optimizer-positive' : '',
             });
         }
 
         new Setting(this.contentEl)
             .addButton(btn => btn
-                .setButtonText('Apply weights')
+                .setButtonText('应用权重')
                 .setCta()
                 .onClick(async () => {
                     if (!this.result) return;
                     this.plugin.settings.fsrsParams.w = [...this.result.weights];
                     await this.plugin.saveSettings();
                     this.plugin.dataManager.updateFsrsParameters(this.plugin.settings.fsrsParams);
-                    new Notice('Optimized FSRS weights applied!');
+                    new Notice('优化后的 FSRS 权重已应用！');
                     this.close();
                 }))
             .addButton(btn => btn
-                .setButtonText('Discard')
+                .setButtonText('放弃')
                 .onClick(() => this.close()));
     }
 

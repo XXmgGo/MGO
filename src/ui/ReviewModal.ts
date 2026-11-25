@@ -49,7 +49,7 @@ export class ReviewModal extends Modal {
     onOpen() {
         this.renderComponent = new Component();
         this.containerEl.addClass('fsrs-review-modal-immersive');
-        const deckPrefix = this.deckName ? this.deckName : 'Reviewing';
+        const deckPrefix = this.deckName ? this.deckName : '复习中';
         this.titleEl.empty();
         this.titleEl.createSpan({ text: deckPrefix });
         this.titleEl.createSpan({ text: `${this.currentCardIndex + 1}/${this.queue.length}`, cls: 'fsrs-counter-badge' });
@@ -74,8 +74,8 @@ export class ReviewModal extends Modal {
         const card = this.getCurrentCard();
         this.modalEl.find('.modal-title').addEventListener('click', () => {
             const data = this.getCurrentCard().fsrsData;
-            if (!data) { new Notice('This is a new card.'); return; }
-            const info = `Stability: ${data.stability.toFixed(2)}\nDifficulty: ${data.difficulty.toFixed(2)}\nReps: ${data.reps}\nLapses: ${data.lapses}\nDue: ${data.due.toLocaleDateString()}`;
+            if (!data) { new Notice('这是一张新卡片。'); return; }
+            const info = `稳定性：${data.stability.toFixed(2)}\n难度：${data.difficulty.toFixed(2)}\n复习次数：${data.reps}\n遗忘次数：${data.lapses}\n到期日：${data.due.toLocaleDateString()}`;
             new Notice(info, 10000);
         });
         this.modalEl.find('.modal-title').addClass('fsrs-card-info-title');
@@ -85,13 +85,13 @@ export class ReviewModal extends Modal {
         if (headerControls) {
             this.undoButton = headerControls.createDiv({ cls: 'clickable-icon' });
             setIcon(this.undoButton, 'undo-2');
-            this.undoButton.setAttribute('aria-label', 'Undo last rating');
+            this.undoButton.setAttribute('aria-label', '撤销上次评分');
             this.undoButton.addEventListener('click', () => this.undoRating());
             this.updateUndoButton();
 
             const editBtn = headerControls.createDiv({ cls: 'clickable-icon' });
             setIcon(editBtn, 'pencil');
-            editBtn.setAttribute('aria-label', 'Edit this card');
+            editBtn.setAttribute('aria-label', '编辑此卡片');
             editBtn.addEventListener('click', () => {
                 const { filePath } = this.getCurrentCard();
                 void this.app.workspace.openLinkText(filePath, filePath);
@@ -122,7 +122,7 @@ export class ReviewModal extends Modal {
         const bottomControlsContainer = container.createDiv({ cls: 'fsrs-bottom-controls' });
 
         this.showAnswerButton = new ButtonComponent(bottomControlsContainer)
-            .setButtonText('Show answer')
+            .setButtonText('显示答案')
             .setCta()
             .onClick(() => this.showAnswer());
         this.showAnswerButton.buttonEl.addClass('fsrs-show-answer-btn');
@@ -135,7 +135,7 @@ export class ReviewModal extends Modal {
 
         this.typeinInput = this.typeinContainer.createEl('input', {
             cls: 'fsrs-typein-input',
-            attr: { type: 'text', placeholder: 'Type your answer...', autocomplete: 'off', spellcheck: 'false' },
+            attr: { type: 'text', placeholder: '输入答案...', autocomplete: 'off', spellcheck: 'false' },
         });
         this.typeinFeedback = this.typeinContainer.createDiv({ cls: 'fsrs-typein-feedback' });
         this.typeinFeedback.hide();
@@ -148,7 +148,7 @@ export class ReviewModal extends Modal {
         });
 
         this.typeinCheckBtn = new ButtonComponent(this.typeinContainer)
-            .setButtonText('Check')
+            .setButtonText('检查')
             .setCta()
             .onClick(() => {
                 const card = this.getCurrentCard();
@@ -167,13 +167,13 @@ export class ReviewModal extends Modal {
                 this.typeinCheckBtn.setDisabled(true);
 
                 if (exactMatch) {
-                    this.typeinFeedback.createSpan({ text: 'Correct', cls: 'fsrs-typein-correct' });
+                    this.typeinFeedback.createSpan({ text: '回答正确', cls: 'fsrs-typein-correct' });
                 } else if (keywordMatch) {
-                    this.typeinFeedback.createSpan({ text: 'Close match', cls: 'fsrs-typein-partial' });
+                    this.typeinFeedback.createSpan({ text: '接近正确', cls: 'fsrs-typein-partial' });
                 } else {
-                    this.typeinFeedback.createSpan({ text: 'Not correct', cls: 'fsrs-typein-wrong' });
+                    this.typeinFeedback.createSpan({ text: '回答错误', cls: 'fsrs-typein-wrong' });
                 }
-                this.typeinFeedback.createEl('p', { text: `Correct answer: ${correct}`, cls: 'fsrs-typein-answer' });
+                this.typeinFeedback.createEl('p', { text: `正确答案：${correct}`, cls: 'fsrs-typein-answer' });
 
                 this.createControlButtons();
                 this.state = 'answer';
@@ -272,10 +272,10 @@ export class ReviewModal extends Modal {
         const intervals = this.plugin.dataManager.getNextReviewIntervals(card);
 
         const ratings: Array<{ text: string; rating: Exclude<Rating, Rating.Manual>; cls: string }> = [
-            { text: 'Again', rating: Rating.Again, cls: 'fsrs-rating-again' },
-            { text: 'Hard', rating: Rating.Hard, cls: 'fsrs-rating-hard' },
-            { text: 'Good', rating: Rating.Good, cls: 'fsrs-rating-good' },
-            { text: 'Easy', rating: Rating.Easy, cls: 'fsrs-rating-easy' },
+            { text: '重来', rating: Rating.Again, cls: 'fsrs-rating-again' },
+            { text: '困难', rating: Rating.Hard, cls: 'fsrs-rating-hard' },
+            { text: '良好', rating: Rating.Good, cls: 'fsrs-rating-good' },
+            { text: '简单', rating: Rating.Easy, cls: 'fsrs-rating-easy' },
         ];
 
         for (const { text, rating, cls } of ratings) {
@@ -305,16 +305,16 @@ export class ReviewModal extends Modal {
         }
         this.inplaceIndicatorEl.hide();
 
-        const deckPrefix = this.deckName ? this.deckName : 'Reviewing';
+        const deckPrefix = this.deckName ? this.deckName : '复习中';
         this.titleEl.empty();
         this.titleEl.createSpan({ text: deckPrefix });
         this.titleEl.createSpan({ text: `${this.currentCardIndex + 1}/${this.queue.length}`, cls: 'fsrs-counter-badge' });
         if (this.plugin.dataManager.isLeech?.(card)) {
             const lapses = card.fsrsData?.lapses ?? 0;
             this.titleEl.createSpan({
-                text: `Leech (${lapses} lapses)`,
+                text: `困难卡（遗忘 ${lapses} 次）`,
                 cls: 'fsrs-leech-badge',
-                attr: { title: 'This card has lapsed repeatedly. Consider simplifying, splitting, or rewriting it.' },
+                attr: { title: '这张卡片反复遗忘。建议简化、拆分或重写。' },
             });
         }
 
@@ -361,7 +361,7 @@ export class ReviewModal extends Modal {
             this.frontEl.hide();
             this.answerContainer.show();
             this.activeInPlaceView = 'answer';
-            this.inplaceIndicatorEl.setText('Answer (tap to peek question)');
+            this.inplaceIndicatorEl.setText('答案（点击可回看问题）');
             this.inplaceIndicatorEl.show();
         } else {
             this.frontEl.show();
@@ -377,12 +377,12 @@ export class ReviewModal extends Modal {
             this.activeInPlaceView = 'question';
             this.frontEl.show();
             this.answerContainer.hide();
-            this.inplaceIndicatorEl.setText('Question (tap to see answer)');
+            this.inplaceIndicatorEl.setText('问题（点击查看答案）');
         } else {
             this.activeInPlaceView = 'answer';
             this.frontEl.hide();
             this.answerContainer.show();
-            this.inplaceIndicatorEl.setText('Answer (tap to peek question)');
+            this.inplaceIndicatorEl.setText('答案（点击可回看问题）');
         }
     }
 
@@ -446,11 +446,11 @@ export class ReviewModal extends Modal {
 
     private showCompletionScreen() {
         this.contentEl.empty();
-        this.titleEl.setText('Session complete!');
+        this.titleEl.setText('本次复习完成！');
         const container = this.contentEl.createDiv({ cls: 'fsrs-completion-screen' });
-        container.createEl('h2', { text: 'Great work!' });
-        container.createEl('p', { text: `You have completed ${this.queue.length} cards.` });
-        new ButtonComponent(container).setButtonText('Return to dashboard').setCta().onClick(() => this.close());
+        container.createEl('h2', { text: '干得漂亮！' });
+        container.createEl('p', { text: `你已完成 ${this.queue.length} 张卡片。` });
+        new ButtonComponent(container).setButtonText('返回面板').setCta().onClick(() => this.close());
     }
 
     private handleKeyPress(evt: KeyboardEvent) {

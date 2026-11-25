@@ -14,7 +14,7 @@ export class StatsModal extends Modal {
 
     onOpen() {
         this.contentEl.empty();
-        this.titleEl.setText('Statistics');
+        this.titleEl.setText('统计');
         this.containerEl.addClass('fsrs-stats-modal');
         this.containerEl.addClass('fsrs-stats-modal-scroll');
         Chart.register(...registerables);
@@ -40,10 +40,10 @@ export class StatsModal extends Modal {
             card.createDiv({ text: label, cls: 'fsrs-stat-header-label' });
         };
 
-        createCard('check-circle', stats.reviewsToday.toString(), 'Reviews today', 'success');
-        createCard('calendar', stats.forecast.reduce((a: number, b: number) => a + b, 0).toString(), 'Due this week', 'warning');
-        createCard('trending-up', stats.maturity.mature.toString(), 'Mature cards', 'info');
-        createCard('award', (stats.maturity.mature + stats.maturity.young).toString(), 'Total learned', 'neutral');
+        createCard('check-circle', stats.reviewsToday.toString(), '今日复习', 'success');
+        createCard('calendar', stats.forecast.reduce((a: number, b: number) => a + b, 0).toString(), '本周到期', 'warning');
+        createCard('trending-up', stats.maturity.mature.toString(), '成熟卡片', 'info');
+        createCard('award', (stats.maturity.mature + stats.maturity.young).toString(), '已学卡片总数', 'neutral');
     }
 
     private renderRetentionCurve(stats: ReturnType<FSRSFlashcardsPlugin['dataManager']['getDetailedStats']>) {
@@ -52,7 +52,7 @@ export class StatsModal extends Modal {
         const card = this.contentEl.createDiv({ cls: 'fsrs-chart-card' });
         const header = card.createDiv({ cls: 'fsrs-chart-header' });
         setIcon(header.createDiv({ cls: 'fsrs-chart-icon' }), 'trending-up');
-        header.createEl('h3', { text: 'Retention rate' });
+        header.createEl('h3', { text: '保留率曲线' });
 
         const wrapper = card.createDiv({ cls: 'fsrs-chart-canvas-wrapper' });
         const canvas = wrapper.createEl('canvas');
@@ -63,7 +63,7 @@ export class StatsModal extends Modal {
                 labels: stats.retentionCurve.map(r => r.date.slice(5)),
                 datasets: [
                     {
-                        label: 'Predicted',
+                        label: '预测',
                         data: stats.retentionCurve.map(r => r.predicted),
                         borderColor: 'var(--interactive-accent)',
                         backgroundColor: 'transparent',
@@ -73,7 +73,7 @@ export class StatsModal extends Modal {
                         tension: 0.3,
                     },
                     {
-                        label: 'Actual',
+                        label: '实际',
                         data: stats.retentionCurve.map(r => r.actual),
                         borderColor: 'var(--color-green)',
                         backgroundColor: 'rgba(var(--color-green-rgb), 0.1)',
@@ -108,13 +108,13 @@ export class StatsModal extends Modal {
         const donutCard = row.createDiv({ cls: 'fsrs-chart-card fsrs-chart-card-half' });
         const donutHeader = donutCard.createDiv({ cls: 'fsrs-chart-header' });
         setIcon(donutHeader.createDiv({ cls: 'fsrs-chart-icon' }), 'pie-chart');
-        donutHeader.createEl('h3', { text: 'Card maturity' });
+        donutHeader.createEl('h3', { text: '卡片成熟度' });
 
         const donutWrapper = donutCard.createDiv({ cls: 'fsrs-chart-canvas-wrapper' });
         const donutCanvas = donutWrapper.createEl('canvas');
         const m = stats.maturity;
         const maturityColors = ['--color-red', '--color-orange', '--interactive-accent', '--color-green'];
-        const maturityLabels = ['New', 'Learning', 'Young', 'Mature'];
+        const maturityLabels = ['新卡', '学习中', '年轻', '成熟'];
         const maturityData = [m.new, m.learning, m.young, m.mature];
 
         const donutChart = new Chart(donutCanvas, {
@@ -145,7 +145,7 @@ export class StatsModal extends Modal {
             const intervalCard = row.createDiv({ cls: 'fsrs-chart-card fsrs-chart-card-half' });
             const intervalHeader = intervalCard.createDiv({ cls: 'fsrs-chart-header' });
             setIcon(intervalHeader.createDiv({ cls: 'fsrs-chart-icon' }), 'clock');
-            intervalHeader.createEl('h3', { text: 'Review intervals' });
+            intervalHeader.createEl('h3', { text: '复习间隔分布' });
 
             const intervalWrapper = intervalCard.createDiv({ cls: 'fsrs-chart-canvas-wrapper' });
             const intervalCanvas = intervalWrapper.createEl('canvas');
@@ -155,7 +155,7 @@ export class StatsModal extends Modal {
                 data: {
                     labels: stats.intervalBuckets.map(b => b.label),
                     datasets: [{
-                        label: 'Reviews',
+                        label: '复习',
                         data: stats.intervalBuckets.map(b => b.count),
                         backgroundColor: 'var(--interactive-accent)',
                         borderRadius: 3,
@@ -180,7 +180,7 @@ export class StatsModal extends Modal {
         const card = this.contentEl.createDiv({ cls: 'fsrs-chart-card' });
         const header = card.createDiv({ cls: 'fsrs-chart-header' });
         setIcon(header.createDiv({ cls: 'fsrs-chart-icon' }), 'calendar');
-        header.createEl('h3', { text: '12-month activity' });
+        header.createEl('h3', { text: '近 12 个月学习活动' });
 
         const heatmapEl = card.createDiv({ cls: 'fsrs-heatmap' });
 
@@ -207,7 +207,7 @@ export class StatsModal extends Modal {
                 const intensity = day.count > 0 ? Math.min(Math.ceil((day.count / maxCount) * 4), 4) : 0;
                 weekRow.createDiv({
                     cls: `fsrs-heatmap-cell fsrs-heatmap-l${intensity}`,
-                    attr: { title: `${day.date}: ${day.count} reviews` },
+                    attr: { title: `${day.date}：${day.count} 次复习` },
                 });
             }
         }
@@ -234,7 +234,7 @@ export class StatsModal extends Modal {
             const rest = sorted.slice(MAX_VISIBLE_DECKS);
             labels = [
                 ...visible.map(d => d.name.length > 20 ? d.name.slice(0, 20) + '…' : d.name),
-                `Other (${rest.length})`,
+                `其他（${rest.length}）`,
             ];
             newData = [...visible.map(d => d.new), rest.reduce((s, d) => s + d.new, 0)];
             dueData = [...visible.map(d => d.due), rest.reduce((s, d) => s + d.due, 0)];
@@ -244,7 +244,7 @@ export class StatsModal extends Modal {
         const card = this.contentEl.createDiv({ cls: 'fsrs-chart-card' });
         const header = card.createDiv({ cls: 'fsrs-chart-header' });
         setIcon(header.createDiv({ cls: 'fsrs-chart-icon' }), 'layers');
-        header.createEl('h3', { text: `Per-deck breakdown (${stats.perDeckStats.length} decks)` });
+        header.createEl('h3', { text: `分牌组明细（${stats.perDeckStats.length} 个牌组）` });
 
         const wrapper = card.createDiv({ cls: 'fsrs-chart-canvas-wrapper' });
         const canvas = wrapper.createEl('canvas');
@@ -254,9 +254,9 @@ export class StatsModal extends Modal {
             data: {
                 labels,
                 datasets: [
-                    { label: 'New', data: newData, backgroundColor: 'var(--color-red)', borderRadius: 2 },
-                    { label: 'Learning', data: learningData, backgroundColor: 'var(--color-orange)', borderRadius: 2 },
-                    { label: 'Due', data: dueData, backgroundColor: 'var(--interactive-accent)', borderRadius: 2 },
+                    { label: '新卡', data: newData, backgroundColor: 'var(--color-red)', borderRadius: 2 },
+                    { label: '学习中', data: learningData, backgroundColor: 'var(--color-orange)', borderRadius: 2 },
+                    { label: '到期', data: dueData, backgroundColor: 'var(--interactive-accent)', borderRadius: 2 },
                 ],
             },
             options: {
@@ -282,14 +282,14 @@ export class StatsModal extends Modal {
         const activityCard = chartsSection.createDiv({ cls: 'fsrs-chart-card fsrs-chart-card-half' });
         const activityHeader = activityCard.createDiv({ cls: 'fsrs-chart-header' });
         setIcon(activityHeader.createDiv({ cls: 'fsrs-chart-icon' }), 'activity');
-        activityHeader.createEl('h3', { text: '30-day activity' });
+        activityHeader.createEl('h3', { text: '近 30 天活动' });
 
         const activityWrapper = activityCard.createDiv({ cls: 'fsrs-chart-canvas-wrapper' });
         const activityCanvas = activityWrapper.createEl('canvas');
         const activityLabels = Array.from({ length: 30 }, (_, i) => {
             const d = new Date();
             d.setDate(d.getDate() - (29 - i));
-            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
         });
 
         const activityChart = new Chart(activityCanvas, {
@@ -297,7 +297,7 @@ export class StatsModal extends Modal {
             data: {
                 labels: activityLabels,
                 datasets: [{
-                    label: 'Reviews',
+                    label: '复习',
                     data: stats.activity,
                     borderColor: 'var(--interactive-accent)',
                     backgroundColor: 'rgba(var(--interactive-accent-rgb), 0.1)',
@@ -324,14 +324,14 @@ export class StatsModal extends Modal {
         const forecastCard = chartsSection.createDiv({ cls: 'fsrs-chart-card fsrs-chart-card-half' });
         const forecastHeader = forecastCard.createDiv({ cls: 'fsrs-chart-header' });
         setIcon(forecastHeader.createDiv({ cls: 'fsrs-chart-icon' }), 'calendar');
-        forecastHeader.createEl('h3', { text: '7-day forecast' });
+        forecastHeader.createEl('h3', { text: '未来 7 天预测' });
 
         const forecastWrapper = forecastCard.createDiv({ cls: 'fsrs-chart-canvas-wrapper' });
         const forecastCanvas = forecastWrapper.createEl('canvas');
         const forecastLabels = Array.from({ length: 7 }, (_, i) => {
             const d = new Date();
             d.setDate(d.getDate() + i);
-            return d.toLocaleDateString(undefined, { weekday: 'short' });
+            return d.toLocaleDateString('zh-CN', { weekday: 'short' });
         });
 
         const forecastChart = new Chart(forecastCanvas, {
@@ -339,7 +339,7 @@ export class StatsModal extends Modal {
             data: {
                 labels: forecastLabels,
                 datasets: [{
-                    label: 'Due',
+                    label: '到期',
                     data: stats.forecast,
                     backgroundColor: 'var(--color-orange)',
                     borderRadius: 4,
