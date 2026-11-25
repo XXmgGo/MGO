@@ -568,10 +568,11 @@ export class DataManager {
                 continue;
             }
 
-            const answerMatch = body.match(/<mgo-a(?:\s[^>]*)?>([\s\S]*?)<\/mgo-a>/i);
-            if (!answerMatch) continue;
-            const back = (answerMatch[1] || '').trim();
-            const front = body.replace(answerMatch[0], '').trim();
+            const frontMatch = body.match(/<mgo-card-front(?:\s[^>]*)?>([\s\S]*?)<\/mgo-card-front>/i);
+            const backMatch = body.match(/<mgo-card-back(?:\s[^>]*)?>([\s\S]*?)<\/mgo-card-back>/i);
+            if (!frontMatch || !backMatch) continue;
+            const front = (frontMatch[1] || '').trim();
+            const back = (backMatch[1] || '').trim();
             if (!front || !back) continue;
 
             let finalFront = front;

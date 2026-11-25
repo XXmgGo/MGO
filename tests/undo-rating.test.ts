@@ -13,8 +13,8 @@ import { DataManager } from '../src/data/DataManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
 const CONTENT = [
-    '<mgo-card cardId="c1">First<mgo-a>One</mgo-a></mgo-card>',
-    '<mgo-card cardId="c2">Second<mgo-a>Two</mgo-a></mgo-card>',
+    '<mgo-card cardId="c1"><mgo-card-front>First</mgo-card-front><mgo-card-back>One</mgo-card-back></mgo-card>',
+    '<mgo-card cardId="c2"><mgo-card-front>Second</mgo-card-front><mgo-card-back>Two</mgo-card-back></mgo-card>',
     '',
 ].join('\n');
 const settle = () => new Promise((r) => setTimeout(r, 200));

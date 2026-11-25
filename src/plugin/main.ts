@@ -80,10 +80,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n\n<mgo-card cardId="${blockId}">\nQuestion\n<mgo-a>Answer</mgo-a>\n</mgo-card>\n\n`;
+                const template = `\n\n<mgo-card cardId="${blockId}">\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setCursor({ line: cursor.line + 3, ch: 8 });
+                editor.setCursor({ line: cursor.line + 4, ch: 8 });
             },
         });
         this.addCommand({
@@ -93,7 +93,7 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}">Question<mgo-a>Answer</mgo-a></mgo-card>`;
+                const template = `\n<mgo-card cardId="${blockId}"><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
                 editor.setSelection({ line: cursor.line + 1, ch: 30 }, { line: cursor.line + 1, ch: 38 });
@@ -106,7 +106,7 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}" reverse>Question<mgo-a>Answer</mgo-a></mgo-card>`;
+                const template = `\n<mgo-card cardId="${blockId}" reverse><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
                 editor.setSelection({ line: cursor.line + 1, ch: 38 }, { line: cursor.line + 1, ch: 46 });
@@ -157,10 +157,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n\n<mgo-card cardId="${blockId}" type="typein">\nQuestion\n<mgo-a>Answer</mgo-a>\n</mgo-card>\n\n`;
+                const template = `\n\n<mgo-card cardId="${blockId}" type="typein">\n<mgo-card-front>\nQuestion\n</mgo-card-front>\n<mgo-card-back>\nAnswer\n</mgo-card-back>\n</mgo-card>\n\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setCursor({ line: cursor.line + 3, ch: 8 });
+                editor.setCursor({ line: cursor.line + 4, ch: 8 });
             },
         });
         this.addCommand({
@@ -170,7 +170,7 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}" type="typein">Question<mgo-a>Answer</mgo-a></mgo-card>`;
+                const template = `\n<mgo-card cardId="${blockId}" type="typein"><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
                 editor.setSelection({ line: cursor.line + 1, ch: 41 }, { line: cursor.line + 1, ch: 49 });

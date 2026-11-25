@@ -132,7 +132,7 @@ describe('ReviewModal learning flow with the real scheduler', () => {
         const file = { path: 'Decks/L.md', basename: 'L', stat: { mtime: 1 } };
         const plugin = {
             app: {
-                vault: { getMarkdownFiles: () => [file], read: async () => '<mgo-card cardId="c1">One<mgo-a>1</mgo-a></mgo-card>\n<mgo-card cardId="c2">Two<mgo-a>2</mgo-a></mgo-card>\n<mgo-card cardId="c3">Three<mgo-a>3</mgo-a></mgo-card>\n' },
+                vault: { getMarkdownFiles: () => [file], read: async () => '<mgo-card cardId="c1"><mgo-card-front>One</mgo-card-front><mgo-card-back>1</mgo-card-back></mgo-card>\n<mgo-card cardId="c2"><mgo-card-front>Two</mgo-card-front><mgo-card-back>2</mgo-card-back></mgo-card>\n<mgo-card cardId="c3"><mgo-card-front>Three</mgo-card-front><mgo-card-back>3</mgo-card-back></mgo-card>\n' },
                 metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
                 workspace: { openLinkText: vi.fn() },
             },

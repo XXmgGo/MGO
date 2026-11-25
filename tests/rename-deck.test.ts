@@ -16,8 +16,8 @@ import { DataManager } from '../src/data/DataManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
 const CONTENT = [
-    '<mgo-card cardId="abc123">Block question<mgo-a>Block answer</mgo-a></mgo-card>',
-    '<mgo-card>Hashed question<mgo-a>Hashed answer</mgo-a></mgo-card>',
+    '<mgo-card cardId="abc123"><mgo-card-front>Block question</mgo-card-front><mgo-card-back>Block answer</mgo-card-back></mgo-card>',
+    '<mgo-card><mgo-card-front>Hashed question</mgo-card-front><mgo-card-back>Hashed answer</mgo-card-back></mgo-card>',
     '',
     '<mgo-card cardId="cloze1">The ==c1::mitochondria== is the powerhouse</mgo-card>',
 ].join('\n');

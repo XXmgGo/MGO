@@ -382,6 +382,6 @@ export class DashboardView extends ItemView {
         const tipEl = emptyStateEl.createDiv({ cls: 'fsrs-empty-tip' });
         const tipIcon = tipEl.createDiv({ cls: 'fsrs-tip-icon' });
         setIcon(tipIcon, 'lightbulb');
-        tipEl.createSpan({ text: '小技巧：在任意带牌组标签的笔记中写下 <mgo-card cardId="my-1">问题<mgo-a>答案</mgo-a></mgo-card>，即可立刻添加卡片。' });
+        tipEl.createSpan({ text: '小技巧：在任意带牌组标签的笔记中写下 <mgo-card cardId="my-1"><mgo-card-front>问题</mgo-card-front><mgo-card-back>答案</mgo-card-back></mgo-card>，即可立刻添加卡片。' });
     }
 }

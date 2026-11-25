@@ -133,9 +133,9 @@ describe('Card parsing', () => {
 tags: [flashcards]
 ---
 
-<mgo-card cardId="test123">
+<mgo-card cardId="test123"><mgo-card-front>
 What is the capital of France?
-<mgo-a>Paris</mgo-a>
+</mgo-card-front><mgo-card-back>Paris</mgo-card-back>
 </mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
@@ -156,14 +156,14 @@ What is the capital of France?
 tags: [flashcards]
 ---
 
-<mgo-card cardId="q1">
+<mgo-card cardId="q1"><mgo-card-front>
 Front 1
-<mgo-a>Back 1</mgo-a>
+</mgo-card-front><mgo-card-back>Back 1</mgo-card-back>
 </mgo-card>
 
-<mgo-card cardId="q2">
+<mgo-card cardId="q2"><mgo-card-front>
 Front 2
-<mgo-a>Back 2</mgo-a>
+</mgo-card-front><mgo-card-back>Back 2</mgo-card-back>
 </mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
@@ -180,9 +180,9 @@ Front 2
 tags: [flashcards]
 ---
 
-<mgo-card>
+<mgo-card><mgo-card-front>
 Front without block ID
-<mgo-a>Back without block ID</mgo-a>
+</mgo-card-front><mgo-card-back>Back without block ID</mgo-card-back>
 </mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
@@ -200,8 +200,8 @@ Front without block ID
 tags: [flashcards]
 ---
 
-<mgo-card cardId="empty">
-<mgo-a>Back only - no front</mgo-a>
+<mgo-card cardId="empty"><mgo-card-front>
+</mgo-card-front><mgo-card-back>Back only - no front</mgo-card-back>
 </mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
@@ -218,9 +218,9 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="py-list-02">
+<mgo-card cardId="py-list-02"><mgo-card-front>
 How do you access single elements and slices of a list?
-<mgo-a>Use indexing: list[0]</mgo-a>
+</mgo-card-front><mgo-card-back>Use indexing: list[0]</mgo-card-back>
 </mgo-card>
 
 ## 2. Next Section
@@ -245,11 +245,11 @@ This heading and text should not be part of the card!
 tags: [flashcards]
 ---
 
-<mgo-card cardId="card-1">Question 1<mgo-a>Answer 1</mgo-a></mgo-card>
+<mgo-card cardId="card-1"><mgo-card-front>Question 1</mgo-card-front><mgo-card-back>Answer 1</mgo-card-back></mgo-card>
 
 Prose notes here
 
-<mgo-card card-id="card-2">Question 2<mgo-a>Answer 2</mgo-a></mgo-card>
+<mgo-card card-id="card-2"><mgo-card-front>Question 2</mgo-card-front><mgo-card-back>Answer 2</mgo-card-back></mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
             const cards = dm.getAllCards();
@@ -269,14 +269,14 @@ Prose notes here
 tags: [flashcards]
 ---
 
-<mgo-card cardId="legacy-01">
+<mgo-card cardId="legacy-01"><mgo-card-front>
 Question 1
-<mgo-a>Answer 1
-Line 2 of answer</mgo-a>
+</mgo-card-front><mgo-card-back>Answer 1
+Line 2 of answer</mgo-card-back>
 </mgo-card>
-<mgo-card cardId="legacy-02">
+<mgo-card cardId="legacy-02"><mgo-card-front>
 Question 2
-<mgo-a>Answer 2</mgo-a>
+</mgo-card-front><mgo-card-back>Answer 2</mgo-card-back>
 </mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
@@ -299,7 +299,7 @@ Question 2
 tags: [flashcards]
 ---
 
-<mgo-card cardId="sl-1">What is the capital of France?<mgo-a>Paris</mgo-a></mgo-card>
+<mgo-card cardId="sl-1"><mgo-card-front>What is the capital of France?</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
             const cards = dm.getAllCards();
@@ -319,7 +319,7 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="rev-1" reverse>Capital of France<mgo-a>Paris</mgo-a></mgo-card>
+<mgo-card cardId="rev-1" reverse><mgo-card-front>Capital of France</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
             const cards = dm.getAllCards();
@@ -339,9 +339,9 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="m1">Q1<mgo-a>A1</mgo-a></mgo-card>
-<mgo-card cardId="m2">Q2<mgo-a>A2</mgo-a></mgo-card>
-<mgo-card cardId="m3" reverse>Q3<mgo-a>A3</mgo-a></mgo-card>
+<mgo-card cardId="m1"><mgo-card-front>Q1</mgo-card-front><mgo-card-back>A1</mgo-card-back></mgo-card>
+<mgo-card cardId="m2"><mgo-card-front>Q2</mgo-card-front><mgo-card-back>A2</mgo-card-back></mgo-card>
+<mgo-card cardId="m3" reverse><mgo-card-front>Q3</mgo-card-front><mgo-card-back>A3</mgo-card-back></mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
             expect(dm.getAllCards()).toHaveLength(3);
@@ -357,7 +357,7 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="colon-1">This is not::A card<mgo-a>The real answer</mgo-a></mgo-card>
+<mgo-card cardId="colon-1"><mgo-card-front>This is not::A card</mgo-card-front><mgo-card-back>The real answer</mgo-card-back></mgo-card>
 
 Time:: 12:30 is just plain prose outside a card.
 `);
@@ -378,7 +378,7 @@ Time:: 12:30 is just plain prose outside a card.
 tags: [flashcards]
 ---
 
-<mgo-card cardId="fsrs-abc123">Capital of France<mgo-a>Paris</mgo-a></mgo-card>
+<mgo-card cardId="fsrs-abc123"><mgo-card-front>Capital of France</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
             const cards = dm.getAllCards();
@@ -399,7 +399,7 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="ti-1" type="typein">Type the capital of France<mgo-a>Paris</mgo-a></mgo-card>
+<mgo-card cardId="ti-1" type="typein"><mgo-card-front>Type the capital of France</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
             const cards = dm.getAllCards();
@@ -505,10 +505,10 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="fsrs-b1">
+<mgo-card cardId="fsrs-b1"><mgo-card-front>
 What are basic types?
-<mgo-a>| Type | Description |
-| \`int\` | Integer |</mgo-a>
+</mgo-card-front><mgo-card-back>| Type | Description |
+| \`int\` | Integer |</mgo-card-back>
 </mgo-card>
 <mgo-card cardId="fsrs-c1">Use the ==c1::type()== function to check type.</mgo-card>
 `);
@@ -594,19 +594,19 @@ tags: [flashcards]
 
 # Real Section
 
-<mgo-card cardId="card-1">
+<mgo-card cardId="card-1"><mgo-card-front>
 Question 1
-<mgo-a>
+</mgo-card-front><mgo-card-back>
 \`\`\`python
 # Python comment inside code
 print("hello")
 \`\`\`
-</mgo-a>
+</mgo-card-back>
 </mgo-card>
 
-<mgo-card cardId="card-2">
+<mgo-card cardId="card-2"><mgo-card-front>
 Question 2
-<mgo-a>Answer 2</mgo-a>
+</mgo-card-front><mgo-card-back>Answer 2</mgo-card-back>
 </mgo-card>
 `);
             await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
@@ -622,7 +622,7 @@ Question 2
             const plugin = createMockPlugin();
             const dm = new DataManager(plugin as never);
             plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({ tags: [] });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`<mgo-card cardId="q1">Front<mgo-a>Back</mgo-a></mgo-card>`);
+            plugin.app.vault.read = vi.fn().mockResolvedValue(`<mgo-card cardId="q1"><mgo-card-front>Front</mgo-card-front><mgo-card-back>Back</mgo-card-back></mgo-card>`);
             await dm.updateFile({ path: 'no-deck-tag.md', basename: 'no-deck-tag' } as never);
             expect(dm.getAllCards()).toHaveLength(0);
             expect(dm.getDecks()).toHaveLength(0);

@@ -17,7 +17,7 @@ const DAY = 24 * HOUR;
 function note(count: number) {
     return Array.from(
         { length: count },
-        (_, i) => `<mgo-card cardId="n${i}">Question ${i}<mgo-a>Answer ${i}</mgo-a></mgo-card>`,
+        (_, i) => `<mgo-card cardId="n${i}"><mgo-card-front>Question ${i}</mgo-card-front><mgo-card-back>Answer ${i}</mgo-card-back></mgo-card>`,
     ).join('\n');
 }
 
@@ -112,7 +112,7 @@ describe('getReviewQueue daily limits', () => {
 
 describe('re-indexing an edited deck note', () => {
     it('keeps the schedules of the cards in the note', async () => {
-        let content = '<mgo-card cardId="b1">Q<mgo-a>A</mgo-a></mgo-card>';
+        let content = '<mgo-card cardId="b1"><mgo-card-front>Q</mgo-card-front><mgo-card-back>A</mgo-card-back></mgo-card>';
         const file = { path: 'a.md', basename: 'a', stat: { mtime: 1 } };
         const plugin = {
             app: {
@@ -128,7 +128,7 @@ describe('re-indexing an edited deck note', () => {
         const card = dm.getAllCards()[0];
         dm.updateCard(card, Rating.Good);
 
-        content = '<mgo-card cardId="b1">Q<mgo-a>A</mgo-a></mgo-card>\n<mgo-card>Q2<mgo-a>A2</mgo-a></mgo-card>';
+        content = '<mgo-card cardId="b1"><mgo-card-front>Q</mgo-card-front><mgo-card-back>A</mgo-card-back></mgo-card>\n<mgo-card><mgo-card-front>Q2</mgo-card-front><mgo-card-back>A2</mgo-card-back></mgo-card>';
         file.stat.mtime = 2;
         await dm.updateFile(file as never);
 
@@ -225,7 +225,7 @@ describe('sibling card burying', () => {
 describe('Per-deck settings overrides', () => {
     it('applies frontmatter newCardsPerDay override', async () => {
         const file = { path: 'CustomDeck.md', basename: 'CustomDeck', stat: { mtime: 1 } };
-        const content = [1,2,3,4,5].map(i => `<mgo-card cardId="c${i}">Q${i}<mgo-a>A${i}</mgo-a></mgo-card>`).join('\n');
+        const content = [1,2,3,4,5].map(i => `<mgo-card cardId="c${i}"><mgo-card-front>Q${i}</mgo-card-front><mgo-card-back>A${i}</mgo-card-back></mgo-card>`).join('\n');
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
@@ -248,7 +248,7 @@ describe('Per-deck settings overrides', () => {
 
     it('applies frontmatter requestRetention to card scheduling intervals', async () => {
         const file = { path: 'HighRetention.md', basename: 'HighRetention', stat: { mtime: 1 } };
-        const content = '<mgo-card cardId="c1">Q1<mgo-a>A1</mgo-a></mgo-card>';
+        const content = '<mgo-card cardId="c1"><mgo-card-front>Q1</mgo-card-front><mgo-card-back>A1</mgo-card-back></mgo-card>';
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },

@@ -391,7 +391,7 @@ export class FSRSSettingsTab extends PluginSettingTab {
         const cardBox = containerEl.createDiv({ cls: 'mgo-about-cheatsheet' });
         const cardGrid = cardBox.createDiv({ cls: 'mgo-about-grid' });
         const cardFormats: [string, string][] = [
-            ['基础卡', '<mgo-card cardId="id">问题<mgo-a>答案</mgo-a></mgo-card>'],
+            ['基础卡', '<mgo-card cardId="id"><mgo-card-front>问题</mgo-card-front><mgo-card-back>答案</mgo-card-back></mgo-card>'],
             ['反向卡', '<mgo-card cardId="id" reverse>…（双向回忆）'],
             ['填空题', '<mgo-card cardId="id">句子含 ==c1::挖空==</mgo-card>'],
             ['图片遮罩', '正反面各一张 ![[图]]（原地覆盖）'],

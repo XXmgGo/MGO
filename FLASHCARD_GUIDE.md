@@ -71,65 +71,81 @@ tags: [ja-card/文法]
 
 ```markdown
 <mgo-card cardId="唯一id">
+<mgo-card-front>
 正面内容
-<mgo-a>背面内容</mgo-a>
+</mgo-card-front>
+<mgo-card-back>
+背面内容
+</mgo-card-back>
 </mgo-card>
 ```
 
-- 问题写在 `<mgo-a>` 之前，答案写在 `<mgo-a>…</mgo-a>` 之内。
-- 可以整行写完，也可以分行写，两种写法完全等价。
+- 正反面分别用 `<mgo-card-front>/<mgo-card-back>` 包裹：`<mgo-card-front>` 的内容是正面（问题），`<mgo-card-back>` 的内容是背面（答案）。
+- 可以整行写完，也可以分行写，两种写法完全等价；长内容推荐分行写，插件命令模板生成的就是分行形式。
 - 阅读视图下这些标签本身不显示，内容像普通段落一样呈现——这正是新语法的设计目标：卡片语法不破坏笔记的阅读体验。
 
 ### 示例
 
 **简单问答：**
 ```markdown
-<mgo-card cardId="fsrs-abc123">What is the capital of France?<mgo-a>Paris</mgo-a></mgo-card>
+<mgo-card cardId="fsrs-abc123"><mgo-card-front>What is the capital of France?</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
 ```
 
 **带 Markdown 排版：**
 ```markdown
 <mgo-card cardId="fsrs-def456">
+<mgo-card-front>
 What is the formula for **Einstein's mass-energy equivalence**?
-<mgo-a>$E = mc^2$
+</mgo-card-front>
+<mgo-card-back>
+$E = mc^2$
 
 Where:
 - $E$ = energy
 - $m$ = mass
-- $c$ = speed of light</mgo-a>
+- $c$ = speed of light
+</mgo-card-back>
 </mgo-card>
 ```
 
 **带列表：**
 ```markdown
 <mgo-card cardId="fsrs-ghi789">
+<mgo-card-front>
 Name the three states of matter
-<mgo-a>1. Solid
+</mgo-card-front>
+<mgo-card-back>
+1. Solid
 2. Liquid
 3. Gas
 
-*Bonus: Plasma is the fourth state*</mgo-a>
+*Bonus: Plasma is the fourth state*
+</mgo-card-back>
 </mgo-card>
 ```
 
 **多行背面：**
 ```markdown
 <mgo-card cardId="fsrs-jkl012">
+<mgo-card-front>
 Explain the process of photosynthesis
-<mgo-a>Photosynthesis is the process by which plants convert:
+</mgo-card-front>
+<mgo-card-back>
+Photosynthesis is the process by which plants convert:
 
 **Light energy** → **Chemical energy**
 
 The basic equation:
-$$6CO_2 + 6H_2O + light \rightarrow C_6H_{12}O_6 + 6O_2$$</mgo-a>
+$$6CO_2 + 6H_2O + light \rightarrow C_6H_{12}O_6 + 6O_2$$
+</mgo-card-back>
 </mgo-card>
 ```
 
 ### 书写规则
 
 - 每张卡片都由 `<mgo-card …>` 开标签与 `</mgo-card>` 闭标签成对包裹（标签名不区分大小写）。
-- 答案部分由 `<mgo-a>` 与 `</mgo-a>` 包裹；`</mgo-card>` 显式结束卡片，从而把后续的标题和正文排除在卡片之外。
-- 正面或背面为空时该卡片不会被识别；既没有 `<mgo-a>`、也没有挖空的 `<mgo-card>` 同样会被忽略。
+- 正反面分别用 `<mgo-card-front>/<mgo-card-back>` 包裹；`</mgo-card>` 显式结束卡片，从而把后续的标题和正文排除在卡片之外。
+- 正面或背面为空时该卡片不会被识别；`<mgo-card-front>` 与 `<mgo-card-back>` 两者缺一（且卡内没有挖空）的 `<mgo-card>` 同样会被忽略。
 - `cardId` 不是必需的，但建议加上，以便卡片拥有稳定的身份标识。
 
 ---
@@ -151,7 +167,7 @@ $$6CO_2 + 6H_2O + light \rightarrow C_6H_{12}O_6 + 6O_2$$</mgo-a>
 
 - `c1` = 填空编号（支持 c1、c2、c3 等）
 - `hidden text` = 复习时需要隐藏的内容
-- 填空卡不需要 `<mgo-a>`：只要卡内出现挖空，整段文本就同时作为正面与背面，由挖空决定隐藏位置
+- 填空卡不需要 `<mgo-card-front>/<mgo-card-back>` 子标签：只要卡内出现挖空，整段文本就同时作为正面与背面，由挖空决定隐藏位置
 
 ### 示例
 
@@ -219,8 +235,12 @@ The three branches of the US government are:
 它会插入一个自带预生成 cardId 的模板：
 ```markdown
 <mgo-card cardId="fsrs-a1b2c3">
+<mgo-card-front>
 Question: 
-<mgo-a>Answer: </mgo-a>
+</mgo-card-front>
+<mgo-card-back>
+Answer: 
+</mgo-card-back>
 </mgo-card>
 ```
 
@@ -254,8 +274,11 @@ Obsidian 的全部 Markdown 功能都能在卡片中使用：
 
 ```markdown
 <mgo-card cardId="fsrs-full-example">
+<mgo-card-front>
 What is the **Pythagorean theorem**?
-<mgo-a>In a right triangle:
+</mgo-card-front>
+<mgo-card-back>
+In a right triangle:
 
 $$a^2 + b^2 = c^2$$
 
@@ -267,7 +290,8 @@ Where:
 
 > [!tip] Remember: The hypotenuse is always the longest side!
 
-See also: [[Geometry Basics]]</mgo-a>
+See also: [[Geometry Basics]]
+</mgo-card-back>
 </mgo-card>
 ```
 
@@ -280,8 +304,8 @@ See also: [[Geometry Basics]]</mgo-a>
 ### 语法
 
 ```markdown
-<mgo-card cardId="唯一id">Question<mgo-a>Answer</mgo-a></mgo-card>
-<mgo-card cardId="唯一id" reverse>Question<mgo-a>Answer</mgo-a></mgo-card>
+<mgo-card cardId="唯一id"><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>
+<mgo-card cardId="唯一id" reverse><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>
 ```
 
 - 把整张卡写在一行内，就是紧凑的单行写法；分行写效果完全相同，只是可读性更高。
@@ -291,8 +315,8 @@ See also: [[Geometry Basics]]</mgo-a>
 ### 示例
 
 ```markdown
-<mgo-card cardId="snd-001">What is the speed of sound in air?<mgo-a>Approximately 343 m/s</mgo-a></mgo-card>
-<mgo-card cardId="neuro-002" reverse>Neuron Soma<mgo-a>Cell body containing the nucleus and organelles</mgo-a></mgo-card>
+<mgo-card cardId="snd-001"><mgo-card-front>What is the speed of sound in air?</mgo-card-front><mgo-card-back>Approximately 343 m/s</mgo-card-back></mgo-card>
+<mgo-card cardId="neuro-002" reverse><mgo-card-front>Neuron Soma</mgo-card-front><mgo-card-back>Cell body containing the nucleus and organelles</mgo-card-back></mgo-card>
 ```
 
 ---
@@ -306,14 +330,18 @@ See also: [[Geometry Basics]]</mgo-a>
 正反面各写一张图片链接即可自动识别为原地切换：
 
 ```markdown
-<mgo-card cardId="occlusion-001">![[diagram-masked.png]]<mgo-a>![[diagram-revealed.png]]</mgo-a></mgo-card>
+<mgo-card cardId="occlusion-001"><mgo-card-front>![[diagram-masked.png]]</mgo-card-front><mgo-card-back>![[diagram-revealed.png]]</mgo-card-back></mgo-card>
 ```
 
 分行写也可以，图片还可以带尺寸参数：
 ```markdown
 <mgo-card cardId="occlusion-002">
+<mgo-card-front>
 ![[anatomy-masked.svg|500]]
-<mgo-a>![[anatomy-revealed.svg|500]]</mgo-a>
+</mgo-card-front>
+<mgo-card-back>
+![[anatomy-revealed.svg|500]]
+</mgo-card-back>
 </mgo-card>
 ```
 
@@ -333,14 +361,18 @@ See also: [[Geometry Basics]]</mgo-a>
 在开标签上加 `type="typein"`：
 
 ```markdown
-<mgo-card cardId="type-001" type="typein">What is the capital of Canada?<mgo-a>Ottawa</mgo-a></mgo-card>
+<mgo-card cardId="type-001" type="typein"><mgo-card-front>What is the capital of Canada?</mgo-card-front><mgo-card-back>Ottawa</mgo-card-back></mgo-card>
 ```
 
 分行写法完全相同：
 ```markdown
 <mgo-card cardId="type-002" type="typein">
+<mgo-card-front>
 What is the SI unit of force?
-<mgo-a>Newton</mgo-a>
+</mgo-card-front>
+<mgo-card-back>
+Newton
+</mgo-card-back>
 </mgo-card>
 ```
 
@@ -402,8 +434,8 @@ MGO 内置了交互式弹窗，你完全不必死记卡片标签语法。
 | `Create card (guided modal)` | 打开交互式卡片创建器 | - |
 | `Create new deck` | 创建已预打牌组标签的笔记 | - |
 | `Tag current note as flashcard deck` | 给当前文件加上牌组标签 | - |
-| `Add a new flashcard` | 插入 `<mgo-card cardId="id">问题<mgo-a>答案</mgo-a></mgo-card>` 分行模板 | - |
-| `Add a single-line card` | 插入紧凑写法 `<mgo-card cardId="id">Q<mgo-a>A</mgo-a></mgo-card>` | - |
+| `Add a new flashcard` | 插入分行模板：正面写在 `<mgo-card-front>` 内，背面写在 `<mgo-card-back>` 内 | - |
+| `Add a single-line card` | 插入紧凑写法 `<mgo-card cardId="id"><mgo-card-front>Q</mgo-card-front><mgo-card-back>A</mgo-card-back></mgo-card>` | - |
 | `Add a reversed card` | 插入带 `reverse` 的紧凑模板 | - |
 | `Add a cloze card` | 插入带 `==c1::...==` 的卡片模板 | - |
 | `Create cloze from selection` | 用 `==c1::...==` 包裹选中文本（不在卡内时自动补上 `<mgo-card>`） | - |
@@ -465,17 +497,25 @@ tags: [flashcards, chemistry, organic]
 ## Basic Definitions
 
 <mgo-card cardId="chem-001">
+<mgo-card-front>
 What is the general formula for alkanes?
-<mgo-a>$C_nH_{2n+2}$
+</mgo-card-front>
+<mgo-card-back>
+$C_nH_{2n+2}$
 
 Examples:
 - Methane: $CH_4$
-- Ethane: $C_2H_6$</mgo-a>
+- Ethane: $C_2H_6$
+</mgo-card-back>
 </mgo-card>
 
 <mgo-card cardId="chem-002">
+<mgo-card-front>
 What type of bonds do alkanes contain?
-<mgo-a>Only **single covalent bonds** (C-C and C-H)</mgo-a>
+</mgo-card-front>
+<mgo-card-back>
+Only **single covalent bonds** (C-C and C-H)
+</mgo-card-back>
 </mgo-card>
 
 <mgo-card cardId="chem-003">This makes them ==c1::saturated== hydrocarbons.</mgo-card>
@@ -500,7 +540,7 @@ tags: [flashcards, biology, chapter-1, exam-prep]
 ### 卡片没有出现？
 
 1. 确认文件已带上 `#flashcards` 标签
-2. 检查语法（每张卡片都要有配对的 `<mgo-card …>` 与 `</mgo-card>`，答案要包在 `<mgo-a>…</mgo-a>` 里）
+2. 检查语法（每张卡片都要有配对的 `<mgo-card …>` 与 `</mgo-card>`，正反面要分别包在 `<mgo-card-front>…</mgo-card-front>` 与 `<mgo-card-back>…</mgo-card-back>` 里）
 3. 打开 **仪表板** → 点击 Refresh（刷新）按钮
 4. 查看控制台报错（Ctrl+Shift+I）
 
@@ -529,10 +569,14 @@ tags: [flashcards]
 ## Geography
 
 <mgo-card cardId="geo-001">
+<mgo-card-front>
 What is the largest ocean on Earth?
-<mgo-a>The **Pacific Ocean**
+</mgo-card-front>
+<mgo-card-back>
+The **Pacific Ocean**
 
-It covers approximately 63 million square miles.</mgo-a>
+It covers approximately 63 million square miles.
+</mgo-card-back>
 </mgo-card>
 
 <mgo-card cardId="geo-002">The Pacific Ocean covers approximately ==c1::63 million square miles==.</mgo-card>
@@ -540,13 +584,17 @@ It covers approximately 63 million square miles.</mgo-a>
 ## Programming
 
 <mgo-card cardId="code-001">
+<mgo-card-front>
 What does the `map()` function do in JavaScript?
-<mgo-a>Creates a new array by applying a function to every element.
+</mgo-card-front>
+<mgo-card-back>
+Creates a new array by applying a function to every element.
 
 ```javascript
 const doubled = [1, 2, 3].map(x => x * 2);
 // Result: [2, 4, 6]
-```</mgo-a>
+```
+</mgo-card-back>
 </mgo-card>
 
 ## Spaced Repetition Facts

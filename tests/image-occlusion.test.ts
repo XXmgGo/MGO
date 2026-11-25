@@ -345,7 +345,7 @@ describe('Card parsing for image occlusion cards', () => {
 tags: [flashcards]
 ---
 
-<mgo-card>![[heart-occluded.png]]<mgo-a>![[heart-revealed.png]]</mgo-a></mgo-card>
+<mgo-card><mgo-card-front>![[heart-occluded.png]]</mgo-card-front><mgo-card-back>![[heart-revealed.png]]</mgo-card-back></mgo-card>
 `);
         await dm.updateFile({ path: 'anatomy.md', basename: 'anatomy' } as never);
         const cards = dm.getAllCards();
@@ -366,7 +366,7 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="cell-01">![[cell-mask.svg|500]]<mgo-a>![[cell-unmasked.svg|500]]</mgo-a></mgo-card>
+<mgo-card cardId="cell-01"><mgo-card-front>![[cell-mask.svg|500]]</mgo-card-front><mgo-card-back>![[cell-unmasked.svg|500]]</mgo-card-back></mgo-card>
 `);
         await dm.updateFile({ path: 'biology.md', basename: 'biology' } as never);
         const cards = dm.getAllCards();
@@ -387,9 +387,9 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="brain-diag">
+<mgo-card cardId="brain-diag"><mgo-card-front>
 ![[brain-occluded.png]]
-<mgo-a>![[brain-revealed.png]]</mgo-a>
+</mgo-card-front><mgo-card-back>![[brain-revealed.png]]</mgo-card-back>
 </mgo-card>
 `);
         await dm.updateFile({ path: 'neuro.md', basename: 'neuro' } as never);
@@ -410,7 +410,7 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="map-01" reverse>![[map-mask.png]]<mgo-a>![[map-answers.png]]</mgo-a></mgo-card>
+<mgo-card cardId="map-01" reverse><mgo-card-front>![[map-mask.png]]</mgo-card-front><mgo-card-back>![[map-answers.png]]</mgo-card-back></mgo-card>
 `);
         await dm.updateFile({ path: 'geography.md', basename: 'geography' } as never);
         const cards = dm.getAllCards();

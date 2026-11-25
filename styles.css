@@ -317,8 +317,10 @@ mgo-card {
     margin-block-end: 1em;
 }
 
-.markdown-rendered mgo-a,
-mgo-a {
+.markdown-rendered mgo-card-front,
+mgo-card-front,
+.markdown-rendered mgo-card-back,
+mgo-card-back {
     display: block;
     margin-block-start: 0.5em;
 }
