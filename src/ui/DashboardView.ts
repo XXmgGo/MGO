@@ -195,7 +195,7 @@ export class DashboardView extends ItemView {
         // 根节点 = 不含 '/' 的路径
         const roots = [...nodePaths].filter(p => !p.includes('/')).sort((a, b) => a.localeCompare(b));
         for (const root of roots) {
-            this.renderTagNode(root, deckByPath, nodePaths);
+            this.renderTagNode(root, deckByPath, nodePaths, this.contentEl);
         }
     }
 
@@ -209,8 +209,8 @@ export class DashboardView extends ItemView {
         return children.sort((a, b) => a.localeCompare(b));
     }
 
-    private renderTagNode(path: string, deckByPath: Map<string, Deck>, nodePaths: Set<string>) {
-        const folderContainer = this.contentEl.createDiv({ cls: 'fsrs-folder-group' });
+    private renderTagNode(path: string, deckByPath: Map<string, Deck>, nodePaths: Set<string>, parentEl: HTMLElement) {
+        const folderContainer = parentEl.createDiv({ cls: 'fsrs-folder-group' });
         const folderHeader = folderContainer.createDiv({ cls: 'fsrs-folder-header' });
         folderHeader.setAttribute('role', 'button');
         folderHeader.setAttribute('tabindex', '0');
@@ -263,9 +263,9 @@ export class DashboardView extends ItemView {
             this.renderDeckItem(decksContainer, deck);
         }
 
-        // 递归渲染子节点
+        // 递归渲染子节点（挂进本节点的展开容器内）
         for (const child of this.childPaths(path, nodePaths)) {
-            this.renderTagNode(child, deckByPath, nodePaths);
+            this.renderTagNode(child, deckByPath, nodePaths, decksContainer);
         }
     }
 
