@@ -86,11 +86,13 @@ MGO 使用 **FSRS-5**（Free Spaced Repetition Scheduler，通过 `ts-fsrs` 实�
 直接在任意 Markdown 笔记中编写闪卡，无需导入、无需切换应用。
 
 ```markdown
----card--- ^fsrs-abc123
+<mgo-card cardId="fsrs-abc123">
 What is the powerhouse of the cell?
----
-**Mitochondria** — produces ATP through cellular respiration.
+<mgo-a>**Mitochondria** — produces ATP through cellular respiration.</mgo-a>
+</mgo-card>
 ```
+
+阅读视图下 `<mgo-card>` 与 `<mgo-a>` 标签本身不显示，内容像普通段落一样呈现——卡片语法不会破坏笔记的阅读体验。
 
 ### 标签即牌组
 牌组由标签决定，而非文件：
@@ -107,7 +109,7 @@ tags: [ja-card/文法]
 
 ### 完形填空
 ```markdown
-The ==c1::mitochondria== is the powerhouse of the ==c2::cell==.
+<mgo-card cardId="cloze-001">The ==c1::mitochondria== is the powerhouse of the ==c2::cell==.</mgo-card>
 ```
 每个填空都会被独立排期。
 
@@ -154,10 +156,10 @@ tags: [flashcards]
 3. 写一张卡片：
 
 ```markdown
----card--- ^my-first-card
+<mgo-card cardId="my-first-card">
 What is spaced repetition?
----
-A learning technique that schedules reviews at increasing intervals to maximize long-term retention.
+<mgo-a>A learning technique that schedules reviews at increasing intervals to maximize long-term retention.</mgo-a>
+</mgo-card>
 ```
 
 4. 从功能区侧边图标、状态栏（桌面端）或命令面板（**Open dashboard**）打开 **MGO 仪表板**。
@@ -170,58 +172,60 @@ A learning technique that schedules reviews at increasing intervals to maximize 
 
 MGO 支持七种卡片与学习格式：
 
-### 1. 基础多行卡片
-多行格式，完整支持 Markdown、LaTeX 公式块与代码排版。用 `---end---` 显式关闭卡片，让后续标题或笔记内容留在答案之外。
+### 1. 基础卡片
+完整支持 Markdown、LaTeX 公式块与代码排版。问题写在 `<mgo-a>` 之前，答案写在 `<mgo-a>…</mgo-a>` 之内；`</mgo-card>` 显式关闭卡片，让后续标题或笔记内容留在答案之外。
 
 ````markdown
----card--- ^basic-001
+<mgo-card cardId="basic-001">
 What is the function of the ribosome?
----
-Protein synthesis via translation of mRNA.
----end---
+<mgo-a>Protein synthesis via translation of mRNA.</mgo-a>
+</mgo-card>
 ````
 
-### 2. 单行卡片
-在一行内快速写出原子化的问答卡片。
+`cardId` 是卡片的稳定身份，编辑内容时靠它保留复习进度；省略时插件会按内容自动哈希出 ID，同样可用，但建议写上。
+
+### 2. 单行紧凑写法
+卡片也可以整行写完，与分行写法完全等价，适合在一行内快速写出原子化的问答卡片。
 
 ```markdown
-What is the capital of Japan?::Tokyo ^single-001
+<mgo-card cardId="basic-002">What is the capital of Japan?<mgo-a>Tokyo</mgo-a></mgo-card>
 ```
 
 ### 3. 反向卡片
-生成一张“给出答案、要求你回忆问题”的卡片。
+生成一张“给出答案、要求你回忆问题”的卡片，在开标签上加 `reverse`。
 
 ```markdown
-Mitochondria:::Powerhouse of the cell ^rev-001
+<mgo-card cardId="rev-001" reverse>Mitochondria<mgo-a>Powerhouse of the cell</mgo-a></mgo-card>
 ```
 
 ### 4. 完形填空卡片
 在语境中隐藏一个或多个知识点。多个填空编号（`c1`、`c2`）会生成各自独立的复习项。
 
 ```markdown
-The ==c1::Ebbinghaus== forgetting curve shows memory decays without ==c2::spaced repetition==. ^cloze-001
+<mgo-card cardId="cloze-001">The ==c1::Ebbinghaus== forgetting curve shows memory decays without ==c2::spaced repetition==.</mgo-card>
 ```
 
 ### 5. 原地图形遮挡卡片
-把被遮挡的示意图与原图就地互换，不产生纵向位移。评级之前点击图片或按 `Space` / `P`，可在遮挡图与答案图之间来回预览。
+把被遮挡的示意图与原图就地互换，不产生纵向位移。评级之前点击图片或按 `Space` / `P`，可在遮挡图与答案图之间来回预览。正反面各写一张图片链接即可自动识别：
 
 ```markdown
-![[anatomy-masked.png]]::![[anatomy-revealed.png]] ^occlusion-001
+<mgo-card cardId="occlusion-001">![[anatomy-masked.png]]<mgo-a>![[anatomy-revealed.png]]</mgo-a></mgo-card>
 ```
 
 ### 6. 输入式主动回忆卡片
-要求你输入答案，并在显示评级按钮之前判定为正确、接近或错误。
+要求你输入答案，并在显示评级按钮之前判定为正确、接近或错误。在开标签上加 `type="typein"`：
 
 ```markdown
-?type What is the SI unit of electric current?::Ampere ^typein-001
+<mgo-card cardId="typein-001" type="typein">What is the SI unit of electric current?<mgo-a>Ampere</mgo-a></mgo-card>
 ```
 
-也可以用块格式：
+分行写法完全相同：
+
 ```markdown
----card--- ?type ^typein-002
+<mgo-card cardId="typein-002" type="typein">
 What is the powerhouse of the cell?
----
-Mitochondria
+<mgo-a>Mitochondria</mgo-a>
+</mgo-card>
 ```
 
 ### 7. 整篇笔记复习
@@ -235,7 +239,7 @@ tags: [review]
 ```
 
 > [!TIP]
-> 给每张卡片加上 `^block-id`，就能拥有稳定的 ID。
+> 给每张卡片写上 `cardId="唯一id"`，就能拥有稳定的 ID。
 
 ---
 
@@ -265,13 +269,13 @@ tags: [review]
 | `Create card (guided modal)` | 打开引导式创建弹窗，含类型选择器与实时预览 |
 | `Create new deck` | 新建一个已预打牌组标签的笔记 |
 | `Tag current note as flashcard deck` | 给当前活动笔记加上牌组标签 |
-| `Add a new flashcard` | 插入一张带预生成块 ID 的基础卡片模板 |
-| `Add a single-line card` | 插入单行卡片模板 |
-| `Add a reversed card` | 插入反向卡片模板 |
-| `Add a cloze card` | 插入完形填空模板 |
-| `Create cloze from selection` | 用填空语法包裹选中的文本 |
-| `Add a type-in card` | 插入输入式卡片模板 |
-| `Add a type-in single-line card` | 插入单行输入式卡片模板 |
+| `Add a new flashcard` | 插入一张带预生成 cardId 的基础卡片模板 |
+| `Add a single-line card` | 插入紧凑单行卡片模板 `<mgo-card cardId="id">Q<mgo-a>A</mgo-a></mgo-card>` |
+| `Add a reversed card` | 插入带 `reverse` 属性的反向卡片模板 |
+| `Add a cloze card` | 插入带 `==c1::…==` 挖空的卡片模板 |
+| `Create cloze from selection` | 用填空语法包裹选中的文本（不在卡内时自动补上 `<mgo-card>`） |
+| `Add a type-in card` | 插入带 `type="typein"` 的输入式卡片模板 |
+| `Add a type-in single-line card` | 插入单行输入式卡片模板 `<mgo-card cardId="id" type="typein">Q<mgo-a>A</mgo-a></mgo-card>` |
 | `Open dashboard` | 打开 MGO 牌组总览 |
 | `Sync now` | 手动触发一次 CouchDB 同步 |
 | `Check sync status` | 查看同步连接状态 |

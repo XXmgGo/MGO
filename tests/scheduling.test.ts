@@ -15,7 +15,10 @@ const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
 
 function note(count: number) {
-    return Array.from({ length: count }, (_, i) => `Question ${i}::Answer ${i}`).join('\n');
+    return Array.from(
+        { length: count },
+        (_, i) => `<mgo-card cardId="n${i}">Question ${i}<mgo-a>Answer ${i}</mgo-a></mgo-card>`,
+    ).join('\n');
 }
 
 async function createManager(cardCount: number, settings: Record<string, unknown> = {}) {
@@ -109,7 +112,7 @@ describe('getReviewQueue daily limits', () => {
 
 describe('re-indexing an edited deck note', () => {
     it('keeps the schedules of the cards in the note', async () => {
-        let content = 'Q::A ^b1';
+        let content = '<mgo-card cardId="b1">Q<mgo-a>A</mgo-a></mgo-card>';
         const file = { path: 'a.md', basename: 'a', stat: { mtime: 1 } };
         const plugin = {
             app: {
@@ -125,7 +128,7 @@ describe('re-indexing an edited deck note', () => {
         const card = dm.getAllCards()[0];
         dm.updateCard(card, Rating.Good);
 
-        content = 'Q::A ^b1\nQ2::A2';
+        content = '<mgo-card cardId="b1">Q<mgo-a>A</mgo-a></mgo-card>\n<mgo-card>Q2<mgo-a>A2</mgo-a></mgo-card>';
         file.stat.mtime = 2;
         await dm.updateFile(file as never);
 
@@ -137,7 +140,7 @@ describe('re-indexing an edited deck note', () => {
 describe('sibling card burying', () => {
     it('identifies cloze cards in the same paragraph as siblings', async () => {
         const file = { path: 'Cloze.md', basename: 'Cloze', stat: { mtime: 1 } };
-        const content = 'The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==. ^p1';
+        const content = '<mgo-card cardId="p1">The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==.</mgo-card>';
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
@@ -157,7 +160,7 @@ describe('sibling card burying', () => {
 
     it('buries siblings so only one is queued per day when burySiblings is enabled', async () => {
         const file = { path: 'Cloze.md', basename: 'Cloze', stat: { mtime: 1 } };
-        const content = 'The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==. ^p1\n\nOther ==c1::card== alone.';
+        const content = '<mgo-card cardId="p1">The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==.</mgo-card>\n\n<mgo-card cardId="p2">Other ==c1::card== alone.</mgo-card>';
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
@@ -177,7 +180,7 @@ describe('sibling card burying', () => {
 
     it('buries siblings if one was already reviewed earlier today', async () => {
         const file = { path: 'Cloze.md', basename: 'Cloze', stat: { mtime: 1 } };
-        const content = 'The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==. ^p1';
+        const content = '<mgo-card cardId="p1">The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==.</mgo-card>';
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
@@ -201,7 +204,7 @@ describe('sibling card burying', () => {
 
     it('does not bury siblings when burySiblings is disabled', async () => {
         const file = { path: 'Cloze.md', basename: 'Cloze', stat: { mtime: 1 } };
-        const content = 'The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==. ^p1';
+        const content = '<mgo-card cardId="p1">The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==.</mgo-card>';
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
@@ -222,7 +225,7 @@ describe('sibling card burying', () => {
 describe('Per-deck settings overrides', () => {
     it('applies frontmatter newCardsPerDay override', async () => {
         const file = { path: 'CustomDeck.md', basename: 'CustomDeck', stat: { mtime: 1 } };
-        const content = 'Q1::A1\nQ2::A2\nQ3::A3\nQ4::A4\nQ5::A5';
+        const content = [1,2,3,4,5].map(i => `<mgo-card cardId="c${i}">Q${i}<mgo-a>A${i}</mgo-a></mgo-card>`).join('\n');
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
@@ -245,7 +248,7 @@ describe('Per-deck settings overrides', () => {
 
     it('applies frontmatter requestRetention to card scheduling intervals', async () => {
         const file = { path: 'HighRetention.md', basename: 'HighRetention', stat: { mtime: 1 } };
-        const content = 'Q1::A1';
+        const content = '<mgo-card cardId="c1">Q1<mgo-a>A1</mgo-a></mgo-card>';
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },

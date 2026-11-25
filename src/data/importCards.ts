@@ -71,13 +71,8 @@ function detectDelimiter(text: string): string {
 
 function cardMarkdown(card: ImportedCard, id: string): string {
     const cloze = /==c\d+::/.test(card.front) && !card.back;
-    if (cloze) return `${card.front} ^${id}`;
-    const multiline = /\n/.test(card.front) || /\n/.test(card.back);
-    const unsafe = card.front.includes('::') || card.back.includes('::') || /^---/m.test(card.front + card.back);
-    if (!multiline && !unsafe) return `${card.front}::${card.back} ^${id}`;
-    // The single-line parser also scans lines inside a block card, so "::" is split with a zero-width space.
-    const safe = (v: string) => v.replace(/::/g, ':\u200B:');
-    return `---card--- ^${id}\n${safe(card.front)}\n---\n${safe(card.back)}\n---end---`;
+    if (cloze) return `<mgo-card cardId="${id}">\n${card.front}\n</mgo-card>`;
+    return `<mgo-card cardId="${id}">\n${card.front}\n<mgo-a>${card.back}</mgo-a>\n</mgo-card>`;
 }
 
 // Accepts an Anki "Notes in Plain Text" export or a CSV/TSV file. The first column is the front and the
@@ -101,7 +96,7 @@ export function convertToMGO(text: string, deckTag: string, makeId: () => string
         while (used.has(id)) id = makeId();
         used.add(id);
         const md = cardMarkdown({ front, back: isCloze ? '' : back }, id);
-        (md.startsWith('---card---') ? blocks : lines).push(md);
+        blocks.push(md);
     }
 
     // A block card's back runs to the next ---card--- marker, so block cards go last to keep other cards out of it.

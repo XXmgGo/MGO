@@ -69,8 +69,8 @@ describe('Tag-based decks', () => {
         const dm = new DataManager(p as never);
         p.caches.set('A.md', tagCache('ja-card'));
         p.caches.set('B.md', tagCache('ja-card'));
-        p.contents.set('A.md', `---card--- ^a1\nQ1\n---\nA1\n---end---\n`);
-        p.contents.set('B.md', `---card--- ^b1\nQ2\n---\nA2\n---end---\n`);
+        p.contents.set('A.md', `<mgo-card cardId="a1">Q1<mgo-a>A1</mgo-a></mgo-card>\n`);
+        p.contents.set('B.md', `<mgo-card cardId="b1">Q2<mgo-a>A2</mgo-a></mgo-card>\n`);
         await dm.updateFile(file('A.md') as never);
         await dm.updateFile(file('B.md') as never);
         const decks = dm.getDecks();
@@ -85,8 +85,8 @@ describe('Tag-based decks', () => {
         const dm = new DataManager(p as never);
         p.caches.set('gram.md', tagCache('ja-card/文法'));
         p.caches.set('vocab.md', tagCache('ja-card/词汇'));
-        p.contents.set('gram.md', `---card--- ^g1\nQ1\n---\nA1\n---end---\n`);
-        p.contents.set('vocab.md', `---card--- ^v1\nQ2\n---\nA2\n---end---\n`);
+        p.contents.set('gram.md', `<mgo-card cardId="g1">Q1<mgo-a>A1</mgo-a></mgo-card>\n`);
+        p.contents.set('vocab.md', `<mgo-card cardId="v1">Q2<mgo-a>A2</mgo-a></mgo-card>\n`);
         await dm.updateFile(file('gram.md') as never);
         await dm.updateFile(file('vocab.md') as never);
         expect(dm.getDecks().map(d => d.tagPath).sort()).toEqual(['ja-card/文法', 'ja-card/词汇']);
@@ -100,7 +100,7 @@ describe('Tag-based decks', () => {
         const p = mockPlugin(['ja-card', 'en-card']);
         const dm = new DataManager(p as never);
         p.caches.set('both.md', tagCache('ja-card', 'en-card'));
-        p.contents.set('both.md', `---card--- ^x1\nQ\n---\nA\n---end---\n`);
+        p.contents.set('both.md', `<mgo-card cardId="x1">Q<mgo-a>A</mgo-a></mgo-card>\n`);
         const changed = await dm.updateFile(file('both.md') as never);
         expect(changed).toBe(false);
         expect(dm.getDecks()).toHaveLength(0);
@@ -110,7 +110,7 @@ describe('Tag-based decks', () => {
         const p = mockPlugin(['flashcards']);
         const dm = new DataManager(p as never);
         p.caches.set('n.md', tagCache('flashcards'));
-        p.contents.set('n.md', `---card--- ^k1\nQ\n---\nA\n---end---\n`);
+        p.contents.set('n.md', `<mgo-card cardId="k1">Q<mgo-a>A</mgo-a></mgo-card>\n`);
         await dm.updateFile(file('n.md') as never);
         const idBefore = dm.getAllCards()[0].id;
         // 把标签改成子牌组后重新处理同一文件

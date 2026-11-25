@@ -17,8 +17,8 @@ import { PouchDBManager } from '../src/database/PouchDBManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
 const NOTE = [
-    'Block question::Block answer ^abc123',
-    'Hashed question::Hashed answer',
+    '<mgo-card cardId="abc123">Block question<mgo-a>Block answer</mgo-a></mgo-card>',
+    '<mgo-card>Hashed question<mgo-a>Hashed answer</mgo-a></mgo-card>',
 ].join('\n');
 
 function indexNote(path: string, content: string, usePouchDB = false) {

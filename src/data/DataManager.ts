@@ -413,13 +413,9 @@ export class DataManager {
             }
 
             const content = await this.plugin.app.vault.read(file);
-            const lines = content.split('\n');
-            const breadcrumbs = this.buildHeadingBreadcrumbs(lines);
 
             const scratch: Deck = { id: deckId, title: deckPath, tagPath: deckPath, filePath: file.path, cardIds: new Set(), stats: { new: 0, due: 0, learning: 0 } };
-            const inBasicCard = this.parseBasicCards(content, lines, breadcrumbs, file.path, deckId, scratch);
-            this.parseSingleLineCards(lines, breadcrumbs, file.path, deckId, scratch, inBasicCard);
-            this.parseClozeCards(content, lines, breadcrumbs, file.path, deckId, scratch, inBasicCard);
+            this.parseMgoCards(content, file.path, deckId, scratch);
 
             for (const cardId of scratch.cardIds) deck.cardIds.add(cardId);
             this.fileCards.set(file.path, scratch.cardIds);
@@ -531,255 +527,72 @@ export class DataManager {
         return this.fsrs;
     }
 
-    private parseSingleLineCards(lines: string[], breadcrumbs: (string | undefined)[], filePath: string, deckId: string, newDeck: Deck, inBasicCard?: boolean[]) {
-        for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-            if (inBasicCard && inBasicCard[lineIdx]) continue;
-            const line = lines[lineIdx];
-            const trimmed = line.trim();
-            if (!trimmed) continue;
+    private parseMgoCards(content: string, filePath: string, deckId: string, deck: Deck) {
+        const lines = content.split('\n');
+        const breadcrumbs = this.buildHeadingBreadcrumbs(lines);
+        const cardRegex = /<mgo-card((?:\s[^>]*)?)\s*>([\s\S]*?)<\/mgo-card>/gi;
+        let match: RegExpExecArray | null;
+        while ((match = cardRegex.exec(content)) !== null) {
+            const attrs = match[1] || '';
+            const body = match[2] || '';
+            const context = this.findCardContext(content, breadcrumbs, match[0]);
+            const idAttr = attrs.match(/(?:cardId|card-id|id)\s*=\s*"([^"]+)"|(?:cardId|card-id|id)\s*=\s*'([^']+)'/i);
+            const cardIdAttr = idAttr ? (idAttr[1] || idAttr[2] || '').trim() : '';
+            const isTypeIn = /\btype\s*=\s*["']?typein/i.test(attrs);
+            const isReverse = /\breverse(?:d)?\b/i.test(attrs) && !/reverse(?:d)?\s*=\s*["']?false/i.test(attrs);
+            if (!body.trim()) continue;
 
-            // Skip lines that are part of card delimiters
-            if (trimmed.startsWith('---card---') || trimmed.startsWith('---end---') || trimmed.startsWith('---card-end---') || trimmed === '---') continue;
-
-            // Skip lines that contain cloze syntax (==c#::)
-            if (/==c\d+::/.test(trimmed)) continue;
-
-            // Extract optional block ID from end of line: ^identifier
-            const blockIdMatch = trimmed.match(/\s+\^([a-zA-Z0-9-]+)\s*$/);
-            const blockId = blockIdMatch ? blockIdMatch[1] : null;
-            let cardText = blockIdMatch ? trimmed.slice(0, blockIdMatch.index).trim() : trimmed;
-
-            // Detect ?type flag and strip it
-            const isTypeIn = /\?type\b/.test(cardText);
-            cardText = cardText.replace(/\?type\b\s*/g, '').trim();
-
-            // Reversed single-line: Q:::A
-            const reversedMatch = cardText.match(/^([^:].*?):::(.*)$/);
-            if (reversedMatch) {
-                const front = reversedMatch[1].trim();
-                const back = reversedMatch[2].trim();
-                if (!front || !back) continue;
-
-                const rType = isTypeIn ? 'typein' : 'reversed';
-                const cardId = blockId
-                    ? `${cyrb53hex(filePath)}::${blockId}`
-                    : cyrb53hex(`${filePath}::${trimmed}::${rType}`);
-                const card: Card = {
-                    id: cardId,
-                    deckId,
-                    filePath,
-                    type: rType,
-                    originalText: trimmed,
-                    front: back,
-                    back: front,
-                    context: breadcrumbs[lineIdx],
-                    fsrsData: this.fsrsDataStore[cardId],
-                };
-                this.cards.set(cardId, card);
-                newDeck.cardIds.add(cardId);
+            const clozeNumbers = [...new Set([...body.matchAll(/==c(\d+)::/g)].map(m => m[1]))];
+            if (clozeNumbers.length > 0) {
+                const baseId = cardIdAttr ? `${cyrb53hex(filePath)}::${cardIdAttr}` : cyrb53hex(`${filePath}::${body}`);
+                for (const clozeNum of clozeNumbers) {
+                    const front = body.replace(/==c(\d+)::(.*?)==/gs, (_m: string, num: string, ansBody: string): string => {
+                        const colonIdx = ansBody.indexOf('::');
+                        const answer = colonIdx !== -1 ? ansBody.slice(0, colonIdx) : ansBody;
+                        const hint = colonIdx !== -1 ? ansBody.slice(colonIdx + 2) : '';
+                        return num === clozeNum ? (hint ? `[${hint}]` : '[...]') : answer;
+                    }).trim();
+                    const back = body.replace(/==c\d+::(.*?)==/gs, (_m: string, ansBody: string): string => {
+                        const colonIdx = ansBody.indexOf('::');
+                        return colonIdx !== -1 ? ansBody.slice(0, colonIdx) : ansBody;
+                    }).trim();
+                    const cardId = `${baseId}-${clozeNum}`;
+                    const card: Card = {
+                        id: cardId, deckId, filePath, type: 'cloze',
+                        originalText: body.trim(), front, back, context,
+                        fsrsData: this.fsrsDataStore[cardId],
+                    };
+                    this.cards.set(cardId, card);
+                    deck.cardIds.add(cardId);
+                }
                 continue;
             }
 
-            // Basic single-line: Q::A
-            const basicMatch = cardText.match(/^([^:].*?)::(?!:)(.*)$/);
-            if (basicMatch) {
-                const front = basicMatch[1].trim();
-                const back = basicMatch[2].trim();
-                if (!front || !back) continue;
-
-                const bType = isTypeIn ? 'typein' : 'basic';
-                const cardId = blockId
-                    ? `${cyrb53hex(filePath)}::${blockId}`
-                    : cyrb53hex(`${filePath}::${trimmed}`);
-                const card: Card = {
-                    id: cardId,
-                    deckId,
-                    filePath,
-                    type: bType,
-                    originalText: trimmed,
-                    front,
-                    back,
-                    context: breadcrumbs[lineIdx],
-                    fsrsData: this.fsrsDataStore[cardId],
-                };
-                this.cards.set(cardId, card);
-                newDeck.cardIds.add(cardId);
-            }
-        }
-    }
-
-    private parseBasicCards(content: string, lines: string[], breadcrumbs: (string | undefined)[], filePath: string, deckId: string, newDeck: Deck): boolean[] {
-        const inBasicCard = new Array<boolean>(lines.length).fill(false);
-        const cardBlocks: Array<{ startLine: number; endLine: number; lines: string[] }> = [];
-
-        let currentStart = -1;
-        let currentCardLines: string[] = [];
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const trimmed = line.trim();
-
-            if (/^---\s*card\s*---/i.test(trimmed)) {
-                if (currentStart !== -1) {
-                    cardBlocks.push({ startLine: currentStart, endLine: i - 1, lines: currentCardLines });
-                    currentCardLines = [];
-                }
-                currentStart = i;
-                inBasicCard[i] = true;
-                currentCardLines.push(line);
-            } else if (currentStart !== -1) {
-                inBasicCard[i] = true;
-                currentCardLines.push(line);
-                if (/^---\s*(?:end|card-end)\s*---$/i.test(trimmed)) {
-                    cardBlocks.push({ startLine: currentStart, endLine: i, lines: currentCardLines });
-                    currentStart = -1;
-                    currentCardLines = [];
-                }
-            }
-        }
-        if (currentStart !== -1 && currentCardLines.length > 0) {
-            cardBlocks.push({ startLine: currentStart, endLine: lines.length - 1, lines: currentCardLines });
-        }
-
-        for (const block of cardBlocks) {
-            const blockText = block.lines.join('\n');
-            const match = blockText.match(/^[ \t]*---\s*card\s*---[ \t]*(.*)$/im);
-            if (!match) continue;
-
-            const afterCardHeader = match[1].trim();
-            const restOfBlock = blockText.slice(match.index! + match[0].length);
-            const cardBody = afterCardHeader ? (afterCardHeader + '\n' + restOfBlock) : restOfBlock;
-
-            const dividerMatch = cardBody.match(/(?:^|\r?\n)[ \t]*---[ \t]*(?:\r?\n|$)/);
-            if (!dividerMatch || dividerMatch.index === undefined) continue;
-
-            const frontPart = cardBody.slice(0, dividerMatch.index);
-            let backPart = cardBody.slice(dividerMatch.index + dividerMatch[0].length);
-
-            const endMatch = backPart.match(/(?:^|\r?\n)[ \t]*---\s*(?:end|card-end)\s*---[ \t]*(?:\r?\n|$)/i);
-            if (endMatch && endMatch.index !== undefined) {
-                backPart = backPart.slice(0, endMatch.index);
-            }
-
-            const isTypeIn = /\?type\b/.test(frontPart);
-            const cleanFront = frontPart.replace(/\?type\b\s*/g, '').trim();
-
-            const blockIdMatch = cleanFront.match(/\^([a-zA-Z0-9-]+)\s*$/m);
-            let cardId: string;
-            let front = cleanFront.trim();
-
-            if (blockIdMatch) {
-                cardId = `${cyrb53hex(filePath)}::${blockIdMatch[1]}`;
-                front = cleanFront.replace(/\^([a-zA-Z0-9-]+)\s*$/m, '').trim();
-            } else {
-                cardId = cyrb53hex(filePath + '::' + front);
-            }
-
-            const back = backPart.trim();
+            const answerMatch = body.match(/<mgo-a(?:\s[^>]*)?>([\s\S]*?)<\/mgo-a>/i);
+            if (!answerMatch) continue;
+            const back = (answerMatch[1] || '').trim();
+            const front = body.replace(answerMatch[0], '').trim();
             if (!front || !back) continue;
 
-            const context = breadcrumbs[block.startLine] ?? this.findCardContext(content, breadcrumbs, blockText);
+            let finalFront = front;
+            let finalBack = back;
+            let type: Card['type'] = 'basic';
+            if (isReverse) { finalFront = back; finalBack = front; type = 'reversed'; }
+            else if (isTypeIn) { type = 'typein'; }
 
+            const cardId = cardIdAttr ? `${cyrb53hex(filePath)}::${cardIdAttr}` : cyrb53hex(`${filePath}::${front}::${back}`);
             const card: Card = {
-                id: cardId,
-                deckId,
-                filePath,
-                type: isTypeIn ? 'typein' : 'basic',
-                originalText: blockText,
-                front,
-                back,
-                context,
+                id: cardId, deckId, filePath, type,
+                originalText: match[0], front: finalFront, back: finalBack, context,
                 fsrsData: this.fsrsDataStore[cardId],
             };
             this.cards.set(cardId, card);
-            newDeck.cardIds.add(cardId);
-        }
-
-        return inBasicCard;
-    }
-
-    private parseClozeCards(content: string, lines: string[], breadcrumbs: (string | undefined)[], filePath: string, deckId: string, newDeck: Deck, inBasicCard?: boolean[]) {
-        const nonBasicParagraphs: Array<{ text: string; startLine: number }> = [];
-        let curParaLines: string[] = [];
-        let curParaStart = -1;
-
-        for (let i = 0; i < lines.length; i++) {
-            if (inBasicCard && inBasicCard[i]) {
-                if (curParaLines.length > 0) {
-                    nonBasicParagraphs.push({ text: curParaLines.join('\n'), startLine: curParaStart });
-                    curParaLines = [];
-                    curParaStart = -1;
-                }
-                continue;
-            }
-            const line = lines[i];
-            const trimmed = line.trim();
-            if (!trimmed || /^---\s*(?:end|card-end|card)\s*---$/i.test(trimmed) || trimmed === '---') {
-                if (curParaLines.length > 0) {
-                    nonBasicParagraphs.push({ text: curParaLines.join('\n'), startLine: curParaStart });
-                    curParaLines = [];
-                    curParaStart = -1;
-                }
-            } else {
-                if (curParaLines.length === 0) curParaStart = i;
-                curParaLines.push(line);
-            }
-        }
-        if (curParaLines.length > 0) {
-            nonBasicParagraphs.push({ text: curParaLines.join('\n'), startLine: curParaStart });
-        }
-
-        for (const { text: paragraph, startLine } of nonBasicParagraphs) {
-            const clozeRegex = /==c(\d+)::(.*?)==/gs;
-            const clozes = [...paragraph.matchAll(clozeRegex)];
-
-            if (clozes.length === 0) continue;
-
-            const blockIdMatch = paragraph.match(/\^([a-zA-Z0-9-]+)\s*$/);
-            const context = breadcrumbs[startLine] ?? this.findCardContext(content, breadcrumbs, paragraph);
-
-            // Deduplicate cloze numbers (e.g. multiple ==c1::...== share the same card)
-            const clozeNumbers = [...new Set(clozes.map(m => m[1]))];
-
-            clozeNumbers.forEach(clozeNum => {
-                let cardId: string;
-                if (blockIdMatch) {
-                    cardId = `${cyrb53hex(filePath)}::${blockIdMatch[1]}-${clozeNum}`;
-                } else {
-                    cardId = cyrb53hex(`${filePath}::${paragraph}::${clozeNum}`);
-                }
-
-                const front = paragraph.replace(/==c(\d+)::(.*?)==/gs, (_match: string, num: string, body: string): string => {
-                    const colonIdx = body.indexOf('::');
-                    const answer = colonIdx !== -1 ? body.slice(0, colonIdx) : body;
-                    const hint = colonIdx !== -1 ? body.slice(colonIdx + 2) : '';
-                    if (num === clozeNum) {
-                        return hint ? `[${hint}]` : '[...]';
-                    }
-                    return answer;
-                }).trim();
-
-                const back = paragraph.replace(/==c\d+::(.*?)==/gs, (_match: string, body: string): string => {
-                    const colonIdx = body.indexOf('::');
-                    return colonIdx !== -1 ? body.slice(0, colonIdx) : body;
-                }).trim();
-
-                const card: Card = {
-                    id: cardId,
-                    deckId,
-                    filePath,
-                    type: 'cloze',
-                    originalText: paragraph,
-                    front,
-                    back,
-                    context,
-                    fsrsData: this.fsrsDataStore[cardId],
-                };
-                this.cards.set(cardId, card);
-                newDeck.cardIds.add(cardId);
-            });
+            deck.cardIds.add(cardId);
         }
     }
+
+
+
 
     /** 收集牌组自身 + 所有子牌组（tagPath 以 `父/` 开头）的卡片 id。 */
     private deckScopeIds(deck: Deck): Set<string> {
@@ -837,15 +650,11 @@ export class DataManager {
     private collectCardIds(content: string, filePath: string): string[] {
         const deckId = this.getDeckId(filePath);
         const scratch: Deck = { id: deckId, title: '', tagPath: '', filePath, cardIds: new Set(), stats: { new: 0, due: 0, learning: 0 } };
-        const lines = content.split('\n');
-        const breadcrumbs = this.buildHeadingBreadcrumbs(lines);
 
         const realCards = this.cards;
         this.cards = new Map();
         try {
-            const inBasicCard = this.parseBasicCards(content, lines, breadcrumbs, filePath, deckId, scratch);
-            this.parseSingleLineCards(lines, breadcrumbs, filePath, deckId, scratch, inBasicCard);
-            this.parseClozeCards(content, lines, breadcrumbs, filePath, deckId, scratch, inBasicCard);
+            this.parseMgoCards(content, filePath, deckId, scratch);
         } finally {
             this.cards = realCards;
         }

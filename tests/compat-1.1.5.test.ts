@@ -15,9 +15,9 @@ import { PouchDBManager as ReleasedPouchDBManager } from './fixtures/PouchDBMana
 import { DEFAULT_SETTINGS, LEGACY_DATABASE_NAME, resolveDatabaseName } from '../src/data/constants';
 
 const CONTENT = [
-    'Block question::Block answer ^abc123',
-    'Hashed question::Hashed answer',
-    'Fill the ==c1::gap== here ^cz9',
+    '<mgo-card cardId="abc123">Block question<mgo-a>Block answer</mgo-a></mgo-card>',
+    '<mgo-card>Hashed question<mgo-a>Hashed answer</mgo-a></mgo-card>',
+    '<mgo-card cardId="cz9">Fill the ==c1::gap== here</mgo-card>',
 ].join('\n');
 
 function createManager(databaseName: string | undefined, path = 'Decks/Bio.md') {

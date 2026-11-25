@@ -80,10 +80,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n\n---card--- ^${blockId}\nQuestion: \n---\nAnswer: \n---end---\n\n`;
+                const template = `\n\n<mgo-card cardId="${blockId}">\nQuestion\n<mgo-a>Answer</mgo-a>\n</mgo-card>\n\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setCursor({ line: cursor.line + 3, ch: 10 });
+                editor.setCursor({ line: cursor.line + 3, ch: 8 });
             },
         });
         this.addCommand({
@@ -93,10 +93,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\nQuestion::Answer ^${blockId}`;
+                const template = `\n<mgo-card cardId="${blockId}">Question<mgo-a>Answer</mgo-a></mgo-card>`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 1, ch: 0 }, { line: cursor.line + 1, ch: 8 });
+                editor.setSelection({ line: cursor.line + 1, ch: 30 }, { line: cursor.line + 1, ch: 38 });
             },
         });
         this.addCommand({
@@ -106,10 +106,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\nQuestion:::Answer ^${blockId}`;
+                const template = `\n<mgo-card cardId="${blockId}" reverse>Question<mgo-a>Answer</mgo-a></mgo-card>`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 1, ch: 0 }, { line: cursor.line + 1, ch: 8 });
+                editor.setSelection({ line: cursor.line + 1, ch: 38 }, { line: cursor.line + 1, ch: 46 });
             },
         });
         this.addCommand({
@@ -118,10 +118,11 @@ class FSRSFlashcardsPlugin extends Plugin {
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
-                const template = `\nSentence with ==c1::hidden text==.`;
+                const blockId = generateBlockId();
+                const template = `\n<mgo-card cardId="${blockId}">\nSentence with ==c1::hidden text==.\n</mgo-card>\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 1, ch: 19 }, { line: cursor.line + 1, ch: 30 });
+                editor.setSelection({ line: cursor.line + 2, ch: 19 }, { line: cursor.line + 2, ch: 30 });
             },
         });
         this.addCommand({
@@ -131,16 +132,21 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const selection = editor.getSelection();
+                const line = editor.getLine(editor.getCursor().line);
+                const clozeMatch = line.match(/==c(\d+)::/);
+                const nextNum = clozeMatch ? parseInt(clozeMatch[1], 10) + 1 : 1;
                 if (selection) {
-                    const existing = editor.getLine(editor.getCursor().line);
-                    const clozeMatch = existing.match(/==c(\d+)::/);
-                    const nextNum = clozeMatch ? parseInt(clozeMatch[1], 10) + 1 : 1;
-                    editor.replaceSelection(`==c${nextNum}::${selection}==`);
+                    if (line.includes('mgo-card')) {
+                        editor.replaceSelection(`==c${nextNum}::${selection}==`);
+                    } else {
+                        const blockId = generateBlockId();
+                        const lineNo = editor.getCursor().line;
+                        editor.replaceRange(`<mgo-card cardId="${blockId}">${line.replace(selection, `==c${nextNum}::${selection}==`)}</mgo-card>`,
+                            { line: lineNo, ch: 0 }, { line: lineNo, ch: line.length });
+                    }
                 } else {
-                    const template = `==c1::text==`;
+                    const template = `<mgo-card cardId="${generateBlockId()}">Sentence with ==c1::text==</mgo-card>`;
                     editor.replaceSelection(template);
-                    const cursor = editor.getCursor();
-                    editor.setCursor({ line: cursor.line, ch: cursor.ch - 2 });
                 }
             },
         });
@@ -151,10 +157,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\n\n---card--- ?type ^${blockId}\nQuestion: \n---\nAnswer: \n---end---\n\n`;
+                const template = `\n\n<mgo-card cardId="${blockId}" type="typein">\nQuestion\n<mgo-a>Answer</mgo-a>\n</mgo-card>\n\n`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setCursor({ line: cursor.line + 3, ch: 10 });
+                editor.setCursor({ line: cursor.line + 3, ch: 8 });
             },
         });
         this.addCommand({
@@ -164,10 +170,10 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
                 const blockId = generateBlockId();
-                const template = `\nQuestion::Answer ?type ^${blockId}`;
+                const template = `\n<mgo-card cardId="${blockId}" type="typein">Question<mgo-a>Answer</mgo-a></mgo-card>`;
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 1, ch: 0 }, { line: cursor.line + 1, ch: 8 });
+                editor.setSelection({ line: cursor.line + 1, ch: 41 }, { line: cursor.line + 1, ch: 49 });
             },
         });
         this.addCommand({
@@ -281,7 +287,14 @@ class FSRSFlashcardsPlugin extends Plugin {
                             const line = editor.getLine(editor.getCursor().line);
                             const clozeMatch = line.match(/==c(\d+)::/);
                             const nextNum = clozeMatch ? parseInt(clozeMatch[1], 10) + 1 : 1;
-                            editor.replaceSelection(`==c${nextNum}::${selection}==`);
+                            if (line.includes('mgo-card')) {
+                                editor.replaceSelection(`==c${nextNum}::${selection}==`);
+                            } else {
+                                const blockId = generateBlockId();
+                                const lineNo = editor.getCursor().line;
+                                editor.replaceRange(`<mgo-card cardId="${blockId}">${line.replace(selection, `==c${nextNum}::${selection}==`)}</mgo-card>`,
+                                    { line: lineNo, ch: 0 }, { line: lineNo, ch: line.length });
+                            }
                         });
                 });
             }

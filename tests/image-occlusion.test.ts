@@ -345,17 +345,18 @@ describe('Card parsing for image occlusion cards', () => {
 tags: [flashcards]
 ---
 
-![[heart-occluded.png]]::![[heart-revealed.png]]
+<mgo-card>![[heart-occluded.png]]<mgo-a>![[heart-revealed.png]]</mgo-a></mgo-card>
 `);
         await dm.updateFile({ path: 'anatomy.md', basename: 'anatomy' } as never);
         const cards = dm.getAllCards();
         expect(cards).toHaveLength(1);
+        expect(cards[0].id).not.toContain('::');
         expect(cards[0].front).toBe('![[heart-occluded.png]]');
         expect(cards[0].back).toBe('![[heart-revealed.png]]');
         expect(isInPlaceImageCard(cards[0])).toBe(true);
     });
 
-    it('parses single-line image occlusion cards with block IDs', async () => {
+    it('parses image occlusion cards with cardIds', async () => {
         const plugin = createMockPlugin();
         const dm = plugin.dataManager;
         plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
@@ -365,7 +366,7 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-![[cell-mask.svg|500]]::![[cell-unmasked.svg|500]] ^cell-01
+<mgo-card cardId="cell-01">![[cell-mask.svg|500]]<mgo-a>![[cell-unmasked.svg|500]]</mgo-a></mgo-card>
 `);
         await dm.updateFile({ path: 'biology.md', basename: 'biology' } as never);
         const cards = dm.getAllCards();
@@ -386,10 +387,10 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
----card--- ^brain-diag
+<mgo-card cardId="brain-diag">
 ![[brain-occluded.png]]
----
-![[brain-revealed.png]]
+<mgo-a>![[brain-revealed.png]]</mgo-a>
+</mgo-card>
 `);
         await dm.updateFile({ path: 'neuro.md', basename: 'neuro' } as never);
         const cards = dm.getAllCards();
@@ -409,12 +410,14 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-![[map-mask.png]]:::![[map-answers.png]]
+<mgo-card cardId="map-01" reverse>![[map-mask.png]]<mgo-a>![[map-answers.png]]</mgo-a></mgo-card>
 `);
         await dm.updateFile({ path: 'geography.md', basename: 'geography' } as never);
         const cards = dm.getAllCards();
         expect(cards).toHaveLength(1);
         expect(cards[0].type).toBe('reversed');
+        expect(cards[0].front).toBe('![[map-answers.png]]');
+        expect(cards[0].back).toBe('![[map-mask.png]]');
         expect(isInPlaceImageCard(cards[0])).toBe(true);
     });
 });

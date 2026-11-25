@@ -12,7 +12,11 @@ vi.mock('obsidian', () => ({ Notice: class {}, TFile: class {} }));
 import { DataManager } from '../src/data/DataManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
-const CONTENT = 'First::One\nSecond::Two\n';
+const CONTENT = [
+    '<mgo-card cardId="c1">First<mgo-a>One</mgo-a></mgo-card>',
+    '<mgo-card cardId="c2">Second<mgo-a>Two</mgo-a></mgo-card>',
+    '',
+].join('\n');
 const settle = () => new Promise((r) => setTimeout(r, 200));
 
 function create(usePouchDB: boolean, databaseName: string, store?: { saved?: unknown }) {

@@ -308,6 +308,21 @@
     margin-top: 1px;
 }
 
+/* ── mgo-card 语法：阅读视图像普通段落一样渲染，标签隐形 ── */
+
+.markdown-rendered mgo-card,
+mgo-card {
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+}
+
+.markdown-rendered mgo-a,
+mgo-a {
+    display: block;
+    margin-block-start: 0.5em;
+}
+
 /* ── Deck rows ── */
 
 .fsrs-deck-row {

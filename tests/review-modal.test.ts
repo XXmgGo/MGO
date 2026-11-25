@@ -132,7 +132,7 @@ describe('ReviewModal learning flow with the real scheduler', () => {
         const file = { path: 'Decks/L.md', basename: 'L', stat: { mtime: 1 } };
         const plugin = {
             app: {
-                vault: { getMarkdownFiles: () => [file], read: async () => 'One::1\nTwo::2\nThree::3\n' },
+                vault: { getMarkdownFiles: () => [file], read: async () => '<mgo-card cardId="c1">One<mgo-a>1</mgo-a></mgo-card>\n<mgo-card cardId="c2">Two<mgo-a>2</mgo-a></mgo-card>\n<mgo-card cardId="c3">Three<mgo-a>3</mgo-a></mgo-card>\n' },
                 metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
                 workspace: { openLinkText: vi.fn() },
             },
@@ -214,7 +214,7 @@ describe('ReviewModal learning flow with the real scheduler', () => {
     });
 
     it('buries unreviewed sibling cards in session queue when a card is rated, and restores on undo', async () => {
-        const clozePara = 'The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==. ^p1';
+        const clozePara = '<mgo-card cardId="p1">The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==.</mgo-card>';
         const file = { path: 'Deck.md', basename: 'Deck', stat: { mtime: 1 } };
         const plugin = {
             app: {

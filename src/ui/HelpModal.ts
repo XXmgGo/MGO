@@ -34,9 +34,9 @@ export class HelpModal extends Modal {
             '填空卡片会隐藏句子中的特定词语。',
             '可以用命令面板插入卡片模板。',
         ], [
-            '基础：---card--- ^id / 正面 / --- / 背面 / ---end---',
-            '填空：==c1::被隐藏的文本==',
-            '使用块 ID（^unique-id）可在编辑卡片时保留复习历史。',
+            '基础：<mgo-card cardId="唯一id">问题<mgo-a>答案</mgo-a></mgo-card>',
+            '填空：<mgo-card cardId="id">句子含 ==c1::被隐藏的文本==</mgo-card>',
+            'cardId 是卡片的稳定身份——编辑卡片内容时靠它保留复习历史。',
         ]);
 
         this.renderSection('复习快捷键', [], [

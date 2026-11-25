@@ -64,8 +64,8 @@ export class CreateCardModal extends Modal {
             .setDesc('格式与复习方式')
             .addDropdown(dd => {
                 dd.addOption('basic', '基础（多行问题与答案）');
-                dd.addOption('single', '单行（q::a）');
-                dd.addOption('reversed', '反向（q:::a 双向回忆）');
+                dd.addOption('single', '紧凑（标签内单行）');
+                dd.addOption('reversed', '反向（双向回忆）');
                 dd.addOption('cloze', '填空（句中挖空）');
                 dd.addOption('occlusion', '图形遮罩（原地切换图片）');
                 dd.addOption('typein', '输入作答（手动键入答案）');
@@ -165,40 +165,40 @@ export class CreateCardModal extends Modal {
     }
 
     private generateCardMarkdown(): string {
-        const blockId = generateBlockId();
+        const cardId = generateBlockId();
 
         if (this.cardType === 'cloze') {
             const clean = this.clozeText.trim() || 'Sentence with ==c1::cloze==.';
-            return `\n${clean} ^${blockId}\n`;
+            return `\n<mgo-card cardId="${cardId}">\n${clean}\n</mgo-card>\n`;
         }
 
         if (this.cardType === 'occlusion') {
             const q = this.frontText.trim() || '![[diagram-question.png]]';
             const a = this.backText.trim() || '![[diagram-answer.png]]';
-            return `\n${q}::${a} ^${blockId}\n`;
+            return `\n<mgo-card cardId="${cardId}">\n${q}\n<mgo-a>${a}</mgo-a>\n</mgo-card>\n`;
         }
 
         if (this.cardType === 'single') {
             const q = this.frontText.trim().replace(/\n+/g, ' ') || 'Question';
             const a = this.backText.trim().replace(/\n+/g, ' ') || 'Answer';
-            return `\n${q}::${a} ^${blockId}\n`;
+            return `\n<mgo-card cardId="${cardId}">${q}<mgo-a>${a}</mgo-a></mgo-card>\n`;
         }
 
         if (this.cardType === 'reversed') {
             const q = this.frontText.trim().replace(/\n+/g, ' ') || 'Question';
             const a = this.backText.trim().replace(/\n+/g, ' ') || 'Answer';
-            return `\n${q}:::${a} ^${blockId}\n`;
+            return `\n<mgo-card cardId="${cardId}" reverse>${q}<mgo-a>${a}</mgo-a></mgo-card>\n`;
         }
 
         if (this.cardType === 'typein') {
             const q = this.frontText.trim() || 'Question';
             const a = this.backText.trim() || 'Answer';
-            return `\n---card--- ?type ^${blockId}\n${q}\n---\n${a}\n---end---\n`;
+            return `\n<mgo-card cardId="${cardId}" type="typein">\n${q}\n<mgo-a>${a}</mgo-a>\n</mgo-card>\n`;
         }
 
         const q = this.frontText.trim() || 'Question';
         const a = this.backText.trim() || 'Answer';
-        return `\n---card--- ^${blockId}\n${q}\n---\n${a}\n---end---\n`;
+        return `\n<mgo-card cardId="${cardId}">\n${q}\n<mgo-a>${a}</mgo-a>\n</mgo-card>\n`;
     }
 
     private updatePreview() {

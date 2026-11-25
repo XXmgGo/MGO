@@ -14,7 +14,7 @@ import { DataManager } from '../src/data/DataManager';
 import { parseBackup } from '../src/data/backup';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
-const CONTENT = 'First::One ^a1\nSecond::Two ^b2\n';
+const CONTENT = '<mgo-card cardId="a1">First<mgo-a>One</mgo-a></mgo-card>\n<mgo-card cardId="b2">Second<mgo-a>Two</mgo-a></mgo-card>\n';
 const settle = () => new Promise((r) => setTimeout(r, 200));
 
 function create(usePouchDB: boolean, databaseName = 'backup_db') {

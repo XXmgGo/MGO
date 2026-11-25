@@ -10,13 +10,14 @@ describe('card import', () => {
         const out = convertToMGO(text, 'flashcards', id);
         expect(out.cards).toBe(2);
         expect(out.markdown).toContain('tags: [flashcards]');
-        expect(out.markdown).toContain('Capital of France?::Paris ^fsrs-t1');
-        expect(out.markdown).toContain('---card--- ^fsrs-t2\nWhat is 2+2?\n(easy)\n---\n4 units');
+        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t1">\nCapital of France?\n<mgo-a>Paris</mgo-a>\n</mgo-card>');
+        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t2">\nWhat is 2+2?\n(easy)\n<mgo-a>4 units</mgo-a>\n</mgo-card>');
     });
 
     it('converts Anki cloze notes and drops cloze hints', () => {
         const out = convertToMGO('The {{c1::mitochondria::organelle}} makes {{c2::ATP}}\n', 'flashcards', id);
-        expect(out.markdown).toContain('The ==c1::mitochondria== makes ==c2::ATP== ^');
+        expect(out.markdown).toContain('<mgo-card cardId="fsrs-');
+        expect(out.markdown).toContain('The ==c1::mitochondria== makes ==c2::ATP==\n</mgo-card>');
         expect(out.cards).toBe(1);
     });
 
@@ -29,14 +30,14 @@ describe('card import', () => {
         ]);
         const out = convertToMGO(csv, 'flashcards', id);
         expect(out.cards).toBe(3);
-        expect(out.markdown).toContain('Front::Back ^');
-        expect(out.markdown).toContain('Say "hi", please\n---\nline one\nline two');
+        expect(out.markdown).toContain('Front\n<mgo-a>Back</mgo-a>');
+        expect(out.markdown).toContain('Say "hi", please\n<mgo-a>line one\nline two</mgo-a>');
     });
 
-    it('falls back to the block format when the text would break single-line syntax', () => {
+    it('keeps text that would break the old single-line syntax intact', () => {
         const out = convertToMGO('std::vector\tA C++ container\n', 'flashcards', id);
-        expect(out.markdown).toContain('---card--- ^');
-        expect(out.markdown).not.toMatch(/std::vector/);
+        expect(out.markdown).toContain('<mgo-card cardId="fsrs-');
+        expect(out.markdown).toContain('std::vector\n<mgo-a>A C++ container</mgo-a>');
     });
 
     it('skips empty or incomplete rows, handles Windows line endings and a BOM, and never repeats an id', () => {
@@ -45,7 +46,7 @@ describe('card import', () => {
         const out = convertToMGO('﻿a\tb\r\n\r\nonlyfront\t\r\nc\td\r\n', 'flashcards', clashing);
         expect(out.cards).toBe(2);
         expect(out.skipped).toBe(1);
-        const ids = [...out.markdown.matchAll(/\^(fsrs-\w+)/g)].map((m) => m[1]);
+        const ids = [...out.markdown.matchAll(/cardId="(fsrs-\w+)"/g)].map((m) => m[1]);
         expect(new Set(ids).size).toBe(ids.length);
     });
 
