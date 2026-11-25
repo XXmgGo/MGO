@@ -13,11 +13,13 @@ type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 export function makeCardPostProcessor(plugin: FSRSFlashcardsPlugin) {
     return (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
         const info = ctx.getSectionInfo(el);
+        console.log('[MGO postprocessor] called for', ctx.sourcePath, '| info =', info ? `${info.lineStart}-${info.lineEnd}` : 'null');
         if (!info || !info.text.includes('<mgo-card')) return;
 
         const { text, lineStart, lineEnd } = info;
         const source = text.split('\n').slice(lineStart, lineEnd + 1).join('\n');
         const sections = splitMgoCardSections(source);
+        console.log('[MGO postprocessor] section source lines', lineStart + '-' + lineEnd, '| cards found:', sections.filter(x => x.type === 'card').length);
         if (!sections.some(s => s.type === 'card')) return;
 
         el.empty();
