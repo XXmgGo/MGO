@@ -449,7 +449,10 @@ export class ReviewModal extends Modal {
         this.titleEl.setText('本次复习完成！');
         const container = this.contentEl.createDiv({ cls: 'fsrs-completion-screen' });
         container.createEl('h2', { text: '干得漂亮！' });
-        container.createEl('p', { text: `你已完成 ${this.queue.length} 张卡片。` });
+        const uniqueCards = new Set(this.queue.map((card) => card.id)).size;
+        const repeats = this.queue.length - uniqueCards;
+        const repeatText = repeats > 0 ? `（含 ${repeats} 次学习重测）` : '';
+        container.createEl('p', { text: `你已完成 ${uniqueCards} 张卡片${repeatText}。` });
         new ButtonComponent(container).setButtonText('返回面板').setCta().onClick(() => this.close());
     }
 
