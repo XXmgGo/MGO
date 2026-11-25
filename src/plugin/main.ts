@@ -33,6 +33,8 @@ class FSRSFlashcardsPlugin extends Plugin {
         this.addSettingTab(new FSRSSettingsTab(this.app, this));
         this.registerView(VIEW_TYPE_DASHBOARD, (leaf) => new DashboardView(leaf, this));
         this.registerMarkdownPostProcessor(makeCardPostProcessor(this));
+        console.log('[MGO] 插件已加载，阅读视图后处理器已注册');
+        this.app.workspace.onLayoutReady(() => console.log('[MGO] layout ready'));
 
         const ribbonIconEl = this.addRibbonIcon(VIEW_ICON_NAME, '打开 MGO 仪表盘', (evt: MouseEvent) => {
             void this.activateView();
