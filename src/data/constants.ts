@@ -3,7 +3,7 @@ import type { FSRSSettings, Card } from './types';
 
 export const VIEW_TYPE_DASHBOARD = 'fsrs-dashboard-view';
 export const MGO_ICON_ID = 'mgo-icon';
-export const MGO_ICON_SVG = '<g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M 38 12 H 76 A 8 8 0 0 1 84 20 V 66"/><path d="M 26 22 H 64 A 8 8 0 0 1 72 30 V 76"/><rect x="14" y="32" width="50" height="58" rx="8"/><path d="M 29 46 V 74 H 49"/></g>';
+export const MGO_ICON_SVG = '<circle cx="50" cy="50" r="48" fill="#6366F1"/><path d="M 32 72 V 30 L 50 54 L 68 30 V 72" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>';
 export const VIEW_ICON_NAME = MGO_ICON_ID;
 export const STATUS_ICON_NAME = MGO_ICON_ID;
 

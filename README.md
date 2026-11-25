@@ -3,7 +3,7 @@
 > MGO 是基于 [Lemma](https://github.com/Fundaments-Work/Lemma) 的二次开发分支。Lemma 由 Fundaments Work 创作并以 MIT 协议授权，原始版权声明与许可全文保留在 [LICENSE](./LICENSE) 中。
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Fundaments-Work/Lemma/main/icon.svg" width="96" height="96" alt="MGO logo" />
+  <img src="https://raw.githubusercontent.com/XXmgGo/MGO/main/icon.svg" width="96" height="96" alt="MGO logo" />
 </p>
 
 <p align="center">
