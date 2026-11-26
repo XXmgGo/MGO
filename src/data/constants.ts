@@ -2,6 +2,8 @@ import { generatorParameters } from 'ts-fsrs';
 import type { FSRSSettings, Card } from './types';
 
 export const VIEW_TYPE_DASHBOARD = 'fsrs-dashboard-view';
+export const VIEW_TYPE_REVIEW = 'mgo-review-view';
+export const VIEW_TYPE_BROWSE = 'mgo-browse-view';
 export const MGO_ICON_ID = 'mgo-icon';
 export const MGO_ICON_SVG = '<circle cx="50" cy="50" r="48" fill="#6366F1"/><path d="M 32 72 V 30 L 50 54 L 68 30 V 72" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>';
 export const VIEW_ICON_NAME = MGO_ICON_ID;
@@ -200,7 +202,7 @@ export function isInPlaceImageCard(card: Card | null | undefined): boolean {
 
 /**
  * 把卡片文本里的普通换行转成 Markdown 硬换行（行尾双空格），
- * 使笔记中 <mgo-card-front>/<mgo-card-back> 块内的换行在复习窗口也生效。
+ * 使 mgo 代码围栏卡片块内的换行在笔记渲染和复习窗口都生效。
  * 跳过代码围栏内部与本已是硬换行/空行/块级语法（列表、标题、表格、分隔线）的行。
  */
 export function toHardBreaks(text: string): string {

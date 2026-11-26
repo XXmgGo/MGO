@@ -1,7 +1,6 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
 import { isRecord, toStringArray } from '../data/constants';
 import type { Card } from '../data/types';
-import { ReviewModal } from './ReviewModal';
 
 type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 
@@ -67,6 +66,6 @@ export class CustomStudyModal extends Modal {
 
         if (queue.length === 0) { new Notice('没有找到符合条件的卡片。'); return; }
         this.close();
-        new ReviewModal(this.app, this.plugin, queue).open();
+        void this.plugin.openReviewSession(queue, undefined, '复习・自定义');
     }
 }

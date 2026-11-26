@@ -1,9 +1,11 @@
 import { Editor, Notice, Plugin, TFile, addIcon, debounce, setIcon } from 'obsidian';
 import { DataManager } from '../data/DataManager';
-import { makeCardPostProcessor } from '../ui/cardPostProcessor';
-import { VIEW_TYPE_DASHBOARD, VIEW_ICON_NAME, STATUS_ICON_NAME, DEFAULT_SETTINGS, generateBlockId, resolveDatabaseName, getErrorMessage, getDocCount, MGO_ICON_ID, MGO_ICON_SVG, sanitizeUrlForDisplay } from '../data/constants';
-import type { FSRSSettings, PluginData } from '../data/types';
+import { registerCardCodeBlocks } from '../ui/cardBlockProcessor';
+import { VIEW_TYPE_DASHBOARD, VIEW_TYPE_REVIEW, VIEW_TYPE_BROWSE, VIEW_ICON_NAME, STATUS_ICON_NAME, DEFAULT_SETTINGS, resolveDatabaseName, getErrorMessage, getDocCount, MGO_ICON_ID, MGO_ICON_SVG, sanitizeUrlForDisplay } from '../data/constants';
+import type { Card, FSRSSettings, PluginData } from '../data/types';
 import { DashboardView } from '../ui/DashboardView';
+import { ReviewView } from '../ui/ReviewView';
+import { BrowseView } from '../ui/BrowseView';
 import { FSRSSettingsTab } from '../ui/FSRSSettingsTab';
 import { ResetProgressModal } from '../ui/ResetProgressModal';
 import { CreateCardModal } from '../ui/CreateCardModal';
@@ -32,9 +34,9 @@ class FSRSFlashcardsPlugin extends Plugin {
 
         this.addSettingTab(new FSRSSettingsTab(this.app, this));
         this.registerView(VIEW_TYPE_DASHBOARD, (leaf) => new DashboardView(leaf, this));
-        this.registerMarkdownPostProcessor(makeCardPostProcessor(this));
-        console.log('[MGO] 插件已加载，阅读视图后处理器已注册');
-        this.app.workspace.onLayoutReady(() => console.log('[MGO] layout ready'));
+        this.registerView(VIEW_TYPE_REVIEW, (leaf) => new ReviewView(leaf, this));
+        this.registerView(VIEW_TYPE_BROWSE, (leaf) => new BrowseView(leaf, this));
+        registerCardCodeBlocks(this);
 
         const ribbonIconEl = this.addRibbonIcon(VIEW_ICON_NAME, '打开 MGO 仪表盘', (evt: MouseEvent) => {
             void this.activateView();
@@ -83,11 +85,10 @@ class FSRSFlashcardsPlugin extends Plugin {
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
-                const blockId = generateBlockId();
-                const template = `\n\n<mgo-card cardId="${blockId}">\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n\n`;
+                const template = '\n\n```mgo\nQuestion\n---\nAnswer\n```\n\n';
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setCursor({ line: cursor.line + 4, ch: 8 });
+                editor.setCursor({ line: cursor.line + 2, ch: 0 });
             },
         });
         this.addCommand({
@@ -96,11 +97,10 @@ class FSRSFlashcardsPlugin extends Plugin {
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
-                const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}">\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n`;
+                const template = '\n```mgo\nQuestion\n---\nAnswer\n```\n';
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 3, ch: 0 }, { line: cursor.line + 3, ch: 8 });
+                editor.setSelection({ line: cursor.line + 2, ch: 0 }, { line: cursor.line + 2, ch: 8 });
             },
         });
         this.addCommand({
@@ -109,11 +109,10 @@ class FSRSFlashcardsPlugin extends Plugin {
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
-                const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}" reverse>\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n`;
+                const template = '\n```mgo-reverse\nQuestion\n---\nAnswer\n```\n';
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 3, ch: 0 }, { line: cursor.line + 3, ch: 8 });
+                editor.setSelection({ line: cursor.line + 2, ch: 0 }, { line: cursor.line + 2, ch: 8 });
             },
         });
         this.addCommand({
@@ -122,11 +121,10 @@ class FSRSFlashcardsPlugin extends Plugin {
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
-                const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}">\nSentence with ==c1::hidden text==.\n</mgo-card>\n`;
+                const template = '\n\n```mgo\nSentence with ==c1::hidden text==.\n```\n';
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 2, ch: 19 }, { line: cursor.line + 2, ch: 30 });
+                editor.setSelection({ line: cursor.line + 2, ch: 20 }, { line: cursor.line + 2, ch: 31 });
             },
         });
         this.addCommand({
@@ -140,17 +138,16 @@ class FSRSFlashcardsPlugin extends Plugin {
                 const clozeMatch = line.match(/==c(\d+)::/);
                 const nextNum = clozeMatch ? parseInt(clozeMatch[1], 10) + 1 : 1;
                 if (selection) {
-                    if (line.includes('mgo-card')) {
+                    if (this.isInsideCardFence(editor, editor.getCursor().line)) {
                         editor.replaceSelection(`==c${nextNum}::${selection}==`);
                     } else {
-                        const blockId = generateBlockId();
                         const lineNo = editor.getCursor().line;
-                        editor.replaceRange(`<mgo-card cardId="${blockId}">${line.replace(selection, `==c${nextNum}::${selection}==`)}</mgo-card>`,
+                        const wrapped = line.replace(selection, `==c${nextNum}::${selection}==`);
+                        editor.replaceRange('```mgo\n' + wrapped + '\n```',
                             { line: lineNo, ch: 0 }, { line: lineNo, ch: line.length });
                     }
                 } else {
-                    const template = `<mgo-card cardId="${generateBlockId()}">Sentence with ==c1::text==</mgo-card>`;
-                    editor.replaceSelection(template);
+                    editor.replaceSelection('```mgo\nSentence with ==c1::text==\n```');
                 }
             },
         });
@@ -160,11 +157,10 @@ class FSRSFlashcardsPlugin extends Plugin {
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
-                const blockId = generateBlockId();
-                const template = `\n\n<mgo-card cardId="${blockId}" type="typein">\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n\n`;
+                const template = '\n\n```mgo-typein\nQuestion\n---\nAnswer\n```\n\n';
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setCursor({ line: cursor.line + 4, ch: 8 });
+                editor.setCursor({ line: cursor.line + 2, ch: 0 });
             },
         });
         this.addCommand({
@@ -173,11 +169,10 @@ class FSRSFlashcardsPlugin extends Plugin {
             editorCallback: (editor: Editor) => {
                 const activeFile = this.app.workspace.getActiveFile();
                 if (activeFile) void this.dataManager.ensureDeckTag(activeFile);
-                const blockId = generateBlockId();
-                const template = `\n<mgo-card cardId="${blockId}" type="typein">\n<mgo-card-front>Question</mgo-card-front>\n<mgo-card-back>Answer</mgo-card-back>\n</mgo-card>\n`;
+                const template = '\n```mgo-typein\nQuestion\n---\nAnswer\n```\n';
                 const cursor = editor.getCursor();
                 editor.replaceRange(template, cursor);
-                editor.setSelection({ line: cursor.line + 3, ch: 0 }, { line: cursor.line + 3, ch: 8 });
+                editor.setSelection({ line: cursor.line + 2, ch: 0 }, { line: cursor.line + 2, ch: 8 });
             },
         });
         this.addCommand({
@@ -291,12 +286,12 @@ class FSRSFlashcardsPlugin extends Plugin {
                             const line = editor.getLine(editor.getCursor().line);
                             const clozeMatch = line.match(/==c(\d+)::/);
                             const nextNum = clozeMatch ? parseInt(clozeMatch[1], 10) + 1 : 1;
-                            if (line.includes('mgo-card')) {
+                            if (this.isInsideCardFence(editor, editor.getCursor().line)) {
                                 editor.replaceSelection(`==c${nextNum}::${selection}==`);
                             } else {
-                                const blockId = generateBlockId();
                                 const lineNo = editor.getCursor().line;
-                                editor.replaceRange(`<mgo-card cardId="${blockId}">${line.replace(selection, `==c${nextNum}::${selection}==`)}</mgo-card>`,
+                                const wrapped = line.replace(selection, `==c${nextNum}::${selection}==`);
+                                editor.replaceRange('```mgo\n' + wrapped + '\n```',
                                     { line: lineNo, ch: 0 }, { line: lineNo, ch: line.length });
                             }
                         });
@@ -375,6 +370,18 @@ class FSRSFlashcardsPlugin extends Plugin {
         })();
     }
 
+    /** 光标所在行是否位于 ```mgo / ```mgo-reverse / ```mgo-typein 围栏块内部。 */
+    private isInsideCardFence(editor: Editor, lineNo: number): boolean {
+        let inside = false;
+        for (let i = 0; i < lineNo; i++) {
+            const m = editor.getLine(i).trim().match(/^```\s*(\S*)/);
+            if (!m) continue;
+            if (inside) inside = false;
+            else inside = /^mgo(-reverse|-typein)?$/i.test(m[1]);
+        }
+        return inside;
+    }
+
     async loadSettings() {
         const data = (await this.loadData()) as PluginData | null;
         this.settings = Object.assign({}, DEFAULT_SETTINGS, data?.settings);
@@ -427,6 +434,32 @@ class FSRSFlashcardsPlugin extends Plugin {
         const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD)[0];
         if (leaf?.view instanceof DashboardView) {
             (leaf.view).render();
+        }
+    }
+
+    /** 在一个新标签页里开始复习会话。 */
+    async openReviewSession(queue: Card[], deckName?: string, modeLabel?: string): Promise<void> {
+        const leaf = this.app.workspace.getLeaf('tab');
+        await leaf.setViewState({
+            type: VIEW_TYPE_REVIEW,
+            active: true,
+            state: { deckName: deckName ?? null, mode: modeLabel ?? '复习・按计划' },
+        });
+        if (leaf.view instanceof ReviewView) {
+            leaf.view.start(queue, deckName, modeLabel);
+        }
+    }
+
+    /** 在一个新标签页里浏览卡片。 */
+    async openBrowseSession(cards: Card[], deckName?: string, startIndex = 0): Promise<void> {
+        const leaf = this.app.workspace.getLeaf('tab');
+        await leaf.setViewState({
+            type: VIEW_TYPE_BROWSE,
+            active: true,
+            state: { deckName: deckName ?? null },
+        });
+        if (leaf.view instanceof BrowseView) {
+            leaf.view.start(cards, deckName, startIndex);
         }
     }
 }

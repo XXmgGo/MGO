@@ -30,7 +30,7 @@
     color: var(--text-accent);
 }
 
-/* ── Immersive review modal ── */
+/* ── Immersive modal (browse window) ── */
 
 .fsrs-review-modal-immersive.modal-container .modal-bg {
     background-color: var(--background-primary);
@@ -70,11 +70,42 @@
     justify-content: center;
 }
 
-.fsrs-review-modal-immersive .modal-header-controls,
-.fsrs-review-modal-immersive .fsrs-header-actions {
+/* ── Review tab (ItemView) ── */
+
+/* 自绘顶栏，隐藏 Obsidian 的视图标题栏 */
+.workspace-leaf-content[data-type="mgo-review-view"] .view-header {
+    display: none;
+}
+
+.workspace-leaf-content[data-type="mgo-review-view"] .view-content {
+    padding: 0;
+    height: 100%;
+}
+
+.fsrs-review-view {
+    height: 100%;
+    padding: 0;
+    background: var(--background-primary);
+}
+
+.fsrs-review-view .fsrs-review-container {
+    height: 100%;
+}
+
+.fsrs-review-idle {
     display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    height: 100%;
     gap: var(--size-4-2);
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.fsrs-review-idle h3 {
+    margin: 0;
+    color: var(--text-normal);
 }
 
 .fsrs-counter-badge {
@@ -253,10 +284,6 @@
     color: var(--icon-color);
 }
 
-.fsrs-folder-header.is-expanded .fsrs-folder-chevron svg {
-    transform: rotate(90deg);
-}
-
 .fsrs-folder-chevron svg {
     width: 12px;
     height: 12px;
@@ -289,12 +316,38 @@
 
 .fsrs-folder-count {
     font-size: 10px;
-    color: var(--text-faint);
+    color: #8a8a8a;
     background-color: var(--background-primary);
     padding: 1px 6px;
     border-radius: var(--radius-s);
     min-width: 18px;
     text-align: center;
+}
+
+.theme-dark .fsrs-folder-count {
+    color: #a5a5a5;
+}
+
+/* 文件夹行右侧的牌组操作（悬停显示） */
+.fsrs-folder-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    opacity: 0;
+}
+
+.fsrs-folder-header:hover .fsrs-folder-actions,
+.fsrs-folder-header:focus-visible .fsrs-folder-actions,
+.fsrs-folder-header.is-expanded .fsrs-folder-actions {
+    opacity: 1;
+}
+
+.fsrs-folder-actions .clickable-icon {
+    color: var(--text-muted);
+}
+
+.fsrs-folder-actions .clickable-icon:hover {
+    color: var(--text-accent);
 }
 
 .fsrs-folder-due-count {
@@ -308,127 +361,151 @@
     margin-top: 1px;
 }
 
-/* ── mgo-card 语法：阅读视图像普通段落一样渲染，标签隐形 ── */
+/* ── 卡片渲染：```mgo 代码块 → .mgo-card-render ── */
 
-/* 阅读视图后处理器重建的卡片结构（Obsidian 净化未知标签后由此接管渲染） */
+/* 代码块处理器重建的卡片结构。实时预览里代码块不在 .markdown-rendered 下，
+   所以选择器不能加前缀，两种视图才能一致。 */
 
-.markdown-rendered .mgo-card-render {
+/* 卡片块在笔记里按纯段落显示：无背景、无边框、无圆角 */
+.mgo-card-render {
+    position: relative;
     display: block;
     margin: 1em 0;
-    padding: 0.4em 0.9em;
-    border-left: 3px solid var(--background-modifier-border);
-    border-radius: var(--radius-s);
-    background: var(--background-secondary);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
-.markdown-rendered .mgo-card-render .mgo-front,
-.markdown-rendered .mgo-card-render .mgo-back,
-.markdown-rendered .mgo-card-render .mgo-cloze {
+.mgo-card-render .mgo-front,
+.mgo-card-render .mgo-back,
+.mgo-card-render .mgo-cloze {
     display: block;
-    margin: 0.35em 0;
+    margin: 0;
 }
 
-.markdown-rendered .mgo-card-render .mgo-back {
+/* 正/背面之间不留空行：去掉首尾段落的默认间距 */
+.mgo-card-render .mgo-front > :first-child,
+.mgo-card-render .mgo-back > :first-child,
+.mgo-card-render .mgo-cloze > :first-child {
+    margin-top: 0;
+}
+
+.mgo-card-render .mgo-front > :last-child,
+.mgo-card-render .mgo-back > :last-child,
+.mgo-card-render .mgo-cloze > :last-child {
+    margin-bottom: 0;
+}
+
+.mgo-card-render .mgo-back {
     color: var(--text-muted);
 }
 
-.markdown-rendered mgo-card,
-mgo-card {
-    display: block !important;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
+/* 右上角 MGO 标记：点击切换卡片 / 源代码 */
+.mgo-card-flair {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #9a9a9a;
+    opacity: 0.45;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.12s ease, color 0.12s ease, background 0.12s ease;
 }
 
-.markdown-rendered mgo-card-front,
-mgo-card-front,
-.markdown-rendered mgo-card-back,
-mgo-card-back {
-    display: block !important;
-    margin-block-start: 0.5em;
-    white-space: pre-line;
+.mgo-card-render:hover .mgo-card-flair,
+.mgo-card-render.is-showing-source .mgo-card-flair {
+    opacity: 1;
 }
+
+.mgo-card-flair:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+/* 实时预览里代码块外壳同样透明，并隐藏右上角的代码块编辑按钮 */
+.markdown-source-view .cm-embed-block:has(.mgo-card-render) {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.markdown-source-view .cm-embed-block:has(.mgo-card-render) .edit-block-button,
+.markdown-source-view .cm-embed-block:has(.mgo-card-render) .code-block-flair,
+.markdown-source-view .cm-embed-block:has(.mgo-card-render) .copy-code-button {
+    display: none;
+}
+
+.markdown-rendered .mgo-card-render + .copy-code-button,
+.markdown-rendered div:has(> .mgo-card-render) > .copy-code-button {
+    display: none;
+}
+
+/* 代码围栏卡片（```mgo）由代码块处理器渲染成 .mgo-card-render。 */
 
 /* ── Deck rows ── */
 
-.fsrs-deck-row {
+/* 牌组下直接列出的卡片 */
+
+.fsrs-deck-cards {
     display: flex;
-    align-items: center;
-    gap: var(--size-4-1);
-    padding: 2px var(--size-4-3);
-    cursor: pointer;
-    border-radius: var(--radius-s);
-    color: var(--nav-item-color);
-    font-size: var(--nav-item-size);
+    flex-direction: column;
+    margin: 2px 0 6px;
 }
 
-.fsrs-deck-row:hover {
+.fsrs-card-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px var(--size-4-2) 3px 30px;
+    border-radius: var(--radius-s);
+    cursor: pointer;
+    font-size: var(--font-ui-smaller);
+    color: var(--nav-item-color);
+}
+
+.fsrs-card-row:hover {
     background-color: var(--nav-item-background-hover);
     color: var(--nav-item-color-hover);
 }
 
-.fsrs-deck-row-icon {
+.fsrs-card-row-icon {
     display: flex;
     align-items: center;
-    justify-content: center;
     flex-shrink: 0;
     color: var(--icon-color);
 }
 
-.fsrs-deck-row-icon svg {
-    width: 14px;
-    height: 14px;
+.fsrs-card-row-icon svg {
+    width: 12px;
+    height: 12px;
 }
 
-.fsrs-deck-row-icon.has-due svg {
+.fsrs-card-row-icon.has-due svg {
     color: var(--color-red);
 }
 
-.fsrs-deck-row-title {
+.fsrs-card-row-title {
     flex: 1;
-    font-weight: 500;
-    color: var(--nav-item-color);
-    font-size: var(--nav-item-size);
-    white-space: nowrap;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.fsrs-deck-row-stats {
-    display: flex;
-    gap: var(--size-4-1);
-    font-size: 10px;
-}
-
-.fsrs-deck-row-stats .fsrs-stat-due.has-due {
-    color: var(--color-red);
-    background-color: var(--tag-background);
-    padding: 1px 5px;
-    border-radius: var(--radius-s);
-    font-weight: 600;
-}
-
-.fsrs-deck-row-stats .fsrs-stat-new {
-    color: var(--text-faint);
-    padding: 1px 5px;
-}
-
-.fsrs-deck-row-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    opacity: 0;
-}
-
-.fsrs-deck-row:hover .fsrs-deck-row-actions {
-    opacity: 1;
-}
-
-.fsrs-deck-row-actions .clickable-icon {
+.fsrs-card-row-empty {
     color: var(--text-muted);
+    cursor: default;
 }
 
-.fsrs-deck-row-actions .clickable-icon:hover {
-    color: var(--text-accent);
+.fsrs-card-row-empty:hover {
+    background: transparent;
 }
 
 .fsrs-deck-muted {
@@ -503,32 +580,178 @@ mgo-card-back {
 
 /* ── Review layout ── */
 
-.fsrs-review-card {
-    font-size: var(--fsrs-card-font-size, var(--font-text-size));
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--radius-m);
-    background-color: var(--background-primary);
-    padding: var(--size-4-4);
-    margin: var(--size-4-4) auto;
-    width: 100%;
-    max-width: 600px;
-    flex: 1 1 auto;
-    overflow-y: auto;
-    min-height: 120px;
-}
-
 .fsrs-review-container {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: var(--size-4-4);
+    padding: 0;
+    background: var(--background-primary);
+}
+
+.fsrs-review-modal-immersive .modal-content {
+    padding: 0;
+}
+
+/* 顶栏：关闭 · 牌组 · 模式胶囊 · 进度 · 更多 */
+.fsrs-review-topbar {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-2);
+    padding: max(18px, var(--safe-area-inset-top)) 28px 10px;
+}
+
+.fsrs-review-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.fsrs-review-icon-btn:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.fsrs-review-icon-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.fsrs-review-deck {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-normal);
+    cursor: help;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fsrs-review-mode {
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: var(--background-modifier-hover);
+    color: var(--text-muted);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.fsrs-review-topbar-spacer {
+    flex: 1 1 auto;
+}
+
+.fsrs-review-counter {
+    font-size: 14px;
+    color: #8a8a8a;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.theme-dark .fsrs-review-counter {
+    color: #a5a5a5;
+}
+
+.fsrs-review-progress {
+    width: 240px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--background-modifier-border);
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.fsrs-review-progress-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--text-normal);
+    transition: width 0.25s ease;
+}
+
+.fsrs-review-more-menu {
+    position: absolute;
+    top: calc(100% - 4px);
+    right: 24px;
+    z-index: 20;
+    min-width: 168px;
+    padding: 6px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    background: var(--background-primary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.fsrs-review-more-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: var(--font-ui-small);
+    color: var(--text-normal);
+    cursor: pointer;
+}
+
+.fsrs-review-more-item:hover {
+    background: var(--background-modifier-hover);
+}
+
+/* 中部：卡片 */
+.fsrs-review-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    padding: 12px 48px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.fsrs-review-card {
+    font-size: var(--fsrs-card-font-size, var(--font-text-size));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 1040px;
+    max-height: 62vh;
+    min-height: 96px;
+    margin: 0 auto;
+    padding: 24px 44px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 24px;
+    background-color: var(--background-primary);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    overflow-y: auto;
+}
+
+.fsrs-review-card .fsrs-card-context {
+    font-size: 12px;
+    color: #8a8a8a;
+    padding: 0;
+    margin-bottom: 18px;
+    background: transparent;
+}
+
+.theme-dark .fsrs-review-card .fsrs-card-context {
+    color: #a5a5a5;
+}
+
+/* 底栏：显示答案 / 评级按钮 + 快捷键提示 */
+.fsrs-review-footer {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 1136px;
+    margin: 0 auto;
+    padding: 12px 48px max(28px, var(--safe-area-inset-bottom));
 }
 
 .fsrs-bottom-controls {
-    flex: 0 0 auto;
-    padding-top: var(--size-4-4);
-    max-width: 600px;
-    margin: 0 auto;
     width: 100%;
 }
 
@@ -536,13 +759,83 @@ mgo-card-back {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--size-4-2);
-    margin-top: var(--size-4-4);
 }
 
 .fsrs-show-answer-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     width: 100%;
-    margin-bottom: var(--size-4-4);
-    min-height: 44px;
+    min-height: 48px;
+    border: none;
+    border-radius: 12px;
+    background: var(--text-normal);
+    color: var(--background-primary);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.fsrs-show-answer-btn:hover {
+    background: var(--text-normal);
+    opacity: 0.9;
+}
+
+.fsrs-show-answer-kbd {
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(127, 127, 127, 0.28);
+    color: inherit;
+    font-size: 11px;
+    font-weight: 400;
+    font-family: inherit;
+}
+
+.fsrs-review-hints {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 12px;
+}
+
+.fsrs-review-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #8a8a8a;
+    cursor: pointer;
+}
+
+.fsrs-review-hint:hover {
+    color: var(--text-normal);
+}
+
+.fsrs-review-hint.fsrs-review-hint-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.fsrs-review-hint kbd {
+    padding: 1px 5px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 11px;
+    line-height: 1.4;
+    box-shadow: none;
+}
+
+.fsrs-review-hint-divider {
+    color: #c4c4c4;
+}
+
+.theme-dark .fsrs-review-hint,
+.theme-dark .fsrs-review-hint-divider {
+    color: #8f8f8f;
 }
 
 /* ── Rating buttons ── */
@@ -551,11 +844,17 @@ mgo-card-back {
 .fsrs-review-controls .fsrs-rating-hard,
 .fsrs-review-controls .fsrs-rating-good,
 .fsrs-review-controls .fsrs-rating-easy {
-    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
     flex-direction: column;
     height: auto;
     padding: var(--size-4-2) var(--size-4-3);
     gap: 2px;
+    border-radius: 12px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
 }
 
 .fsrs-review-controls .fsrs-rating-again:hover {
@@ -707,36 +1006,76 @@ mgo-card-back {
     cursor: pointer;
 }
 
-/* ── Browse modal ── */
+/* ── Browse view (tab) ── */
 
-.fsrs-browse-container {
-    display: flex;
-    align-items: center;
-    gap: var(--size-4-4);
+/* 自绘顶栏，隐藏 Obsidian 的视图标题栏 */
+.workspace-leaf-content[data-type="mgo-browse-view"] .view-header {
+    display: none;
+}
+
+.workspace-leaf-content[data-type="mgo-browse-view"] .view-content {
+    padding: 0;
     height: 100%;
 }
 
-.fsrs-browse-card-wrapper {
-    flex: 1;
-    overflow-y: auto;
-    max-height: 100%;
+.fsrs-browse-view {
+    height: 100%;
+    padding: 0;
+    background: var(--background-primary);
 }
 
-.fsrs-browse-open-row {
+.fsrs-browse-view .fsrs-review-container {
+    height: 100%;
+}
+
+.fsrs-browse-footer {
+    flex: 0 0 auto;
     display: flex;
+    align-items: center;
     justify-content: center;
-    padding: 8px 0 4px;
+    gap: var(--size-4-3);
+    padding: 12px 48px max(24px, var(--safe-area-inset-bottom));
 }
 
-.fsrs-browse-open-btn {
+.fsrs-browse-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
     cursor: pointer;
 }
 
-/* ── Browse navigation buttons ── */
+.fsrs-browse-nav-btn:hover {
+    background: var(--background-modifier-hover);
+}
 
-.fsrs-browse-container > div > button {
-    min-height: 44px;
-    min-width: 44px;
+.fsrs-browse-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.fsrs-browse-nav-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.fsrs-browse-source-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+    font-size: var(--font-ui-small);
+    cursor: pointer;
+}
+
+.fsrs-browse-source-btn:hover {
+    background: var(--background-modifier-border);
 }
 
 /* ── Stats modal ── */
@@ -995,6 +1334,11 @@ mgo-card-back {
 .fsrs-completion-screen {
     text-align: center;
     padding: var(--size-4-8);
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .fsrs-completion-screen h2 {
@@ -1016,18 +1360,17 @@ mgo-card-back {
 /* Touch-device baseline — any pointer:coarse device (phones, tablets) */
 @media (pointer: coarse) {
     /* Ensure all interactive row targets are tall enough to tap */
-    .fsrs-folder-header,
-    .fsrs-deck-row {
+    .fsrs-folder-header {
         min-height: 44px;
     }
 
     /* Always show actions (no hover on touch) */
-    .fsrs-deck-row-actions {
+    .fsrs-folder-actions {
         opacity: 1;
     }
 
     /* Larger tap targets for icon buttons */
-    .fsrs-deck-row-actions .clickable-icon {
+    .fsrs-folder-actions .clickable-icon {
         padding: 8px;
         min-width: 36px;
         min-height: 36px;
@@ -1052,20 +1395,21 @@ mgo-card-back {
         min-height: 56px;
     }
 
-    /* Comfortable padding on card, remove border/bg to save space */
+    /* Compact card box on touch devices */
     .fsrs-review-card {
-        padding: 0;
-        margin: 0;
+        padding: 24px 20px;
+        margin: 0 auto;
         max-width: 100%;
-        background-color: transparent;
-        border: none;
+        min-height: 160px;
+        max-height: 58vh;
+        border-radius: 16px;
         box-shadow: none;
     }
 
     /* Browse nav buttons: bigger tap targets */
-    .fsrs-browse-container > div > button {
-        min-height: 52px;
-        min-width: 52px;
+    .fsrs-browse-nav-btn {
+        width: 48px;
+        height: 48px;
     }
 }
 
@@ -1133,14 +1477,12 @@ mgo-card-back {
         padding-left: var(--size-4-2);
     }
 
-    /* Deck rows */
-    .fsrs-deck-row {
-        padding: 4px var(--size-4-2);
-        min-height: 44px;
+    .fsrs-card-row {
+        min-height: 36px;
     }
 
     /* Always show deck actions on mobile */
-    .fsrs-deck-row-actions {
+    .fsrs-folder-actions {
         opacity: 1;
     }
 
@@ -1164,39 +1506,29 @@ mgo-card-back {
         min-height: 52px;
     }
 
-    /* Review card: fully native mobile flow, no separate card box */
+    /* Review card: compact box on phones */
     .fsrs-review-card {
-        padding: 0;
-        margin: 0;
+        padding: 20px 16px;
+        margin: 0 auto;
         max-width: 100%;
-        background-color: transparent;
-        border: none;
+        min-height: 150px;
+        max-height: 56vh;
+        border-radius: 16px;
         box-shadow: none;
     }
 
     .fsrs-review-container {
-        padding: var(--size-4-2);
+        padding: 0;
     }
 
     .fsrs-bottom-controls {
         padding-top: var(--size-4-2);
     }
 
-    /* Browse modal: stack nav buttons vertically */
-    .fsrs-browse-container {
-        flex-direction: column;
+    /* Browse view: compact footer */
+    .fsrs-browse-footer {
+        padding: 8px 14px max(14px, var(--safe-area-inset-bottom));
         gap: var(--size-4-2);
-        align-items: stretch;
-    }
-
-    .fsrs-browse-card-wrapper {
-        order: -1;
-        max-height: calc(100% - 120px);
-    }
-
-    .fsrs-browse-container > div {
-        display: flex;
-        justify-content: center;
     }
 
     /* Stats header: 2-column grid of cards */
@@ -1363,7 +1695,6 @@ mgo-card-back {
     }
 
     .fsrs-folder-chevron svg,
-    .fsrs-deck-row,
     .fsrs-folder-header {
         transition: none;
     }
@@ -1481,7 +1812,10 @@ mgo-card-back {
 /* ── Type-in answer ── */
 
 .fsrs-typein-container {
-    padding: var(--size-4-3);
+    width: 100%;
+    max-width: 1040px;
+    margin: 14px auto 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: var(--size-4-2);
@@ -1489,9 +1823,10 @@ mgo-card-back {
 
 .fsrs-typein-input {
     width: 100%;
-    padding: var(--size-4-2);
-    border: 2px solid var(--background-modifier-border);
-    border-radius: var(--radius-m);
+    min-height: 48px;
+    padding: 0 var(--size-4-3);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
     background: var(--background-primary);
     color: var(--text-normal);
     font-size: var(--font-ui-medium);
@@ -1788,3 +2123,42 @@ mgo-card-back {
 
 
 
+
+/* ── Review chrome responsive ── */
+
+@media (max-width: 700px) {
+    .fsrs-review-topbar {
+        padding: max(12px, var(--safe-area-inset-top)) 14px 6px;
+        gap: var(--size-4-1);
+    }
+
+    .fsrs-review-deck {
+        font-size: 15px;
+    }
+
+    .fsrs-review-mode {
+        padding: 2px 9px;
+        font-size: 12px;
+    }
+
+    .fsrs-review-progress {
+        width: 88px;
+    }
+
+    .fsrs-review-body {
+        padding: 8px 14px;
+    }
+
+    .fsrs-review-footer {
+        padding: 8px 14px max(16px, var(--safe-area-inset-bottom));
+    }
+
+    .fsrs-review-hints {
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .fsrs-typein-container {
+        margin-top: 10px;
+    }
+}

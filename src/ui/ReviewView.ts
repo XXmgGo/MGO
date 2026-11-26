@@ -1,7 +1,8 @@
-import { App, Modal, ButtonComponent, Component, MarkdownRenderer, Notice, setIcon } from 'obsidian';
+import { ButtonComponent, Component, ItemView, MarkdownRenderer, Notice, WorkspaceLeaf, setIcon, type ViewStateResult } from 'obsidian';
 import { Rating, State } from 'ts-fsrs';
 import type { Card } from '../data/types';
-import { isInPlaceImageCard, toHardBreaks } from '../data/constants';
+import { VIEW_ICON_NAME, VIEW_TYPE_REVIEW, isInPlaceImageCard, toHardBreaks } from '../data/constants';
+import { openCardSource } from './cardSource';
 
 type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 
@@ -10,10 +11,13 @@ const SWIPE_THRESHOLD = 60;
 const LEARN_AHEAD_MS = 30 * 60 * 1000;
 const REQUEUE_GAP = 4;
 
-export class ReviewModal extends Modal {
+export class ReviewView extends ItemView {
     private plugin: FSRSFlashcardsPlugin;
-    private queue: Card[];
-    private deckName: string | null;
+    private queue: Card[] = [];
+    private deckName: string | null = null;
+    private reviewMode = '复习・按计划';
+    private started = false;
+    private active = false;
     private currentCardIndex = 0;
     private undoButton: HTMLElement | null = null;
     private state: 'question' | 'answer' = 'question';
@@ -31,6 +35,12 @@ export class ReviewModal extends Modal {
     private typeinInput: HTMLInputElement;
     private typeinFeedback: HTMLElement;
     private typeinCheckBtn: ButtonComponent;
+    private reviewShell: HTMLElement | null = null;
+    private topbarEl: HTMLElement | null = null;
+    private visibleCounter: HTMLElement | null = null;
+    private progressFill: HTMLElement | null = null;
+    private moreMenu: HTMLElement | null = null;
+    private menuOutsideHandler: ((evt: MouseEvent) => void) | null = null;
 
     private gestureStartX = 0;
     private gestureStartY = 0;
@@ -39,28 +49,51 @@ export class ReviewModal extends Modal {
     private isGesturing = false;
     private boundHandlers: Array<{ target: EventTarget; type: string; handler: EventListener }> = [];
 
-    constructor(app: App, plugin: FSRSFlashcardsPlugin, queue: Card[], deckName?: string) {
-        super(app);
+    constructor(leaf: WorkspaceLeaf, plugin: FSRSFlashcardsPlugin) {
+        super(leaf);
         this.plugin = plugin;
+    }
+
+    getViewType(): string { return VIEW_TYPE_REVIEW; }
+
+    getDisplayText(): string { return this.deckName ?? '复习'; }
+
+    getIcon(): string { return VIEW_ICON_NAME; }
+
+    async setState(state: unknown, _result: ViewStateResult): Promise<void> {
+        const s = (state ?? {}) as { deckName?: string; mode?: string };
+        if (typeof s.deckName === 'string') this.deckName = s.deckName;
+        if (typeof s.mode === 'string') this.reviewMode = s.mode;
+    }
+
+    async onOpen(): Promise<void> {
+        this.containerEl.addClass('fsrs-review-view');
+        this.registerDomEvent(document, 'keydown', (evt: KeyboardEvent) => this.handleKeyPress(evt));
+        this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf) => {
+            this.active = leaf === this.leaf;
+        }));
+        if (!this.started) this.renderIdleState();
+    }
+
+    /** 由插件打开标签页后调用，注入本次复习队列。 */
+    start(queue: Card[], deckName?: string, modeLabel = '复习・按计划'): void {
         this.queue = queue;
         this.deckName = deckName || null;
-    }
-
-    onOpen() {
+        this.reviewMode = modeLabel;
+        this.currentCardIndex = 0;
+        this.buriedStack = [];
+        this.started = true;
+        this.active = true;
         this.renderComponent = new Component();
-        this.containerEl.addClass('fsrs-review-modal-immersive');
-        const deckPrefix = this.deckName ? this.deckName : '复习中';
-        this.titleEl.empty();
-        this.titleEl.createSpan({ text: deckPrefix });
-        this.titleEl.createSpan({ text: `${this.currentCardIndex + 1}/${this.queue.length}`, cls: 'fsrs-counter-badge' });
+        this.contentEl.empty();
         this.setupUI();
         void this.showNextCard();
-        for (const key of [' ', 'Enter', '1', '2', '3', '4', 'z', 'Z']) {
-            this.scope.register([], key, (evt: KeyboardEvent) => this.handleKeyPress(evt));
-        }
+        const header = this.leaf as unknown as { tabHeaderInnerTitleEl?: HTMLElement };
+        header.tabHeaderInnerTitleEl?.setText?.(this.deckName ?? '复习');
     }
 
-    onClose() {
+    async onClose(): Promise<void> {
+        this.closeMoreMenu();
         for (const { target, type, handler } of this.boundHandlers) {
             target.removeEventListener(type, handler);
         }
@@ -70,43 +103,60 @@ export class ReviewModal extends Modal {
         this.plugin.refreshDashboardView();
     }
 
+    /** 结束复习：把这个标签页关掉。 */
+    private finish(): void {
+        this.leaf.detach();
+    }
+
+    private renderIdleState(): void {
+        const box = this.contentEl.createDiv({ cls: 'fsrs-review-idle' });
+        box.createEl('h3', { text: '复习标签页' });
+        box.createEl('p', { text: '从 MGO 仪表盘选择一个牌组开始复习。' });
+    }
+
     private setupUI() {
-        const card = this.getCurrentCard();
-        this.modalEl.find('.modal-title').addEventListener('click', () => {
-            const data = this.getCurrentCard().fsrsData;
-            if (!data) { new Notice('这是一张新卡片。'); return; }
-            const info = `稳定性：${data.stability.toFixed(2)}\n难度：${data.difficulty.toFixed(2)}\n复习次数：${data.reps}\n遗忘次数：${data.lapses}\n到期日：${data.due.toLocaleDateString()}`;
-            new Notice(info, 10000);
-        });
-        this.modalEl.find('.modal-title').addClass('fsrs-card-info-title');
-
-        const headerControls = this.modalEl.querySelector('.modal-header-controls')
-            ?? this.modalEl.querySelector('.modal-header')?.createDiv({ cls: 'fsrs-header-actions' });
-        if (headerControls) {
-            this.undoButton = headerControls.createDiv({ cls: 'clickable-icon' });
-            setIcon(this.undoButton, 'undo-2');
-            this.undoButton.setAttribute('aria-label', '撤销上次评分');
-            this.undoButton.addEventListener('click', () => this.undoRating());
-            this.updateUndoButton();
-
-            const editBtn = headerControls.createDiv({ cls: 'clickable-icon' });
-            setIcon(editBtn, 'pencil');
-            editBtn.setAttribute('aria-label', '编辑此卡片');
-            editBtn.addEventListener('click', () => {
-                const { filePath } = this.getCurrentCard();
-                void this.app.workspace.openLinkText(filePath, filePath);
-                this.close();
-            });
-        }
-
         const container = this.contentEl.createDiv({ cls: 'fsrs-review-container' });
+        this.reviewShell = container;
 
-        this.cardContainer = container.createDiv({ cls: 'fsrs-review-card' });
+        // 顶栏：关闭 · 牌组 · 模式 · 进度 · 原文 · 更多
+        const topbar = container.createDiv({ cls: 'fsrs-review-topbar' });
+        this.topbarEl = topbar;
+
+        const closeBtn = topbar.createDiv({ cls: 'fsrs-review-icon-btn fsrs-review-close', attr: { 'aria-label': '结束复习' } });
+        setIcon(closeBtn, 'x');
+        closeBtn.addEventListener('click', () => this.finish());
+
+        const deckEl = topbar.createDiv({ cls: 'fsrs-review-deck', text: this.deckName ?? '复习中' });
+        deckEl.addEventListener('click', () => this.showCardInfo());
+        topbar.createSpan({ cls: 'fsrs-review-mode', text: this.reviewMode });
+
+        topbar.createDiv({ cls: 'fsrs-review-topbar-spacer' });
+        this.visibleCounter = topbar.createDiv({ cls: 'fsrs-review-counter' });
+        const progress = topbar.createDiv({ cls: 'fsrs-review-progress' });
+        this.progressFill = progress.createDiv({ cls: 'fsrs-review-progress-fill' });
+
+        const sourceBtn = topbar.createDiv({ cls: 'fsrs-review-icon-btn', attr: { 'aria-label': '打开原文笔记' } });
+        setIcon(sourceBtn, 'file-text');
+        sourceBtn.addEventListener('click', () => void this.openCardSource());
+
+        const moreBtn = topbar.createDiv({ cls: 'fsrs-review-icon-btn fsrs-review-more', attr: { 'aria-label': '更多操作' } });
+        setIcon(moreBtn, 'more-vertical');
+        moreBtn.addEventListener('click', (evt: MouseEvent) => {
+            evt.stopPropagation();
+            this.toggleMoreMenu();
+        });
+
+        // 中部：卡片
+        const body = container.createDiv({ cls: 'fsrs-review-body' });
+
+        this.cardContainer = body.createDiv({ cls: 'fsrs-review-card' });
         this.cardContainer.setCssProps({ '--fsrs-card-font-size': `${this.plugin.settings.fontSize}px` });
 
         const contextEl = this.cardContainer.createDiv({ cls: 'fsrs-card-context' });
-        if (card.context) {
-            contextEl.setText(card.context);
+        contextEl.addEventListener('click', () => void this.openCardSource());
+        const firstCard = this.getCurrentCard();
+        if (firstCard.context) {
+            contextEl.setText(firstCard.context);
         } else {
             contextEl.addClass('fsrs-card-context-hidden');
         }
@@ -119,18 +169,41 @@ export class ReviewModal extends Modal {
         this.inplaceIndicatorEl = this.cardContainer.createDiv({ cls: 'fsrs-inplace-indicator' });
         this.inplaceIndicatorEl.hide();
 
-        const bottomControlsContainer = container.createDiv({ cls: 'fsrs-bottom-controls' });
+        this.typeinContainer = body.createDiv({ cls: 'fsrs-typein-container' });
+
+        // 底栏：显示答案 / 评级按钮 + 快捷键提示
+        const footer = container.createDiv({ cls: 'fsrs-review-footer' });
+        const bottomControlsContainer = footer.createDiv({ cls: 'fsrs-bottom-controls' });
 
         this.showAnswerButton = new ButtonComponent(bottomControlsContainer)
             .setButtonText('显示答案')
             .setCta()
             .onClick(() => this.showAnswer());
         this.showAnswerButton.buttonEl.addClass('fsrs-show-answer-btn');
+        this.showAnswerButton.buttonEl.createEl('kbd', { text: '空格键', cls: 'fsrs-show-answer-kbd' });
 
         this.controlsContainer = bottomControlsContainer.createDiv({ cls: 'fsrs-review-controls' });
         this.controlsContainer.hide();
 
-        this.typeinContainer = container.createDiv({ cls: 'fsrs-typein-container' });
+        const hints = footer.createDiv({ cls: 'fsrs-review-hints' });
+        const editHint = hints.createSpan({ cls: 'fsrs-review-hint', attr: { 'aria-label': '编辑此卡片' } });
+        editHint.createEl('kbd', { text: 'E' });
+        editHint.createSpan({ text: ' 编辑' });
+        editHint.addEventListener('click', () => void this.openCardSource());
+
+        hints.createSpan({ cls: 'fsrs-review-hint-divider', text: '·' });
+
+        this.undoButton = hints.createSpan({ cls: 'fsrs-review-hint', attr: { 'aria-label': '撤销上次评分' } });
+        this.undoButton.createEl('kbd', { text: '⌘' + 'Z' });
+        this.undoButton.createSpan({ text: ' 撤销' });
+        this.undoButton.addEventListener('click', () => this.undoRating());
+
+        hints.createSpan({ cls: 'fsrs-review-hint-divider', text: '·' });
+
+        const escHint = hints.createSpan({ cls: 'fsrs-review-hint' });
+        escHint.createEl('kbd', { text: 'Esc' });
+        escHint.createSpan({ text: ' 结束复习' });
+        escHint.addEventListener('click', () => this.finish());
         this.typeinContainer.hide();
 
         this.typeinInput = this.typeinContainer.createEl('input', {
@@ -191,6 +264,63 @@ export class ReviewModal extends Modal {
         addHandler(this.cardContainer, 'pointermove', (e: Event) => this.onGestureMove(e as PointerEvent));
         addHandler(this.cardContainer, 'pointerup', (e: Event) => this.onGestureEnd(e as PointerEvent));
         addHandler(this.cardContainer, 'pointerleave', (e: Event) => this.onGestureEnd(e as PointerEvent));
+        this.updateUndoButton();
+    }
+
+    private updateChrome() {
+        const total = this.queue.length;
+        const answered = this.currentCardIndex;
+        if (this.visibleCounter) this.visibleCounter.setText(`${answered} / ${total}`);
+        if (this.progressFill) {
+            this.progressFill.style.width = total > 0 ? `${Math.round((answered / total) * 100)}%` : '0%';
+        }
+    }
+
+    private showCardInfo() {
+        const data = this.getCurrentCard().fsrsData;
+        if (!data) { new Notice('这是一张新卡片。'); return; }
+        const info = `稳定性：${data.stability.toFixed(2)}\n难度：${data.difficulty.toFixed(2)}\n复习次数：${data.reps}\n遗忘次数：${data.lapses}\n到期日：${data.due.toLocaleDateString()}`;
+        new Notice(info, 10000);
+    }
+
+    /** 打开这张卡片的原文笔记，并滚动到卡片块的位置。 */
+    private async openCardSource(): Promise<void> {
+        this.closeMoreMenu();
+        const card = this.getCurrentCard();
+        if (!card) return;
+        await openCardSource(this.app, card);
+    }
+
+    private toggleMoreMenu() {
+        if (this.moreMenu) { this.closeMoreMenu(); return; }
+        const menu = (this.topbarEl ?? this.reviewShell ?? this.contentEl).createDiv({ cls: 'fsrs-review-more-menu' });
+        const item = (label: string, fn: () => void) => {
+            const el = menu.createDiv({ cls: 'fsrs-review-more-item', text: label });
+            el.addEventListener('click', () => { this.closeMoreMenu(); fn(); });
+        };
+        item('打开原文笔记', () => void this.openCardSource());
+        item('撤销上次评分', () => this.undoRating());
+        item('结束复习', () => this.finish());
+        this.moreMenu = menu;
+        const closeOnOutside = (evt: MouseEvent) => {
+            if (!this.moreMenu) {
+                document.removeEventListener('click', closeOnOutside);
+                this.menuOutsideHandler = null;
+                return;
+            }
+            if (!this.moreMenu.contains(evt.target as Node)) this.closeMoreMenu();
+        };
+        this.menuOutsideHandler = closeOnOutside;
+        window.setTimeout(() => document.addEventListener('click', closeOnOutside), 0);
+    }
+
+    private closeMoreMenu() {
+        this.moreMenu?.remove();
+        this.moreMenu = null;
+        if (this.menuOutsideHandler) {
+            document.removeEventListener('click', this.menuOutsideHandler);
+            this.menuOutsideHandler = null;
+        }
     }
 
     private onGestureStart(e: PointerEvent) {
@@ -305,18 +435,8 @@ export class ReviewModal extends Modal {
         }
         this.inplaceIndicatorEl.hide();
 
-        const deckPrefix = this.deckName ? this.deckName : '复习中';
-        this.titleEl.empty();
-        this.titleEl.createSpan({ text: deckPrefix });
-        this.titleEl.createSpan({ text: `${this.currentCardIndex + 1}/${this.queue.length}`, cls: 'fsrs-counter-badge' });
-        if (this.plugin.dataManager.isLeech?.(card)) {
-            const lapses = card.fsrsData?.lapses ?? 0;
-            this.titleEl.createSpan({
-                text: `困难卡（遗忘 ${lapses} 次）`,
-                cls: 'fsrs-leech-badge',
-                attr: { title: '这张卡片反复遗忘。建议简化、拆分或重写。' },
-            });
-        }
+        this.closeMoreMenu();
+        this.updateChrome();
 
         this.frontEl.empty();
         this.backEl.empty();
@@ -437,33 +557,39 @@ export class ReviewModal extends Modal {
 
     private updateUndoButton() {
         if (!this.undoButton) return;
-        if (this.currentCardIndex > 0 && this.plugin.dataManager.canUndo()) {
-            this.undoButton.show();
+        const canUndo = this.currentCardIndex > 0 && this.plugin.dataManager.canUndo();
+        if (canUndo) {
+            this.undoButton.removeClass('fsrs-review-hint-disabled');
         } else {
-            this.undoButton.hide();
+            this.undoButton.addClass('fsrs-review-hint-disabled');
         }
     }
 
     private showCompletionScreen() {
         this.contentEl.empty();
-        this.titleEl.setText('本次复习完成！');
         const container = this.contentEl.createDiv({ cls: 'fsrs-completion-screen' });
         container.createEl('h2', { text: '干得漂亮！' });
         const uniqueCards = new Set(this.queue.map((card) => card.id)).size;
         const repeats = this.queue.length - uniqueCards;
         const repeatText = repeats > 0 ? `（含 ${repeats} 次学习重测）` : '';
         container.createEl('p', { text: `你已完成 ${uniqueCards} 张卡片${repeatText}。` });
-        new ButtonComponent(container).setButtonText('返回面板').setCta().onClick(() => this.close());
+        new ButtonComponent(container).setButtonText('结束复习').setCta().onClick(() => this.finish());
     }
 
     private handleKeyPress(evt: KeyboardEvent) {
+        if (!this.active) return;
         if (evt.key === 'Escape') {
-            this.close();
+            this.finish();
             return;
         }
 
         const typing = evt.target instanceof HTMLInputElement || evt.target instanceof HTMLTextAreaElement;
         if (typing) return;
+        if (evt.key.toLowerCase() === 'e' && !evt.shiftKey && !evt.altKey && !evt.ctrlKey && !evt.metaKey) {
+            evt.preventDefault();
+            void this.openCardSource();
+            return;
+        }
         if (evt.key.toLowerCase() === 'z' && !evt.shiftKey && !evt.altKey) {
             evt.preventDefault();
             this.undoRating();

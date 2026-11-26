@@ -1,11 +1,9 @@
 import { ItemView, WorkspaceLeaf, ButtonComponent, Notice, setIcon } from 'obsidian';
 import { VIEW_TYPE_DASHBOARD, VIEW_ICON_NAME, getErrorMessage } from '../data/constants';
-import type { Deck } from '../data/types';
-import { ReviewModal } from './ReviewModal';
+import type { Card, Deck } from '../data/types';
 import { StatsModal } from './StatsModal';
 import { CustomStudyModal } from './CustomStudyModal';
 import { HelpModal } from './HelpModal';
-import { BrowseModal } from './BrowseModal';
 import { CreateCardModal } from './CreateCardModal';
 import { CreateDeckModal } from './CreateDeckModal';
 
@@ -13,6 +11,8 @@ type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 
 export class DashboardView extends ItemView {
     private plugin: FSRSFlashcardsPlugin;
+    /** 展开文件夹时才渲染的卡片列表（大牌组避免一次性建太多 DOM）。 */
+    private pendingCardLists = new Map<HTMLElement, () => void>();
     constructor(leaf: WorkspaceLeaf, plugin: FSRSFlashcardsPlugin) {
         super(leaf);
         this.plugin = plugin;
@@ -75,7 +75,7 @@ export class DashboardView extends ItemView {
                     : '没有到期待复习的卡片！');
                 return;
             }
-            new ReviewModal(this.app, this.plugin, allDueCards).open();
+            void this.plugin.openReviewSession(allDueCards);
         }, true);
         const dueCount = this.plugin.dataManager.getDecks().reduce((acc: number, d: Deck) => acc + d.stats.due, 0);
         if (dueCount > 0) {
@@ -179,6 +179,7 @@ export class DashboardView extends ItemView {
 
     private renderDecks() {
         const decks = this.plugin.dataManager.getDecks();
+        this.pendingCardLists.clear();
         if (decks.length === 0) { this.renderEmptyState(); return; }
 
         // 收集所有节点路径（牌组本身 + 其全部祖先前缀）
@@ -224,14 +225,19 @@ export class DashboardView extends ItemView {
         const lastSegment = path.substring(path.lastIndexOf('/') + 1);
         folderHeader.createSpan({ text: lastSegment, cls: 'fsrs-folder-name' });
 
-        const subtree = this.plugin.dataManager.getSubtreeStats(path);
-        const childDecks = [...nodePaths].filter(p => p !== path && p.startsWith(path + '/')).length;
+        const deck = deckByPath.get(path);
+        if (deck) this.renderDeckActions(folderHeader, deck);
 
+        const counts = deck
+            ? this.plugin.dataManager.getOwnDeckStats(deck.id)
+            : this.plugin.dataManager.getSubtreeStats(path);
         const countContainer = folderHeader.createDiv({ cls: 'fsrs-folder-count-container' });
-        if (subtree.due > 0) {
-            countContainer.createSpan({ text: `${subtree.due}`, cls: 'fsrs-folder-count fsrs-folder-due-count' });
+        if (counts.due > 0) {
+            countContainer.createSpan({ text: `${counts.due}`, cls: 'fsrs-folder-count fsrs-folder-due-count' });
         }
-        countContainer.createSpan({ text: `${childDecks + (deckByPath.has(path) ? 1 : 0)}`, cls: 'fsrs-folder-count' });
+        if (counts.new > 0) {
+            countContainer.createSpan({ text: `${counts.new}`, cls: 'fsrs-folder-count' });
+        }
 
         const decksContainer = folderContainer.createDiv({ cls: 'fsrs-folder-decks' });
         decksContainer.hide();
@@ -244,7 +250,7 @@ export class DashboardView extends ItemView {
             folderHeader.toggleClass('is-collapsed', isCollapsed);
             folderHeader.toggleClass('is-expanded', !isCollapsed);
             folderHeader.setAttribute('aria-expanded', (!isCollapsed).toString());
-            if (isCollapsed) { decksContainer.hide(); } else { decksContainer.show(); }
+            if (isCollapsed) { decksContainer.hide(); } else { decksContainer.show(); this.flushCardLists(decksContainer); }
             setIcon(chevronIcon, isCollapsed ? 'chevron-right' : 'chevron-down');
             setIcon(folderIcon, isCollapsed ? 'folder-closed' : 'folder-open');
         };
@@ -257,10 +263,10 @@ export class DashboardView extends ItemView {
             }
         });
 
-        // 本节点若本身是牌组，渲染其牌组行（复习/浏览走子树聚合）
-        const deck = deckByPath.get(path);
+        // 本节点若本身是牌组：卡片列表直接挂在文件夹下，文件夹行就是牌组行
         if (deck) {
-            this.renderDeckItem(decksContainer, deck);
+            const deckCardsEl = decksContainer.createDiv({ cls: 'fsrs-deck-cards' });
+            this.pendingCardLists.set(deckCardsEl, () => this.renderCardRows(deckCardsEl, deck));
         }
 
         // 递归渲染子节点（挂进本节点的展开容器内）
@@ -269,41 +275,10 @@ export class DashboardView extends ItemView {
         }
     }
 
-    private renderDeckItem(container: HTMLElement, deck: Deck) {
+    /** 文件夹行右侧的牌组操作：复习 / 突击 / 浏览。 */
+    private renderDeckActions(header: HTMLElement, deck: Deck) {
         const hasDue = deck.stats.due > 0;
-        const lastSegment = deck.tagPath.substring(deck.tagPath.lastIndexOf('/') + 1);
-
-        const deckRow = container.createDiv({ cls: 'fsrs-deck-row' });
-
-        deckRow.addEventListener('click', () => {
-            const cards = this.plugin.dataManager.getCardsByDeck(deck.id);
-            if (cards.length === 0) {
-                new Notice('该牌组没有可浏览的卡片。');
-                return;
-            }
-            new BrowseModal(this.app, this.plugin, cards, deck.tagPath).open();
-        });
-
-        const iconEl = deckRow.createDiv({ cls: 'fsrs-deck-row-icon' });
-        setIcon(iconEl, hasDue ? 'file-clock' : 'file-text');
-        if (hasDue) {
-            iconEl.addClass('has-due');
-        }
-
-        deckRow.createSpan({ text: lastSegment, cls: 'fsrs-deck-row-title' });
-
-        const statsEl = deckRow.createDiv({ cls: 'fsrs-deck-row-stats' });
-        if (deck.stats.due > 0) {
-            statsEl.createSpan({
-                text: `${deck.stats.due}`,
-                cls: 'fsrs-stat-due has-due',
-            });
-        }
-        if (deck.stats.new > 0) {
-            statsEl.createSpan({ text: `${deck.stats.new}`, cls: 'fsrs-stat-new' });
-        }
-
-        const actionsEl = deckRow.createDiv({ cls: 'fsrs-deck-row-actions' });
+        const actionsEl = header.createDiv({ cls: 'fsrs-folder-actions' });
 
         const studyBtn = actionsEl.createEl('button', {
             cls: `clickable-icon${hasDue ? '' : ' fsrs-deck-muted'}`,
@@ -319,7 +294,7 @@ export class DashboardView extends ItemView {
                     : '该牌组没有可复习的卡片！');
                 return;
             }
-            new ReviewModal(this.app, this.plugin, queue, deck.title).open();
+            void this.plugin.openReviewSession(queue, deck.title);
         });
 
         const cramBtn = actionsEl.createEl('button', {
@@ -334,7 +309,7 @@ export class DashboardView extends ItemView {
                 new Notice('该牌组没有卡片！');
                 return;
             }
-            new ReviewModal(this.app, this.plugin, cards, deck.title).open();
+            void this.plugin.openReviewSession(cards, deck.title);
         });
 
         const browseBtn = actionsEl.createEl('button', {
@@ -344,12 +319,45 @@ export class DashboardView extends ItemView {
         setIcon(browseBtn, 'list');
         browseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const cards = this.plugin.dataManager.getCardsByDeck(deck.id);
+            const cards = this.plugin.dataManager.getOwnCardsByDeck(deck.id);
             if (cards.length === 0) {
                 new Notice('该牌组没有可浏览的卡片。');
                 return;
             }
-            new BrowseModal(this.app, this.plugin, cards, deck.title).open();
+            void this.plugin.openBrowseSession(cards, deck.title);
+        });
+    }
+
+    /** 文件夹展开时，把其下所有待填充的卡片列表一次性建好。 */
+    private flushCardLists(root: HTMLElement) {
+        for (const [el, render] of Array.from(this.pendingCardLists)) {
+            if (!root.contains(el)) continue;
+            this.pendingCardLists.delete(el);
+            render();
+        }
+    }
+
+    /** 文件夹下直接列出的卡片：只属于该标签本身的卡片（不含子标签）。 */
+    private renderCardRows(container: HTMLElement, deck: Deck) {
+        const cards = this.plugin.dataManager.getOwnCardsByDeck(deck.id);
+        if (cards.length === 0) {
+            container.createDiv({ cls: 'fsrs-card-row fsrs-card-row-empty', text: '（没有卡片）' });
+            return;
+        }
+        cards.forEach((card: Card, index: number) => {
+            const row = container.createDiv({ cls: 'fsrs-card-row' });
+            const iconEl = row.createDiv({ cls: 'fsrs-card-row-icon' });
+            const due = card.fsrsData ? card.fsrsData.due.getTime() <= Date.now() : false;
+            setIcon(iconEl, due ? 'file-clock' : 'file-text');
+            if (due) iconEl.addClass('has-due');
+
+            const label = card.title?.trim() || card.front.trim() || '未命名卡片';
+            row.createSpan({ text: label, cls: 'fsrs-card-row-title' });
+            row.setAttribute('title', card.filePath);
+
+            row.addEventListener('click', () => {
+                void this.plugin.openBrowseSession(cards, deck.tagPath, index);
+            });
         });
     }
 
@@ -382,6 +390,6 @@ export class DashboardView extends ItemView {
         const tipEl = emptyStateEl.createDiv({ cls: 'fsrs-empty-tip' });
         const tipIcon = tipEl.createDiv({ cls: 'fsrs-tip-icon' });
         setIcon(tipIcon, 'lightbulb');
-        tipEl.createSpan({ text: '小技巧：在任意带牌组标签的笔记中写下 <mgo-card cardId="my-1"><mgo-card-front>问题</mgo-card-front><mgo-card-back>答案</mgo-card-back></mgo-card>，即可立刻添加卡片。' });
+        tipEl.createSpan({ text: '小技巧：在任意带牌组标签的笔记里写一个 ```mgo 代码块（问题、一行 ---、答案），即可立刻添加卡片。' });
     }
 }
