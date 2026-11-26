@@ -1,6 +1,6 @@
 # Reviewing
 
-Use the Lemma review window to show a card, reveal the answer and rate your recall with Again, Hard, Good or Easy using the mouse, keys or swipe gestures.
+Use the MGO review tab to show a card, reveal the answer and rate your recall with Again, Hard, Good or Easy using the mouse, keys or swipe gestures.
 
 ## Start a review
 
@@ -17,18 +17,18 @@ The number on **Study all due** is the count of due cards across all decks. The 
 
 Cram sessions still record ratings and change card schedules. They are not a "preview" mode.
 
-## The review window
+## The review tab
 
-The window title shows the deck name and a counter badge such as `1/20`. In sessions that mix decks, the title reads "Reviewing". Above the card, a small line shows the heading path where the card sits in its note.
+A review session opens in its own workspace tab, so it stays open next to your notes. The tab title shows the deck name. The top bar shows the deck name, the queue mode, the answered/total counter (for example `0 / 20`) and a progress bar. Above the card, a small line shows the heading path where the card sits in its note; clicking it (or the file icon in the top bar, or `E`) opens the source note in another tab and scrolls to the card block. The review tab stays open.
 
 1. Read the front of the card.
 2. Click **Show answer**, or press `Space` or `Enter`.
 3. The back appears below a divider, and four rating buttons appear.
 4. Rate the card. Lemma saves the result and shows the next card.
 
-The font size of card text follows the **Review font size** setting. The pencil icon in the window header is labeled "Edit this card" and opens the deck note, closing the review.
+The font size of card text follows the **Review font size** setting. The footer shortcut **E 编辑** (or the overflow menu behind the ⋮ button) opens the deck note and closes the review. The top bar shows the deck name, the queue mode, the answered/total counter and a progress bar; the ⋮ menu also offers undo and finish.
 
-When the queue is empty, the window shows **Session complete!** with the number of cards you completed and a **Return to dashboard** button.
+When the queue is empty, the tab shows **Session complete!** with the number of cards you completed and a button that closes the review tab.
 
 ## Rating buttons
 
@@ -50,14 +50,15 @@ Each button shows a small interval hint: `<1d` for under a day, then days (`4d`)
 | `Space` or `Enter` | Question shown | Show the answer |
 | `1`, `2`, `3`, `4` | Answer shown | Rate Again, Hard, Good, Easy |
 | `Space`, `Enter`, `P` or `F` | Image card, answer shown | Toggle between the question image and the answer image |
-| `Z` | After the first rating | Undo the last rating (also the undo icon beside the close button) |
-| `Esc` | Any time | Close the window |
+| `E` | Any time | Open this card's note in another tab at the card's position; the review tab stays open |
+| `⌘Z` / `Z` | After the first rating | Undo the last rating (also the dimmed **⌘Z 撤销** shortcut in the footer) |
+| `Esc` | Any time | Close the review tab |
 
 Undo restores the card's previous schedule, removes the rating from your history and statistics, and restores your streak and XP counters. It works as many times as you have rated cards in this window. Keys are ignored while you type in an answer box.
 
 A card you rate Again, or a new card you rate Hard or Good, comes back a few cards later in the same session when its short step is due within 30 minutes, so the counter can grow during a session.
 
-`P` and `F` are lowercase letters; with Caps Lock on they may not register. The Browse window uses the left and right arrow keys; see [Browsing a deck](#browsing-a-deck).
+`P` and `F` are lowercase letters; with Caps Lock on they may not register. The Browse tab uses the left and right arrow keys; see [Browsing a deck](#browsing-a-deck).
 
 ## Swipe gestures
 
@@ -74,7 +75,7 @@ A swipe counts once you have moved at least 60 pixels; the larger of the horizon
 
 ## Type-in cards
 
-On a card marked `?type` there is no **Show answer** button. Instead a text box appears.
+On a `mgo-typein` card there is no **Show answer** button. Instead a text box appears.
 
 1. Type your answer.
 2. Press `Enter` or click **Check**.
@@ -108,12 +109,12 @@ When both sides of a card are a single image, the review window swaps the images
 
 ## Browsing a deck
 
-The list icon on a deck row opens **Browse**, a read-only viewer that shows each card's front and back. Use the arrow buttons or the left and right arrow keys to move between cards, and `Esc` to close. Browsing does not rate cards or change their schedule.
+The list icon on a deck row (or clicking the deck row) opens **Browse** in its own workspace tab: a read-only viewer that shows each card's front and back. The top bar shows the deck name, the position (for example `2 / 12`) and a source-note icon; the footer has previous/next buttons and **打开原文笔记**. The source link, the `E` key, or clicking the heading path opens the card's note in another tab and scrolls to the card block. Use the arrow buttons or the left and right arrow keys to move between cards, and `Esc` to close the browse tab. Browsing does not rate cards or change their schedule.
 
 ## Card details during review
 
-Clicking the window title shows a notice with the card's stability, difficulty, repetitions, lapses and due date, or "This is a new card." if it has no history. Both the notice and the pencil icon (**Edit this card**) refer to the card currently on screen.
+Clicking the deck name in the top bar shows a notice with the current card's stability, difficulty, repetitions, lapses and due date, or "This is a new card." if it has no history. The **E 编辑** shortcut and the file icon open the card currently on screen.
 
 ## Leaving a session
 
-Closing the window with `Esc` or the close button keeps every rating you gave. Cards you did not reach stay as they were. The dashboard refreshes when the window closes.
+Closing the review tab with `Esc` or the ✕ button keeps every rating you gave. Cards you did not reach stay as they were. The dashboard refreshes when the tab closes.

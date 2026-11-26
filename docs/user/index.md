@@ -8,7 +8,7 @@ Get Lemma from [lemma.fundaments.work](https://lemma.fundaments.work/) or the [G
 
 Lemma adds spaced repetition to the notes you already have. A note tagged `#flashcards` is a deck. Cards are plain Markdown written inside that note, so they stay readable, searchable and linkable like the rest of your vault. Lemma reads the cards, shows them in a review window, and schedules each card with FSRS-5 based on how you rate your recall.
 
-- Seven card and study formats: basic, single-line, reversed, cloze, image occlusion, type-in and whole-note review.
+- Seven card and study formats: basic, reversed, cloze, image occlusion, type-in and whole-note review, all written as `mgo` code fences.
 - A dashboard with due and new counts per deck, grouped by folder.
 - Custom study sessions filtered by tag, card state and size.
 - A statistics window with retention, maturity, intervals, activity and per-deck charts.
@@ -34,7 +34,7 @@ Lemma makes no network requests unless you turn on sync. It has no telemetry or 
   A practical guide from your first card to reviewing on your phone, with examples checked against the parser.
 
 - **[Writing cards](writing-cards.md)**
-  The exact syntax for basic, single-line, reversed, cloze, image occlusion, type-in and whole-note cards, block IDs, and what you can put inside a card.
+  The exact syntax for basic, reversed, cloze, image occlusion, type-in and whole-note cards, card identity, and what you can put inside a card.
 
 - **[Organizing decks](organizing-decks.md)**
   How tags make decks, how the dashboard groups them by folder, deck titles, the deck tag setting and how Lemma finds cards.

@@ -62,10 +62,10 @@ How rows become cards:
 | Further columns, such as tags | Ignored |
 | `{{c1::text}}` or `{{c1::text::hint}}` in the first column | Cloze `==c1::text==`; the hint is dropped |
 | HTML such as `<br>`, `<b>` and `&nbsp;` | Converted to plain text and line breaks |
-| A field with line breaks, or text containing `::` | A `---card---` block, with `::` split by a zero-width space so it is not read as a second card |
+| A field with line breaks, or text containing `::` | An `mgo` fence with the text split across front and back |
 | Rows with an empty front or back | Skipped and counted |
 
-Every card receives a new block ID, so you can edit the text later without losing its history. The deck note is created in the vault root with the deck tag, using the name you type (or `Imported cards`). If that name exists, Lemma adds a number instead of overwriting it.
+Every card is written as an `mgo` code fence. The deck note is created in the vault root with the deck tag, using the name you type (or `Imported cards`). If that name exists, Lemma adds a number instead of overwriting it. Card IDs are content hashes, so editing an imported card later gives it a new ID and resets its progress.
 
 What is not imported: scheduling data and review history from the other app, media files and further columns. Imported cards start as new cards.
 

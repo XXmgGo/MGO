@@ -8,13 +8,13 @@
 
 1. [开始使用](#开始使用)
 2. [基础卡片](#基础卡片)
-3. [单行卡片与反向卡片](#单行卡片与反向卡片)
+3. [反向卡片与输入作答卡](#反向卡片与输入作答卡)
 4. [完形填空卡片](#完形填空卡片)
 5. [图片遮挡卡片](#图片遮挡卡片)
 6. [输入式主动回忆卡片](#输入式主动回忆卡片)
 7. [整篇笔记复习](#整篇笔记复习)
 8. [引导式卡片与牌组创建](#引导式卡片与牌组创建)
-9. [卡片 ID 与编辑](#卡片-id-与编辑)
+9. [卡片身份与编辑](#卡片身份与编辑)
 10. [Markdown 支持](#markdown-支持)
 11. [快捷命令](#快捷命令)
 12. [最佳实践](#最佳实践)
@@ -69,84 +69,109 @@ tags: [ja-card/文法]
 
 ### 语法
 
-```markdown
-<mgo-card cardId="唯一id">
-<mgo-card-front>
-正面内容
-</mgo-card-front>
-<mgo-card-back>
-背面内容
-</mgo-card-back>
-</mgo-card>
-```
+卡片写在一个 `mgo` 代码块里，块内用**单独一行 `---`** 分隔正面与背面：
 
-- 正反面分别用 `<mgo-card-front>/<mgo-card-back>` 包裹：`<mgo-card-front>` 的内容是正面（问题），`<mgo-card-back>` 的内容是背面（答案）。
-- 可以整行写完，也可以分行写，两种写法完全等价；长内容推荐分行写，插件命令模板生成的就是分行形式。
-- 阅读视图下这些标签本身不显示，内容像普通段落一样呈现——这正是新语法的设计目标：卡片语法不破坏笔记的阅读体验。
+````markdown
+```mgo
+正面内容（问题，可以多行）
+---
+背面内容（答案，可以多行）
+```
+````
+
+- 代码块由 Obsidian 原生渲染，阅读视图和实时预览里都能正常显示，不需要任何 HTML 标签。
+- 正面、背面都可以写多行、列表、公式、图片链接；换行会原样保留。
+- 同一篇笔记里可以写多个 `mgo` 代码块，每块是一张卡片。
+
+### 卡片类型
+
+| 写法 | 类型 |
+|---|---|
+| ` ```mgo ` | 基础卡（正面 → 背面） |
+| ` ```mgo-reverse ` | 反向卡（背面 ↔ 正面，双向回忆） |
+| ` ```mgo-typein ` | 输入作答卡（手动键入答案） |
 
 ### 示例
 
 **简单问答：**
-```markdown
-<mgo-card cardId="fsrs-abc123"><mgo-card-front>What is the capital of France?</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
+````markdown
+```mgo
+What is the capital of France?
+---
+Paris
 ```
+````
 
 **带 Markdown 排版：**
-```markdown
-<mgo-card cardId="fsrs-def456">
-<mgo-card-front>
+````markdown
+```mgo
 What is the formula for **Einstein's mass-energy equivalence**?
-</mgo-card-front>
-<mgo-card-back>
+---
 $E = mc^2$
 
 Where:
 - $E$ = energy
 - $m$ = mass
 - $c$ = speed of light
-</mgo-card-back>
-</mgo-card>
 ```
-
-**带列表：**
-```markdown
-<mgo-card cardId="fsrs-ghi789">
-<mgo-card-front>
-Name the three states of matter
-</mgo-card-front>
-<mgo-card-back>
-1. Solid
-2. Liquid
-3. Gas
-
-*Bonus: Plasma is the fourth state*
-</mgo-card-back>
-</mgo-card>
-```
+````
 
 **多行背面：**
-```markdown
-<mgo-card cardId="fsrs-jkl012">
-<mgo-card-front>
+````markdown
+```mgo
 Explain the process of photosynthesis
-</mgo-card-front>
-<mgo-card-back>
+---
 Photosynthesis is the process by which plants convert:
 
 **Light energy** → **Chemical energy**
 
 The basic equation:
 $$6CO_2 + 6H_2O + light \rightarrow C_6H_{12}O_6 + 6O_2$$
-</mgo-card-back>
-</mgo-card>
 ```
+````
 
 ### 书写规则
 
-- 每张卡片都由 `<mgo-card …>` 开标签与 `</mgo-card>` 闭标签成对包裹（标签名不区分大小写）。
-- 正反面分别用 `<mgo-card-front>/<mgo-card-back>` 包裹；`</mgo-card>` 显式结束卡片，从而把后续的标题和正文排除在卡片之外。
-- 正面或背面为空时该卡片不会被识别；`<mgo-card-front>` 与 `<mgo-card-back>` 两者缺一（且卡内没有挖空）的 `<mgo-card>` 同样会被忽略。
-- `cardId` 不是必需的，但建议加上，以便卡片拥有稳定的身份标识。
+- 代码块的语言名必须是 `mgo`、`mgo-reverse` 或 `mgo-typein`（小写），后面不要再跟别的文字。
+- 正/背面之间用**单独一行 `---`** 分隔；没有 `---` 且不含挖空标记的块不会被识别为卡片。
+- 正面或背面为空时该卡片会被忽略。
+- 卡片的身份由「笔记路径 + 正面 + 背面」的内容指纹决定，修改卡片内容会生成新卡（复习进度从零开始）。
+- 块内不要再套 ` ``` ` 代码围栏（会提前截断卡片）；需要展示代码时用 4 空格缩进代码块。
+- 笔记里的卡片按普通段落显示，右上角有一个浅色的 `MGO` 标记：点一下会把光标放进这张卡的代码块，直接编辑源码（阅读视图下会自动切到源码模式）。
+- 目前没有转义 `---` 的写法：正面内容里出现「单独一行三个减号」会被当作分隔线。
+
+### 卡片属性（可选）
+
+属性写在卡片块最顶部，用一对 `---` 包住，写法与笔记 frontmatter 相同。属性只是**元数据**，不会在笔记里渲染出来；目前唯一立即生效的是 `id`。
+
+````markdown
+```mgo
+---
+title: 高血压
+id: fsrs-hp-1
+options: [高い, 低い, 普通]
+hint: 注意「ありがち」是「常见、常有」的意思
+---
+高血圧はお年寄りにありがちな病気だ。
+---
+高血压是老年人常见的疾病。
+```
+````
+
+| 属性 | 类型 | 作用 |
+|---|---|---|
+| `title` | 文本 | 卡片显示名：在仪表盘展开文件夹后直接列在牌组下方（没写时显示正面文字） |
+| `id` | 文本 | 稳定的卡片身份；写了它，修改正/背面内容也不会丢失复习进度 |
+| `options` | 列表 | 选择题候选项，预留给后续选择题功能 |
+| `hint` | 文本 | 回忆提示，预留给后续复习界面 |
+
+规则：
+
+- 属性段必须位于块的最开头：第一行是 `---`，再找下一条 `---` 结束；段内每一行都必须是「键: 值」或「- 列表项」，否则整段按正文处理。
+- `options` 支持三种写法：`[A, B, C]`、`options: A, B, C`、多行 `- A` / `- B`。
+- `id` 只能用字母、数字、下划线、连字符；不合法的 id 会被忽略，卡片退回内容指纹。
+- 挖空卡同样支持属性段，属性会应用到每个挖空编号生成的卡片上。
+- 未知的键会被保留但不影响行为（留给后续版本）。
 
 ---
 
@@ -159,45 +184,48 @@ $$6CO_2 + 6H_2O + light \rightarrow C_6H_{12}O_6 + 6O_2$$
 
 ### 语法
 
-把挖空写在 `<mgo-card>` 内部：
+把挖空写在 `mgo` 代码块内部：
 
-```markdown
-<mgo-card cardId="唯一id">句子中的 ==c1::hidden text== 会被隐藏</mgo-card>
+````markdown
+```mgo
+句子中的 ==c1::hidden text== 会被隐藏
 ```
+````
 
 - `c1` = 填空编号（支持 c1、c2、c3 等）
 - `hidden text` = 复习时需要隐藏的内容
-- 填空卡不需要 `<mgo-card-front>/<mgo-card-back>` 子标签：只要卡内出现挖空，整段文本就同时作为正面与背面，由挖空决定隐藏位置
+- 填空卡不需要 `---` 分隔：只要块内出现挖空，整段文本就同时作为正面与背面，由挖空决定隐藏位置
 
 ### 示例
 
 **单个填空：**
-```markdown
-<mgo-card cardId="fr-001">The capital of France is ==c1::Paris==.</mgo-card>
+````markdown
+```mgo
+The capital of France is ==c1::Paris==.
 ```
+````
 
 **多个填空（同一张卡片）：**
-```markdown
-<mgo-card cardId="cell-001">==c1::Mitochondria== is the powerhouse of the cell, producing ==c2::ATP== through cellular respiration.</mgo-card>
+````markdown
+```mgo
+==c1::Mitochondria== is the powerhouse of the cell, producing ==c2::ATP== through cellular respiration.
 ```
+````
 
 **循序渐进学习（c1、c2、c3）：**
-```markdown
-<mgo-card cardId="gov-001">The three branches of the US government are: ==c1::Legislative==, ==c2::Executive==, and ==c3::Judicial==.</mgo-card>
+````markdown
+```mgo
+The three branches of the US government are: ==c1::Legislative==, ==c2::Executive==, and ==c3::Judicial==.
 ```
-
-**带 cardId 便于编辑：**
-```markdown
-<mgo-card cardId="my-math-card">The quadratic formula is ==c1::x = (-b ± √(b² - 4ac)) / 2a==.</mgo-card>
-```
+````
 
 分行写也可以：
-```markdown
-<mgo-card cardId="gov-002">
+````markdown
+```mgo
 The three branches of the US government are:
 ==c1::Legislative==, ==c2::Executive==, and ==c3::Judicial==.
-</mgo-card>
 ```
+````
 
 ### 完形填空卡片的显示方式
 
@@ -208,48 +236,20 @@ The three branches of the US government are:
 ### 重要说明
 
 - 每个填空编号都会生成一张**独立的卡片**，各自排期
-- 同一张卡片里的 `==c1::text==` 和 `==c2::text==` = 2 张卡片
-- 填空必须写在同一个 `<mgo-card>…</mgo-card>` 内才会归为同一组；卡片之外的裸 `==c1::text==` 不会被识别为卡片
+- 同一个代码块里的 `==c1::text==` 和 `==c2::text==` ⇒ 2 张卡片
+- 填空必须写在同一个 `mgo` 代码块内才会归为同一组；卡片之外的裸 `==c1::text==` 不会被识别为卡片
 - 挖空语法本身不破坏阅读体验：高亮写法与 Obsidian 原生的 `==高亮==` 一致，只是带编号时会被识别为填空
 
 ---
 
-## 卡片 ID 与编辑
+## 卡片身份与编辑
 
-### 为什么要用 cardId
+### 卡片 ID 怎么来
 
-`cardId` 属性（`cardId="unique-id"`）可以保证卡片在编辑之后仍然保留自己的复习记录。
+代码块写法没有可写的 `cardId` 属性，卡片 ID 由「笔记路径 + 正面 + 背面」的内容指纹生成：
 
-**不写 cardId：**
-- 卡片 ID 由文件路径与卡片内容的哈希值生成
-- 修改卡片内容会让复习记录归零
-
-**写上 cardId：**
-- 卡片 ID 基于这个持久化的标识
-- 可以放心编辑，不会丢失复习记录
-
-### 自动生成 cardId
-
-使用命令面板：**`Add a new flashcard`**
-
-它会插入一个自带预生成 cardId 的模板：
-```markdown
-<mgo-card cardId="fsrs-a1b2c3">
-<mgo-card-front>
-Question: 
-</mgo-card-front>
-<mgo-card-back>
-Answer: 
-</mgo-card-back>
-</mgo-card>
-```
-
-### 手写 cardId 的格式
-
-- 以 `fsrs-` 开头（推荐），或使用任意字母数字组合
-- 合法 ID 示例：`cardId="fsrs-abc123"`、`cardId="my-card-001"`、`cardId="chemistry-5"`
-- 写在开标签 `<mgo-card …>` 的属性里
-- 同一篇笔记内的 cardId 请保持唯一，避免两张卡片撞到同一个 ID
+- 修改卡片内容会生成一张新卡，复习记录从零开始
+- 需要大改时可以先导出备份（设置 → 数据）
 
 ---
 
@@ -272,12 +272,10 @@ Obsidian 的全部 Markdown 功能都能在卡片中使用：
 
 ### 完整排版示例
 
-```markdown
-<mgo-card cardId="fsrs-full-example">
-<mgo-card-front>
+````markdown
+```mgo
 What is the **Pythagorean theorem**?
-</mgo-card-front>
-<mgo-card-back>
+---
 In a right triangle:
 
 $$a^2 + b^2 = c^2$$
@@ -291,33 +289,46 @@ Where:
 > [!tip] Remember: The hypotenuse is always the longest side!
 
 See also: [[Geometry Basics]]
-</mgo-card-back>
-</mgo-card>
 ```
+````
 
 ---
 
-## 单行卡片与反向卡片
+## 反向卡片与输入作答卡
 
-单行卡片让你在一行内快速写出原子化的问答对，反向卡片则用来做双向记忆。
+反向卡用来做双向记忆，输入作答卡让你手动键入答案。
 
 ### 语法
 
-```markdown
-<mgo-card cardId="唯一id"><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>
-<mgo-card cardId="唯一id" reverse><mgo-card-front>Question</mgo-card-front><mgo-card-back>Answer</mgo-card-back></mgo-card>
+````markdown
+```mgo-reverse
+Question
+---
+Answer
 ```
+````
 
-- 把整张卡写在一行内，就是紧凑的单行写法；分行写效果完全相同，只是可读性更高。
-- 在开标签上加 `reverse`，创建一张反向卡（复习时先给答案、回忆问题）。如果是单词这类需要双向记忆的内容，请写一张正向卡再加一张反向卡，并各自使用自己的 cardId。
-- 可选的 `cardId` 能让卡片的历史记录保持稳定。
+````markdown
+```mgo-typein
+Question
+---
+Answer
+```
+````
+
+- `mgo-reverse`：复习时先给背面、回忆正面（双向记忆）；单词这类内容可以写一张 `mgo` 正向卡再加一张 `mgo-reverse`。
+- `mgo-typein`：复习时显示正面，要求手动输入答案后对照。
+- 卡片的身份由内容指纹决定，修改内容会重新从零开始排期。
 
 ### 示例
 
-```markdown
-<mgo-card cardId="snd-001"><mgo-card-front>What is the speed of sound in air?</mgo-card-front><mgo-card-back>Approximately 343 m/s</mgo-card-back></mgo-card>
-<mgo-card cardId="neuro-002" reverse><mgo-card-front>Neuron Soma</mgo-card-front><mgo-card-back>Cell body containing the nucleus and organelles</mgo-card-back></mgo-card>
+````markdown
+```mgo-reverse
+Neuron Soma
+---
+Cell body containing the nucleus and organelles
 ```
+````
 
 ---
 
@@ -329,21 +340,23 @@ See also: [[Geometry Basics]]
 
 正反面各写一张图片链接即可自动识别为原地切换：
 
-```markdown
-<mgo-card cardId="occlusion-001"><mgo-card-front>![[diagram-masked.png]]</mgo-card-front><mgo-card-back>![[diagram-revealed.png]]</mgo-card-back></mgo-card>
+````markdown
+```mgo
+![[diagram-masked.png]]
+---
+![[diagram-revealed.png]]
 ```
+````
 
-分行写也可以，图片还可以带尺寸参数：
-```markdown
-<mgo-card cardId="occlusion-002">
-<mgo-card-front>
+图片还可以带尺寸参数：
+
+````markdown
+```mgo
 ![[anatomy-masked.svg|500]]
-</mgo-card-front>
-<mgo-card-back>
+---
 ![[anatomy-revealed.svg|500]]
-</mgo-card-back>
-</mgo-card>
 ```
+````
 
 ### 复习交互
 - **原位互换**：揭晓答案时，被遮挡的示意图会在完全相同的位置被完整图替换。
@@ -358,23 +371,23 @@ See also: [[Geometry Basics]]
 
 ### 语法
 
-在开标签上加 `type="typein"`：
+使用 `mgo-typein` 代码块：
 
-```markdown
-<mgo-card cardId="type-001" type="typein"><mgo-card-front>What is the capital of Canada?</mgo-card-front><mgo-card-back>Ottawa</mgo-card-back></mgo-card>
+````markdown
+```mgo-typein
+What is the capital of Canada?
+---
+Ottawa
 ```
+````
 
-分行写法完全相同：
-```markdown
-<mgo-card cardId="type-002" type="typein">
-<mgo-card-front>
+````markdown
+```mgo-typein
 What is the SI unit of force?
-</mgo-card-front>
-<mgo-card-back>
+---
 Newton
-</mgo-card-back>
-</mgo-card>
 ```
+````
 
 ### 复习体验
 复习时会出现一个输入框。按 `Enter` 或点击 `Check` 即可获得即时反馈：
@@ -406,7 +419,7 @@ tags: [review]
 
 ## 引导式卡片与牌组创建
 
-MGO 内置了交互式弹窗，你完全不必死记卡片标签语法。
+MGO 内置了交互式弹窗，你完全不必死记卡片语法。
 
 ### 1. 引导式卡片创建弹窗
 运行命令 `Create card (guided modal)`，或点击 MGO 仪表板上的 **+ New card**：
@@ -414,7 +427,7 @@ MGO 内置了交互式弹窗，你完全不必死记卡片标签语法。
 - 通过下拉菜单选择卡片类型。
 - 填写问题（Question）与答案（Answer）字段。
 - 查看实时的语法预览。
-- 按 `Ctrl + Enter`（或 `Cmd + Enter`）插入卡片，自动带上 `cardId` 并自动打上牌组标签。
+- 按 `Ctrl + Enter`（或 `Cmd + Enter`）插入卡片，自动生成 `mgo` 代码块并自动打上牌组标签。
 
 ### 2. 引导式牌组创建弹窗
 点击 MGO 仪表板上的 **+ New deck**，或运行命令 `Create new deck`：
@@ -434,19 +447,21 @@ MGO 内置了交互式弹窗，你完全不必死记卡片标签语法。
 | `Create card (guided modal)` | 打开交互式卡片创建器 | - |
 | `Create new deck` | 创建已预打牌组标签的笔记 | - |
 | `Tag current note as flashcard deck` | 给当前文件加上牌组标签 | - |
-| `Add a new flashcard` | 插入分行模板：正面写在 `<mgo-card-front>` 内，背面写在 `<mgo-card-back>` 内 | - |
-| `Add a single-line card` | 插入紧凑写法 `<mgo-card cardId="id"><mgo-card-front>Q</mgo-card-front><mgo-card-back>A</mgo-card-back></mgo-card>` | - |
-| `Add a reversed card` | 插入带 `reverse` 的紧凑模板 | - |
+| `Add a new flashcard` | 插入 `mgo` 代码块基础卡片模板 | - |
+| `Add a single-line card` | 插入紧凑版 `mgo` 卡片模板（问题、答案各一行） | - |
+| `Add a reversed card` | 插入 `mgo-reverse` 反向卡片模板 | - |
 | `Add a cloze card` | 插入带 `==c1::...==` 的卡片模板 | - |
-| `Create cloze from selection` | 用 `==c1::...==` 包裹选中文本（不在卡内时自动补上 `<mgo-card>`） | - |
-| `Add a type-in card` | 插入带 `type="typein"` 的卡片模板 | - |
-| `Add a type-in single-line card` | 插入带 `type="typein"` 的紧凑模板 | - |
+| `Create cloze from selection` | 用 `==c1::...==` 包裹选中文本（不在卡内时自动补上 `mgo` 代码块） | - |
+| `Add a type-in card` | 插入 `mgo-typein` 输入式卡片模板 | - |
+| `Add a type-in single-line card` | 插入紧凑版 `mgo-typein` 卡片模板 | - |
 | `Open dashboard` | 打开学习仪表板 | - |
 | `Review due notes` | 开始整篇笔记复习队列 | - |
 | `Sync Now` | 手动同步（需已启用） | - |
 | `Check Sync Status` | 查看同步状态 | - |
 
 ### 复习会话的快捷键与手势
+
+复习在独立的 Obsidian 标签页里进行。顶栏的「打开原文笔记」图标（或 `E` 键）会在另一个标签页打开当前卡片的原文并滚动到卡片块，复习标签页保持打开。
 
 | 按键 / 手势 | 作用 |
 |---------------|--------|
@@ -457,7 +472,7 @@ MGO 内置了交互式弹窗，你完全不必死记卡片标签语法。
 | `3` | 评级：良好 |
 | `4` | 评级：简单 |
 | `Z` | 撤销上一次评级 |
-| `Esc` | 退出复习会话 |
+| `Esc` | 结束复习（关闭复习标签页） |
 | `←` / `→` | 翻页浏览（浏览模式） |
 | 向左滑动 | 评级：重来 |
 | 向下滑动 | 评级：困难 |
@@ -477,17 +492,23 @@ MGO 内置了交互式弹窗，你完全不必死记卡片标签语法。
 
 ### 填空技巧
 
-```markdown
-Avoid: <mgo-card cardId="fox-001">The ==c1::quick brown fox jumps over the lazy dog==.</mgo-card>
-Better: <mgo-card cardId="fox-002">The ==c1::quick brown fox== jumps over the lazy dog.</mgo-card>
-
-Avoid: <mgo-card cardId="paris-001">==c1::Paris== is the capital of ==c2::France== and has ==c3::2.1 million== people.</mgo-card>
-Better: Split into focused clozes or separate cards
+````markdown
+```mgo
+The ==c1::quick brown fox jumps over the lazy dog==.
 ```
+````
+
+````markdown
+```mgo
+The ==c1::quick brown fox== jumps over the lazy dog.
+```
+````
+
+一个块里塞太多编号会降低回忆质量（例如 `==c1::Paris== is the capital of ==c2::France== and has ==c3::2.1 million== people.`），建议拆成聚焦的卡片。
 
 ### 组织方式
 
-```markdown
+````markdown
 ---
 tags: [flashcards, chemistry, organic]
 ---
@@ -496,30 +517,26 @@ tags: [flashcards, chemistry, organic]
 
 ## Basic Definitions
 
-<mgo-card cardId="chem-001">
-<mgo-card-front>
+```mgo
 What is the general formula for alkanes?
-</mgo-card-front>
-<mgo-card-back>
+---
 $C_nH_{2n+2}$
 
 Examples:
 - Methane: $CH_4$
 - Ethane: $C_2H_6$
-</mgo-card-back>
-</mgo-card>
-
-<mgo-card cardId="chem-002">
-<mgo-card-front>
-What type of bonds do alkanes contain?
-</mgo-card-front>
-<mgo-card-back>
-Only **single covalent bonds** (C-C and C-H)
-</mgo-card-back>
-</mgo-card>
-
-<mgo-card cardId="chem-003">This makes them ==c1::saturated== hydrocarbons.</mgo-card>
 ```
+
+```mgo
+What type of bonds do alkanes contain?
+---
+Only **single covalent bonds** (C-C and C-H)
+```
+
+```mgo
+This makes them ==c1::saturated== hydrocarbons.
+```
+````
 
 ### 用标签支持自定义学习
 
@@ -540,26 +557,27 @@ tags: [flashcards, biology, chapter-1, exam-prep]
 ### 卡片没有出现？
 
 1. 确认文件已带上 `#flashcards` 标签
-2. 检查语法（每张卡片都要有配对的 `<mgo-card …>` 与 `</mgo-card>`，正反面要分别包在 `<mgo-card-front>…</mgo-card-front>` 与 `<mgo-card-back>…</mgo-card-back>` 里）
+2. 检查语法：代码块语言名必须是 `mgo`（或 `mgo-reverse`、`mgo-typein`），正面与背面之间要有**单独一行 `---`**，且两侧都不为空
 3. 打开 **仪表板** → 点击 Refresh（刷新）按钮
 4. 查看控制台报错（Ctrl+Shift+I）
 
 ### 复习进度被重置了？
 
-- 很可能你编辑了一张没有 `cardId` 的卡片
-- 对于打算后续修改的卡片，请务必写上 `cardId="唯一id"`
+- 卡片没有可写的 ID 属性，ID 由内容指纹生成
+- 编辑卡片内容会生成新卡，复习进度从零开始；需要保留进度时请尽量一次写好，或先导出备份
 
 ### 填空不生效？
 
 - 确保语法严格是 `==c1::text==`（中间没有空格）
-- 检查这些填空是否写在同一个 `<mgo-card>…</mgo-card>` 内，写在卡片外面不会被识别
+- 检查这些填空是否写在同一个 `mgo` 代码块内，写在块外面不会被识别
+- 挖空块不要用 `---` 分隔正反面
 - 确认该卡片所在的文件已打上 `#flashcards` 标签
 
 ---
 
 ## 示例牌组
 
-```markdown
+````markdown
 ---
 tags: [flashcards]
 ---
@@ -568,41 +586,39 @@ tags: [flashcards]
 
 ## Geography
 
-<mgo-card cardId="geo-001">
-<mgo-card-front>
+```mgo
 What is the largest ocean on Earth?
-</mgo-card-front>
-<mgo-card-back>
+---
 The **Pacific Ocean**
 
 It covers approximately 63 million square miles.
-</mgo-card-back>
-</mgo-card>
+```
 
-<mgo-card cardId="geo-002">The Pacific Ocean covers approximately ==c1::63 million square miles==.</mgo-card>
+```mgo
+The Pacific Ocean covers approximately ==c1::63 million square miles==.
+```
 
 ## Programming
 
-<mgo-card cardId="code-001">
-<mgo-card-front>
+```mgo
 What does the `map()` function do in JavaScript?
-</mgo-card-front>
-<mgo-card-back>
+---
 Creates a new array by applying a function to every element.
 
-```javascript
-const doubled = [1, 2, 3].map(x => x * 2);
-// Result: [2, 4, 6]
+    const doubled = [1, 2, 3].map(x => x * 2);
+    // Result: [2, 4, 6]
 ```
-</mgo-card-back>
-</mgo-card>
 
 ## Spaced Repetition Facts
 
-<mgo-card cardId="sr-001">The ==c1::Forgetting Curve== was discovered by ==c2::Hermann Ebbinghaus== in ==c3::1885==.</mgo-card>
-
-<mgo-card cardId="sr-002">FSRS stands for ==c1::Free Spaced Repetition Scheduler==.</mgo-card>
+```mgo
+The ==c1::Forgetting Curve== was discovered by ==c2::Hermann Ebbinghaus== in ==c3::1885==.
 ```
+
+```mgo
+FSRS stands for ==c1::Free Spaced Repetition Scheduler==.
+```
+````
 
 ---
 

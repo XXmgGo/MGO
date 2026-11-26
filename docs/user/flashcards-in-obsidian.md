@@ -31,67 +31,89 @@ tags: [flashcards]
 ---
 ```
 
-3. Write a card. This is the simplest form, one line with `::` between the question and the answer:
+3. Write a card. This is the simplest form, a fenced block with the question above a `---` line and the answer below it:
 
-```markdown
-What is the capital of Japan?::Tokyo ^japan-capital
+````markdown
+```mgo
+What is the capital of Japan?
+---
+Tokyo
 ```
+````
 
-The `^japan-capital` at the end is a block ID. It is optional, but it lets you edit the card text later without losing its review history. Without it, Lemma identifies the card by its text, and any edit creates a new card. See [Writing cards](writing-cards.md#block-ids-and-review-history).
-
-You can also run the command **Add a single-line card** from the command palette. Lemma inserts a template with a fresh block ID and tags the note for you.
+You can also run the command **Add a new flashcard** from the command palette. MGO inserts the template and tags the note for you.
 
 A deck only appears on the dashboard once it contains at least one card. If it does not show up, click the refresh icon on the dashboard.
 
 ## What card types can you write?
 
-Lemma reads four main formats. All of them are ordinary text in a tagged note.
+MGO reads five formats. All of them are ordinary text in a tagged note.
 
-### Single-line cards
+### Basic cards
 
-```markdown
-Mitochondria::Powerhouse of the cell ^cards-001
+````markdown
+```mgo
+Mitochondria
+---
+Powerhouse of the cell
 ```
+````
 
-Good for short facts: terms, dates, formulas. Both sides must have text, and the line cannot start with a colon.
+Good for facts, definitions and anything short. Both sides must have text.
 
 ### Reversed cards
 
-```markdown
-Mitochondria:::Powerhouse of the cell ^cards-002
+````markdown
+```mgo-reverse
+Mitochondria
+---
+Powerhouse of the cell
 ```
+````
 
-Three colons make a reversed card. It shows the right-hand side and asks you to recall the left-hand side. Lemma makes one card per line, not two. If you want both directions, write one `::` line and one `:::` line with different block IDs.
+A reversed card shows the back and asks you to recall the front. If you want both directions, write one `mgo` block and one `mgo-reverse` block.
 
 ### Multi-line cards
 
-When an answer needs several lines, a list, code or an image, use a block:
+Both sides can hold several lines, a list, code or an image:
 
-```markdown
----card--- ^cards-003
+````markdown
+```mgo
 What are the three stages of cellular respiration?
 ---
 1. Glycolysis
 2. The citric acid cycle
 3. The electron transport chain
----end---
 ```
-
-The front is everything up to a line that is exactly `---`. The back runs until `---end---` (recommended), the next `---card---` or the end of the note. Adding `---end---` lets you write headings, outlines, and notes immediately following the card without them becoming part of the card's answer.
+````
 
 ### Cloze deletions
 
 A cloze hides part of a sentence. Wrap the hidden text in `==c1::` and `==`:
 
-```markdown
-The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==. ^cards-004
+````markdown
+```mgo
+The ==c1::mitochondrion== is the powerhouse of the ==c2::cell==.
 ```
+````
 
-Each number becomes its own card, so this sentence gives two. Use a different number for each blank, and keep one or two short clozes per paragraph. In a paragraph with several clozes, the other clozes are shown in their raw form on the front, which can reveal answers. You can select text and run **Create cloze from selection** instead of typing the markers.
+Each number becomes its own card, so this sentence gives two. Use a different number for each blank, and keep one or two short clozes per block. You can select text and run **Create cloze from selection** instead of typing the markers.
 
-Lemma also supports type-in cards, where you type the answer (add `?type`), image cards, and whole-note review. They are covered in [Writing cards](writing-cards.md).
+### Type-in cards
 
-One caution: every line in a tagged note that contains `::` becomes a card, including things like `std::vector` in your notes. Only tag notes meant to be decks, or keep such lines out of them.
+Use the `mgo-typein` fence to type the answer during review:
+
+````markdown
+```mgo-typein
+What is the SI unit of electric current?
+---
+Ampere
+```
+````
+
+Type-in cards, image-occlusion cards and whole-note review are covered in [Writing cards](writing-cards.md).
+
+One caution: card IDs are derived from the content, so editing a card's wording gives it a new ID and resets its review history. Write the final version before studying.
 
 ## How do you organise cards into decks?
 

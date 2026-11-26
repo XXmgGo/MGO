@@ -26,20 +26,20 @@ Turn **Use PouchDB (IndexedDB)** off and reload Obsidian. Lemma then reads sched
 
 ## Moving to a new device
 
-Review data does not move with your notes. Either set up [CouchDB sync](sync-and-data.md) on both devices, or use a backup: run **Export review data (backup)** on the old device, copy the `Lemma backup ... .json` file to the new one, and run **Import review data from backup**. Import merges: a card keeps whichever version was reviewed most recently, and nothing is deleted. Cards are matched by their IDs, so the deck notes must have the same paths (or use block IDs and the same folder layout).
+Review data does not move with your notes. Either set up [CouchDB sync](sync-and-data.md) on both devices, or use a backup: run **Export review data (backup)** on the old device, copy the `Lemma backup ... .json` file to the new one, and run **Import review data from backup**. Import merges: a card keeps whichever version was reviewed most recently, and nothing is deleted. Cards are matched by their IDs, so the deck notes must have the same paths and folder layout.
 
 ## From other spaced repetition tools
 
-Run **Import cards from file** and choose a plain text export (in Anki, **Export > Notes in Plain Text**, with HTML included if you like) or a CSV or TSV file. Lemma reads the first column as the front and the second as the back, turns `{{c1::text}}` into a cloze, strips HTML, gives every card a block ID and creates a new deck note tagged `#flashcards`. Cards with line breaks use the `---card---` format. Imported cards start as new cards: scheduling data and media files are not imported, and further columns such as tags are ignored.
+Run **Import cards from file** and choose a plain text export (in Anki, **Export > Notes in Plain Text**, with HTML included if you like) or a CSV or TSV file. Lemma reads the first column as the front and the second as the back, turns `{{c1::text}}` into a cloze, strips HTML and creates a new deck note tagged `#flashcards` with every card written as an `mgo` code fence. Imported cards start as new cards: scheduling data and media files are not imported, and further columns such as tags are ignored.
 
 For other sources, convert the text yourself, since Lemma cards are plain Markdown:
 
 1. Export or copy your cards as text.
-2. Rewrite each card into one of Lemma's formats: `Question::Answer`, a `---card---` block, or a cloze with `==c1::text==`. See [Writing cards](writing-cards.md).
+2. Rewrite each card as an `mgo` code fence: the front, a line containing only `---`, then the back. Cloze cards use `==c1::text==` instead. See [Writing cards](writing-cards.md).
 3. Put them in notes tagged `#flashcards`.
-4. Add a block ID to each card, or use the commands that add one, so edits keep history.
+4. Keep the wording final: fence cards are identified by content, so editing a card later resets its history.
 
-If another plugin already uses `::` or `==` in your notes, its syntax may be read by Lemma as cards once the note is tagged `#flashcards`. Only tag notes you want Lemma to read.
+If another plugin already uses `::` or `==` in your notes, MGO leaves those lines alone — only `mgo` code fences are read as cards.
 
 ## Renaming and moving decks
 

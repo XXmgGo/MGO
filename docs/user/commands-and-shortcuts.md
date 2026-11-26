@@ -12,13 +12,13 @@ Open the command palette (`Ctrl+P`, or `Cmd+P` on macOS) and type the command na
 | **Create card (guided modal)** | Opens the card creator with a card type dropdown and a live preview | |
 | **Create new deck** | Creates a note with the deck tag and opens it | |
 | **Tag current note as flashcard deck** | Adds the deck tag to the open note's frontmatter | An open note |
-| **Add a new flashcard** | Inserts a basic `---card---` block with a new block ID | Editor |
-| **Add a single-line card** | Inserts `Question::Answer ^id` and selects the first word | Editor |
-| **Add a reversed card** | Inserts `Question:::Answer ^id` | Editor |
-| **Add a cloze card** | Inserts `Sentence with ==c1::hidden text==.` | Editor |
-| **Create cloze from selection** | Wraps the selected text in `==cN::...==` | Editor |
-| **Add a type-in card** | Inserts a basic block with the `?type` flag | Editor |
-| **Add a type-in single-line card** | Inserts `Question::Answer ?type ^id` | Editor |
+| **Add a new flashcard** | Inserts a blank `mgo` fence template (Question / `---` / Answer) | Editor |
+| **Add a single-line card** | Inserts a compact `mgo` template and selects the question | Editor |
+| **Add a reversed card** | Inserts a `mgo-reverse` template | Editor |
+| **Add a cloze card** | Inserts `Sentence with ==c1::hidden text==.` inside an `mgo` block | Editor |
+| **Create cloze from selection** | Wraps the selected text in `==cN::...==`; outside a card block it wraps the line in an `mgo` block | Editor |
+| **Add a type-in card** | Inserts a `mgo-typein` template | Editor |
+| **Add a type-in single-line card** | Inserts a compact `mgo-typein` template | Editor |
 | **Import cards from file** | Converts a plain text export from another flashcard app, or a CSV or TSV file, into a new deck note | |
 | **Export review data (backup)** | Saves all schedules, review history and streak data as `Lemma backup <date and time>.json` in the vault root | |
 | **Import review data from backup** | Merges a Lemma backup, or a `data.json` file from any version, into your data | |
@@ -31,7 +31,7 @@ Notes:
 
 - The card insertion commands also add the deck tag to the current note if it is missing.
 - **Add a new flashcard** and **Add a type-in card** insert a blank line before the card, then leave the cursor on the question line.
-- **Create cloze from selection**: when a selection exists, the cloze number is one higher than the first cloze already on the cursor's line, or 1 if there is none. With no selection it inserts `==c1::text==`.
+- **Create cloze from selection**: when a selection exists inside an `mgo` block, the cloze number is one higher than the first cloze already on the cursor's line, or 1 if there is none. With no selection it inserts a cloze template block.
 - **Sync now** and **Check sync status** are registered at start-up only while **Use PouchDB (IndexedDB)** is on. Reload Obsidian after changing that setting.
 
 ## Editor menu
@@ -56,13 +56,14 @@ Select text in a note, right-click (or long-press on mobile) and choose **Create
 
 `1`, `2`, `3` and `4` rate the note as Again, Hard, Good and Easy. `Esc` closes the window.
 
-## Browse window keys
+## Browse tab keys
 
 | Key | Action |
 |---|---|
 | Left arrow | Previous card |
 | Right arrow | Next card |
-| `Esc` | Close |
+| `E` | Open the card's note at its position |
+| `Esc` | Close the browse tab |
 
 ## Guided creator keys
 

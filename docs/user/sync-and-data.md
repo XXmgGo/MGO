@@ -12,7 +12,7 @@ See what Lemma stores in your notes, in Obsidian's local database and in data.js
 | Review history (one entry per rating) | Local browser database | CouchDB sync, if you enable it |
 | Settings, streak and XP | `data.json` in the plugin folder | Your vault, if it syncs `.obsidian` |
 
-Lemma never writes anything into your notes except the cards, block IDs and tags that you or its commands insert. It does not create separate files per card.
+Lemma never writes anything into your notes except the cards and tags that you or its commands insert. It does not create separate files per card.
 
 ### The local database
 

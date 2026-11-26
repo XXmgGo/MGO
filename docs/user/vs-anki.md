@@ -32,7 +32,7 @@ Anki's manual documents an FSRS parameter optimizer, a workload simulator and op
 
 In Anki, a note has fields and a note type. The note type's card types generate one or more cards, and editing a note updates all of its cards. Decks group cards, can nest using `::`, and take their options from a preset you assign. Anki's built-in types include Basic, reversed variants, type-in-the-answer, Cloze and Image Occlusion, and you can make your own.
 
-In Lemma, the text in your note is the card. Lemma supports a `---card---` block, a one-line `Question::Answer`, a reversed `:::` line, `==c1::text==` clozes, a type-in flag and image-pair cards. There are no custom note types or templates. A deck is simply a tagged note. See [Writing cards](writing-cards.md) and [Organizing decks](organizing-decks.md).
+In MGO, the text in your note is the card. MGO supports `mgo` code fences (with `mgo-reverse` and `mgo-typein` variants), `==c1::text==` clozes and image-pair cards. There are no custom note types or templates. A deck is simply a tagged note. See [Writing cards](writing-cards.md) and [Organizing decks](organizing-decks.md).
 
 Anki's model is more flexible when one set of facts should produce many differently shaped cards. Lemma's model is lighter when your knowledge is already in notes and you want cards next to the context.
 
@@ -86,9 +86,9 @@ Lemma has no `.apkg` importer and brings no scheduling data from Anki. What it d
 
 1. In Anki, export your deck as **Notes in Plain Text** (the manual lists this under File > Export).
 2. In Obsidian, run **Import cards from file** and choose the file. A CSV, TSV or semicolon file also works.
-3. Lemma reads the first column as the front and the second as the back, turns `{{c1::text}}` into `==c1::text==`, strips HTML and creates a new deck note with a block ID on every card.
+3. Lemma reads the first column as the front and the second as the back, turns `{{c1::text}}` into `==c1::text==`, strips HTML and creates a new deck note with every card written as an `mgo` code fence.
 
-Imported cards start as new cards. Review history, media files and further columns such as tags are not imported. Treat the move as a fresh start for scheduling. If a card has line breaks or contains `::`, Lemma writes it as a `---card---` block. Full details are in [Migrating](migrating.md#from-other-spaced-repetition-tools) and [Backup and import](backup-and-import.md#import-cards-from-another-app).
+Imported cards start as new cards. Review history, media files and further columns such as tags are not imported. Treat the move as a fresh start for scheduling. Full details are in [Migrating](migrating.md#from-other-spaced-repetition-tools) and [Backup and import](backup-and-import.md#import-cards-from-another-app).
 
 ## Can I use both?
 

@@ -54,16 +54,17 @@ tags: [flashcards]
 
 Add this to the deck note:
 
-```markdown
----card--- ^my-first-card
+````markdown
+```mgo
 What is spaced repetition?
 ---
 A learning technique that schedules reviews at increasing intervals to maximize long-term retention.
 ```
+````
 
-You can also use the guided creator: run **Create card (guided modal)**, pick the deck note, choose a card type, fill in the fields and press **Insert card** (or `Ctrl+Enter`, `Cmd+Enter` on macOS). Lemma inserts the card with a generated block ID. See [Writing cards](writing-cards.md) for every format.
+You can also use the guided creator: run **Create card (guided modal)**, pick the deck note, choose a card type, fill in the fields and press **Insert card** (or `Ctrl+Enter`, `Cmd+Enter` on macOS). MGO inserts the card as an `mgo` code fence. See [Writing cards](writing-cards.md) for every format.
 
-A deck only appears on the dashboard once it contains at least one card. Lemma re-reads a note shortly after you stop typing; if a new deck does not show up, click the refresh icon on the dashboard.
+A deck only appears on the dashboard once it contains at least one card. MGO re-reads a note shortly after you stop typing; if a new deck does not show up, click the refresh icon on the dashboard.
 
 ## 5. Run your first review
 
