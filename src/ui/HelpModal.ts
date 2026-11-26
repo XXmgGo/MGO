@@ -31,12 +31,14 @@ export class HelpModal extends Modal {
 
         this.renderSection('卡片格式', [
             '基础卡片分为正面（问题）与背面（答案）。',
+            '卡片写在 ```mgo 代码块里，块内用单独一行 --- 分隔正/背面，两边都可以写多行。',
             '填空卡片会隐藏句子中的特定词语。',
             '可以用命令面板插入卡片模板。',
         ], [
-            '基础：<mgo-card cardId="唯一id"><mgo-card-front>问题</mgo-card-front><mgo-card-back>答案</mgo-card-back></mgo-card>',
-            '填空：<mgo-card cardId="id">句子含 ==c1::被隐藏的文本==</mgo-card>',
-            'cardId 是卡片的稳定身份——编辑卡片内容时靠它保留复习历史。',
+            '基础：```mgo 块，第一段问题，--- 之后写答案',
+            '填空：```mgo 块里写 句子含 ==c1::被隐藏的文本==',
+            '反向卡用 ```mgo-reverse，输入作答卡用 ```mgo-typein。',
+            '属性：块顶部用一对 --- 包一段键值，支持 title / id / options / hint。',
         ]);
 
         this.renderSection('复习快捷键', [], [

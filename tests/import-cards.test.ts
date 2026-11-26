@@ -1,23 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { convertToMGO, parseDelimited } from '../src/data/importCards';
 
-let n = 0;
-const id = () => `fsrs-t${++n}`;
-
 describe('card import', () => {
-    it('converts a tab separated Anki plain text export', () => {
+    it('converts a tab separated Anki plain text export to mgo fences', () => {
         const text = '#separator:tab\n#html:true\n#tags column:3\nCapital of France?\tParis\tgeo\nWhat is 2+2?<br>(easy)\t<b>4</b>&nbsp;units\tmath\n';
-        const out = convertToMGO(text, 'flashcards', id);
+        const out = convertToMGO(text, 'flashcards');
         expect(out.cards).toBe(2);
         expect(out.markdown).toContain('tags: [flashcards]');
-        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t1">\n<mgo-card-front>Capital of France?</mgo-card-front>\n<mgo-card-back>Paris</mgo-card-back>\n</mgo-card>');
-        expect(out.markdown).toContain('<mgo-card cardId="fsrs-t2">\n<mgo-card-front>What is 2+2?\n(easy)</mgo-card-front>\n<mgo-card-back>4 units</mgo-card-back>\n</mgo-card>');
+        expect(out.markdown).toContain('```mgo\nCapital of France?\n---\nParis\n```');
+        expect(out.markdown).toContain('```mgo\nWhat is 2+2?\n(easy)\n---\n4 units\n```');
     });
 
     it('converts Anki cloze notes and drops cloze hints', () => {
-        const out = convertToMGO('The {{c1::mitochondria::organelle}} makes {{c2::ATP}}\n', 'flashcards', id);
-        expect(out.markdown).toContain('<mgo-card cardId="fsrs-');
-        expect(out.markdown).toContain('The ==c1::mitochondria== makes ==c2::ATP==\n</mgo-card>');
+        const out = convertToMGO('The {{c1::mitochondria::organelle}} makes {{c2::ATP}}\n', 'flashcards');
+        expect(out.markdown).toContain('```mgo\nThe ==c1::mitochondria== makes ==c2::ATP==\n```');
         expect(out.cards).toBe(1);
     });
 
@@ -28,26 +24,23 @@ describe('card import', () => {
             ['Say "hi", please', 'line one\nline two'],
             ['plain', 'answer'],
         ]);
-        const out = convertToMGO(csv, 'flashcards', id);
+        const out = convertToMGO(csv, 'flashcards');
         expect(out.cards).toBe(3);
-        expect(out.markdown).toContain('Front</mgo-card-front>\n<mgo-card-back>Back</mgo-card-back>');
-        expect(out.markdown).toContain('Say "hi", please</mgo-card-front>\n<mgo-card-back>line one\nline two</mgo-card-back>');
+        expect(out.markdown).toContain('```mgo\nFront\n---\nBack\n```');
+        expect(out.markdown).toContain('```mgo\nSay "hi", please\n---\nline one\nline two\n```');
     });
 
-    it('keeps text that would break the old single-line syntax intact', () => {
-        const out = convertToMGO('std::vector\tA C++ container\n', 'flashcards', id);
-        expect(out.markdown).toContain('<mgo-card cardId="fsrs-');
-        expect(out.markdown).toContain('std::vector</mgo-card-front>\n<mgo-card-back>A C++ container</mgo-card-back>');
+    it('keeps text that would break inline syntax intact', () => {
+        const out = convertToMGO('std::vector\tA C++ container\n', 'flashcards');
+        expect(out.markdown).toContain('```mgo\nstd::vector\n---\nA C++ container\n```');
     });
 
-    it('skips empty or incomplete rows, handles Windows line endings and a BOM, and never repeats an id', () => {
-        let k = 0;
-        const clashing = () => `fsrs-same${k++ < 2 ? '' : k}`;
-        const out = convertToMGO('﻿a\tb\r\n\r\nonlyfront\t\r\nc\td\r\n', 'flashcards', clashing);
+    it('skips empty or incomplete rows and handles Windows line endings and a BOM', () => {
+        const out = convertToMGO('\uFEFFa\tb\r\n\r\nonlyfront\t\r\nc\td\r\n', 'flashcards');
         expect(out.cards).toBe(2);
         expect(out.skipped).toBe(1);
-        const ids = [...out.markdown.matchAll(/cardId="(fsrs-\w+)"/g)].map((m) => m[1]);
-        expect(new Set(ids).size).toBe(ids.length);
+        expect(out.markdown).toContain('```mgo\na\n---\nb\n```');
+        expect(out.markdown).toContain('```mgo\nc\n---\nd\n```');
     });
 
     it('produces cards that the real parser reads back', async () => {

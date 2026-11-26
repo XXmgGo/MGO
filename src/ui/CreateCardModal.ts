@@ -1,5 +1,4 @@
 import { App, Modal, Setting, Notice, TFile } from 'obsidian';
-import { generateBlockId } from '../data/constants';
 
 type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 
@@ -64,7 +63,7 @@ export class CreateCardModal extends Modal {
             .setDesc('格式与复习方式')
             .addDropdown(dd => {
                 dd.addOption('basic', '基础（多行问题与答案）');
-                dd.addOption('single', '紧凑（标签内单行）');
+                dd.addOption('single', '紧凑（问题与答案各一行）');
                 dd.addOption('reversed', '反向（双向回忆）');
                 dd.addOption('cloze', '填空（句中挖空）');
                 dd.addOption('occlusion', '图形遮罩（原地切换图片）');
@@ -165,40 +164,17 @@ export class CreateCardModal extends Modal {
     }
 
     private generateCardMarkdown(): string {
-        const cardId = generateBlockId();
+        const fence = (lang: string, body: string): string => '\n```' + lang + '\n' + body + '\n```\n';
 
         if (this.cardType === 'cloze') {
             const clean = this.clozeText.trim() || 'Sentence with ==c1::cloze==.';
-            return `\n<mgo-card cardId="${cardId}">\n${clean}\n</mgo-card>\n`;
+            return fence('mgo', clean);
         }
 
-        if (this.cardType === 'occlusion') {
-            const q = this.frontText.trim() || '![[diagram-question.png]]';
-            const a = this.backText.trim() || '![[diagram-answer.png]]';
-            return `\n<mgo-card cardId="${cardId}"><mgo-card-front>${q}</mgo-card-front>\n<mgo-card-back>${a}</mgo-card-back>\n</mgo-card>\n`;
-        }
-
-        if (this.cardType === 'single') {
-            const q = this.frontText.trim().replace(/\n+/g, ' ') || 'Question';
-            const a = this.backText.trim().replace(/\n+/g, ' ') || 'Answer';
-            return `\n<mgo-card cardId="${cardId}">\n<mgo-card-front>${q}</mgo-card-front>\n<mgo-card-back>${a}</mgo-card-back>\n</mgo-card>\n`;
-        }
-
-        if (this.cardType === 'reversed') {
-            const q = this.frontText.trim().replace(/\n+/g, ' ') || 'Question';
-            const a = this.backText.trim().replace(/\n+/g, ' ') || 'Answer';
-            return `\n<mgo-card cardId="${cardId}" reverse>\n<mgo-card-front>${q}</mgo-card-front>\n<mgo-card-back>${a}</mgo-card-back>\n</mgo-card>\n`;
-        }
-
-        if (this.cardType === 'typein') {
-            const q = this.frontText.trim() || 'Question';
-            const a = this.backText.trim() || 'Answer';
-            return `\n<mgo-card cardId="${cardId}" type="typein">\n<mgo-card-front>${q}</mgo-card-front>\n<mgo-card-back>${a}</mgo-card-back>\n</mgo-card>\n`;
-        }
-
-        const q = this.frontText.trim() || 'Question';
-        const a = this.backText.trim() || 'Answer';
-        return `\n<mgo-card cardId="${cardId}"><mgo-card-front>${q}</mgo-card-front>\n<mgo-card-back>${a}</mgo-card-back>\n</mgo-card>\n`;
+        const q = this.frontText.trim() || (this.cardType === 'occlusion' ? '![[diagram-question.png]]' : 'Question');
+        const a = this.backText.trim() || (this.cardType === 'occlusion' ? '![[diagram-answer.png]]' : 'Answer');
+        const lang = this.cardType === 'reversed' ? 'mgo-reverse' : this.cardType === 'typein' ? 'mgo-typein' : 'mgo';
+        return fence(lang, q + '\n---\n' + a);
     }
 
     private updatePreview() {

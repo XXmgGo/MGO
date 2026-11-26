@@ -16,10 +16,10 @@ import { DataManager } from '../src/data/DataManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
 const CONTENT = [
-    '<mgo-card cardId="abc123"><mgo-card-front>Block question</mgo-card-front><mgo-card-back>Block answer</mgo-card-back></mgo-card>',
-    '<mgo-card><mgo-card-front>Hashed question</mgo-card-front><mgo-card-back>Hashed answer</mgo-card-back></mgo-card>',
+    '```mgo\nBlock question\n---\nBlock answer\n```',
+    '```mgo\nHashed question\n---\nHashed answer\n```',
     '',
-    '<mgo-card cardId="cloze1">The ==c1::mitochondria== is the powerhouse</mgo-card>',
+    '```mgo\nThe ==c1::mitochondria== is the powerhouse\n```',
 ].join('\n');
 
 function createManager(path: string, usePouchDB: boolean) {

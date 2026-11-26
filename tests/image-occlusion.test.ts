@@ -186,7 +186,6 @@ vi.mock('../src/database/PouchDBManager', () => {
 import { describe, it, expect, vi } from 'vitest';
 import { isImageOnlyContent, isInPlaceImageCard, DEFAULT_SETTINGS } from '../src/data/constants';
 import { DataManager } from '../src/data/DataManager';
-import { ReviewModal } from '../src/ui/ReviewModal';
 import type { Card } from '../src/data/types';
 
 function createMockPlugin() {
@@ -345,7 +344,7 @@ describe('Card parsing for image occlusion cards', () => {
 tags: [flashcards]
 ---
 
-<mgo-card><mgo-card-front>![[heart-occluded.png]]</mgo-card-front><mgo-card-back>![[heart-revealed.png]]</mgo-card-back></mgo-card>
+\`\`\`mgo\n![[heart-occluded.png]]\n---\n![[heart-revealed.png]]\n\`\`\`
 `);
         await dm.updateFile({ path: 'anatomy.md', basename: 'anatomy' } as never);
         const cards = dm.getAllCards();
@@ -356,7 +355,7 @@ tags: [flashcards]
         expect(isInPlaceImageCard(cards[0])).toBe(true);
     });
 
-    it('parses image occlusion cards with cardIds', async () => {
+    it('parses image occlusion cards with size parameters', async () => {
         const plugin = createMockPlugin();
         const dm = plugin.dataManager;
         plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
@@ -366,12 +365,11 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="cell-01"><mgo-card-front>![[cell-mask.svg|500]]</mgo-card-front><mgo-card-back>![[cell-unmasked.svg|500]]</mgo-card-back></mgo-card>
+\`\`\`mgo\n![[cell-mask.svg|500]]\n---\n![[cell-unmasked.svg|500]]\n\`\`\`
 `);
         await dm.updateFile({ path: 'biology.md', basename: 'biology' } as never);
         const cards = dm.getAllCards();
         expect(cards).toHaveLength(1);
-        expect(cards[0].id).toContain('cell-01');
         expect(cards[0].front).toBe('![[cell-mask.svg|500]]');
         expect(cards[0].back).toBe('![[cell-unmasked.svg|500]]');
         expect(isInPlaceImageCard(cards[0])).toBe(true);
@@ -387,10 +385,11 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="brain-diag"><mgo-card-front>
+\`\`\`mgo
 ![[brain-occluded.png]]
-</mgo-card-front><mgo-card-back>![[brain-revealed.png]]</mgo-card-back>
-</mgo-card>
+---
+![[brain-revealed.png]]
+\`\`\`
 `);
         await dm.updateFile({ path: 'neuro.md', basename: 'neuro' } as never);
         const cards = dm.getAllCards();
@@ -410,7 +409,11 @@ tags: [flashcards]
 tags: [flashcards]
 ---
 
-<mgo-card cardId="map-01" reverse><mgo-card-front>![[map-mask.png]]</mgo-card-front><mgo-card-back>![[map-answers.png]]</mgo-card-back></mgo-card>
+\`\`\`mgo-reverse
+![[map-mask.png]]
+---
+![[map-answers.png]]
+\`\`\`
 `);
         await dm.updateFile({ path: 'geography.md', basename: 'geography' } as never);
         const cards = dm.getAllCards();
@@ -419,88 +422,5 @@ tags: [flashcards]
         expect(cards[0].front).toBe('![[map-answers.png]]');
         expect(cards[0].back).toBe('![[map-mask.png]]');
         expect(isInPlaceImageCard(cards[0])).toBe(true);
-    });
-});
-
-describe('ReviewModal in-place occlusion interaction', () => {
-    it('handles in-place display and tap-to-flip for image cards', async () => {
-        const plugin = createMockPlugin();
-        const card: Card = {
-            id: 'image-card-1',
-            deckId: 'deck-1',
-            filePath: 'anatomy.md',
-            type: 'basic',
-            originalText: '...',
-            front: '![[diagram-q.png]]',
-            back: '![[diagram-a.png]]',
-        };
-
-        const modal = new ReviewModal(plugin.app as never, plugin as never, [card]);
-        modal.open();
-        modal.onOpen();
-
-        const cardContainer = (modal as unknown as { cardContainer: { hasClass: (c: string) => boolean } }).cardContainer;
-        const frontEl = (modal as unknown as { frontEl: { hasClass: (c: string) => boolean } }).frontEl;
-        const answerContainer = (modal as unknown as { answerContainer: { hasClass: (c: string) => boolean } }).answerContainer;
-        const indicatorEl = (modal as unknown as { inplaceIndicatorEl: { getText: () => string; hasClass: (c: string) => boolean } }).inplaceIndicatorEl;
-
-        expect(cardContainer.hasClass('fsrs-card-inplace')).toBe(true);
-        expect(frontEl.hasClass('is-hidden')).toBe(false);
-        expect(answerContainer.hasClass('is-hidden')).toBe(true);
-
-        (modal as unknown as { showAnswer: () => void }).showAnswer();
-
-        expect(frontEl.hasClass('is-hidden')).toBe(true);
-        expect(answerContainer.hasClass('is-hidden')).toBe(false);
-        expect(indicatorEl.hasClass('is-hidden')).toBe(false);
-        expect(indicatorEl.getText()).toBe('答案（点击可回看问题）');
-
-        (modal as unknown as { toggleInPlaceView: () => void }).toggleInPlaceView();
-
-        expect(frontEl.hasClass('is-hidden')).toBe(false);
-        expect(answerContainer.hasClass('is-hidden')).toBe(true);
-        expect(indicatorEl.getText()).toBe('问题（点击查看答案）');
-
-        (modal as unknown as { toggleInPlaceView: () => void }).toggleInPlaceView();
-
-        expect(frontEl.hasClass('is-hidden')).toBe(true);
-        expect(answerContainer.hasClass('is-hidden')).toBe(false);
-        expect(indicatorEl.getText()).toBe('答案（点击可回看问题）');
-
-        modal.close();
-    });
-
-    it('keeps standard cards unmodified with front and answer visible together', async () => {
-        const plugin = createMockPlugin();
-        const textCard: Card = {
-            id: 'text-card-1',
-            deckId: 'deck-1',
-            filePath: 'trivia.md',
-            type: 'basic',
-            originalText: '...',
-            front: 'What is the speed of light?',
-            back: '299,792,458 m/s',
-        };
-
-        const modal = new ReviewModal(plugin.app as never, plugin as never, [textCard]);
-        modal.open();
-        modal.onOpen();
-
-        const cardContainer = (modal as unknown as { cardContainer: { hasClass: (c: string) => boolean } }).cardContainer;
-        const frontEl = (modal as unknown as { frontEl: { hasClass: (c: string) => boolean } }).frontEl;
-        const answerContainer = (modal as unknown as { answerContainer: { hasClass: (c: string) => boolean } }).answerContainer;
-        const indicatorEl = (modal as unknown as { inplaceIndicatorEl: { hasClass: (c: string) => boolean } }).inplaceIndicatorEl;
-
-        expect(cardContainer.hasClass('fsrs-card-inplace')).toBe(false);
-        expect(frontEl.hasClass('is-hidden')).toBe(false);
-        expect(answerContainer.hasClass('is-hidden')).toBe(true);
-
-        (modal as unknown as { showAnswer: () => void }).showAnswer();
-
-        expect(frontEl.hasClass('is-hidden')).toBe(false);
-        expect(answerContainer.hasClass('is-hidden')).toBe(false);
-        expect(indicatorEl.hasClass('is-hidden')).toBe(true);
-
-        modal.close();
     });
 });

@@ -44,6 +44,12 @@ export interface CardData {
     front: string;
     back: string;
     context?: string;
+    /** 卡片属性头里的 title（UI 显示名）。 */
+    title?: string;
+    /** 选择题候选项（未来选择题功能使用）。 */
+    options?: string[];
+    /** 回忆提示，显示在正面下方。 */
+    hint?: string;
 }
 
 export type FSRSData = FSRSCard;

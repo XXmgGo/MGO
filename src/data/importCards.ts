@@ -1,5 +1,3 @@
-import { generateBlockId } from './constants';
-
 export interface ImportedCard {
     front: string;
     back: string;
@@ -69,21 +67,19 @@ function detectDelimiter(text: string): string {
     return counts[0][1] > 0 ? counts[0][0] : '\t';
 }
 
-function cardMarkdown(card: ImportedCard, id: string): string {
+function cardMarkdown(card: ImportedCard): string {
     const cloze = /==c\d+::/.test(card.front) && !card.back;
-    if (cloze) return `<mgo-card cardId="${id}">\n${card.front}\n</mgo-card>`;
-    return `<mgo-card cardId="${id}">\n<mgo-card-front>${card.front}</mgo-card-front>\n<mgo-card-back>${card.back}</mgo-card-back>\n</mgo-card>`;
+    if (cloze) return '```mgo\n' + card.front + '\n```';
+    return '```mgo\n' + card.front + '\n---\n' + card.back + '\n```';
 }
 
 // Accepts an Anki "Notes in Plain Text" export or a CSV/TSV file. The first column is the front and the
 // second the back; further columns (tags, extra fields) are ignored. Cloze notes need only one column.
-export function convertToMGO(text: string, deckTag: string, makeId: () => string = generateBlockId): CardImportResult {
+export function convertToMGO(text: string, deckTag: string): CardImportResult {
     const clean = text.replace(/^\uFEFF/, '');
     const html = /^#html:true$/im.test(clean);
     const rows = parseDelimited(clean.split(/\r?\n/).filter((l) => !l.startsWith('#')).join('\n'), detectDelimiter(clean));
 
-    const used = new Set<string>();
-    const lines: string[] = [];
     const blocks: string[] = [];
     let skipped = 0;
     for (const row of rows) {
@@ -92,15 +88,9 @@ export function convertToMGO(text: string, deckTag: string, makeId: () => string
         const back = prepare(row[1] ?? '');
         const isCloze = /==c\d+::/.test(front);
         if (!front || (!back && !isCloze)) { skipped++; continue; }
-        let id = makeId();
-        while (used.has(id)) id = makeId();
-        used.add(id);
-        const md = cardMarkdown({ front, back: isCloze ? '' : back }, id);
-        blocks.push(md);
+        blocks.push(cardMarkdown({ front, back: isCloze ? '' : back }));
     }
 
-    // A block card's back runs to the next ---card--- marker, so block cards go last to keep other cards out of it.
-    const all = [...lines, ...blocks];
-    const markdown = `---\ntags: [${deckTag}]\n---\n\n${all.join('\n\n')}\n`;
-    return { markdown, cards: all.length, skipped };
+    const markdown = `---\ntags: [${deckTag}]\n---\n\n${blocks.join('\n\n')}\n`;
+    return { markdown, cards: blocks.length, skipped };
 }

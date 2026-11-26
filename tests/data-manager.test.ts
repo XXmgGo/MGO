@@ -208,9 +208,9 @@ describe('DataManager', () => {
 tags: [flashcards]
 ---
 
-<mgo-card cardId="q1"><mgo-card-front>Front 1</mgo-card-front><mgo-card-back>Back 1</mgo-card-back></mgo-card>
+\`\`\`mgo\nFront 1\n---\nBack 1\n\`\`\`
 
-<mgo-card cardId="q2"><mgo-card-front>Front 2</mgo-card-front><mgo-card-back>Back 2</mgo-card-back></mgo-card>
+\`\`\`mgo\nFront 2\n---\nBack 2\n\`\`\`
 `);
             await dm.updateFile({ path: 'test.md', basename: 'test' } as never);
             expect(dm.getAllCards()).toHaveLength(2);

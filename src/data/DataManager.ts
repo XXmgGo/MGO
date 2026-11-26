@@ -2,6 +2,7 @@ import { FSRS, Rating, State, createEmptyCard, type Card as FSRSCard } from 'ts-
 import { Notice, TFile, type CachedMetadata } from 'obsidian';
 import type { Card, Deck, DeckSettings, FSRSData, FSRSParameters, Gamification, NoteReviewData, PluginData, ReviewLog } from './types';
 import { isRecord, cyrb53hex, LEGACY_DATABASE_NAME, getDocsWritten, getErrorMessage, isLikelyCorsOrNetworkErrorMessage, buildAuthenticatedUrl, sanitizeUrlForDisplay } from './constants';
+import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, parseCardBlockAttributes, parseCardBlockBody } from './cardText';
 import { PouchDBManager } from '../database/PouchDBManager';
 import { buildBackup, type BackupContent } from './backup';
 
@@ -530,61 +531,71 @@ export class DataManager {
     private parseMgoCards(content: string, filePath: string, deckId: string, deck: Deck) {
         const lines = content.split('\n');
         const breadcrumbs = this.buildHeadingBreadcrumbs(lines);
-        const cardRegex = /<mgo-card((?:\s[^>]*)?)\s*>([\s\S]*?)<\/mgo-card>/gi;
         let match: RegExpExecArray | null;
-        while ((match = cardRegex.exec(content)) !== null) {
-            const attrs = match[1] || '';
-            const body = match[2] || '';
-            const context = this.findCardContext(content, breadcrumbs, match[0]);
-            const idAttr = attrs.match(/(?:cardId|card-id|id)\s*=\s*"([^"]+)"|(?:cardId|card-id|id)\s*=\s*'([^']+)'/i);
-            const cardIdAttr = idAttr ? (idAttr[1] || idAttr[2] || '').trim() : '';
-            const isTypeIn = /\btype\s*=\s*["']?typein/i.test(attrs);
-            const isReverse = /\breverse(?:d)?\b/i.test(attrs) && !/reverse(?:d)?\s*=\s*["']?false/i.test(attrs);
-            if (!body.trim()) continue;
 
-            const clozeNumbers = [...new Set([...body.matchAll(/==c(\d+)::/g)].map(m => m[1]))];
-            if (clozeNumbers.length > 0) {
-                const baseId = cardIdAttr ? `${cyrb53hex(filePath)}::${cardIdAttr}` : cyrb53hex(`${filePath}::${body}`);
-                for (const clozeNum of clozeNumbers) {
-                    const front = body.replace(/==c(\d+)::(.*?)==/gs, (_m: string, num: string, ansBody: string): string => {
-                        const colonIdx = ansBody.indexOf('::');
-                        const answer = colonIdx !== -1 ? ansBody.slice(0, colonIdx) : ansBody;
-                        const hint = colonIdx !== -1 ? ansBody.slice(colonIdx + 2) : '';
-                        return num === clozeNum ? (hint ? `[${hint}]` : '[...]') : answer;
-                    }).trim();
-                    const back = body.replace(/==c\d+::(.*?)==/gs, (_m: string, ansBody: string): string => {
-                        const colonIdx = ansBody.indexOf('::');
-                        return colonIdx !== -1 ? ansBody.slice(0, colonIdx) : ansBody;
-                    }).trim();
-                    const cardId = `${baseId}-${clozeNum}`;
-                    const card: Card = {
-                        id: cardId, deckId, filePath, type: 'cloze',
-                        originalText: body.trim(), front, back, context,
-                        fsrsData: this.fsrsDataStore[cardId],
-                    };
-                    this.cards.set(cardId, card);
-                    deck.cardIds.add(cardId);
-                }
+        // 代码围栏卡片（```mgo / ```mgo-reverse / ```mgo-typein）：块内独立一行 --- 分隔正/背面。
+        CARD_BLOCK_RE.lastIndex = 0;
+        while ((match = CARD_BLOCK_RE.exec(content)) !== null) {
+            const lang = match[1].toLowerCase();
+            const rawBody = match[2] || '';
+            if (!rawBody.trim()) continue;
+
+            const { attrs, content: cardContent } = parseCardBlockAttributes(rawBody);
+            const body = cardContent.trim();
+            if (!body) continue;
+
+            const context = this.findCardContext(content, breadcrumbs, match[0]);
+            const meta = {
+                title: typeof attrs.title === 'string' ? attrs.title : undefined,
+                options: Array.isArray(attrs.options) ? attrs.options : undefined,
+                hint: typeof attrs.hint === 'string' ? attrs.hint : undefined,
+            };
+            const explicitId = typeof attrs.id === 'string' ? attrs.id : '';
+
+            if (clozeNumbers(body).length > 0) {
+                const baseId = explicitId ? `${cyrb53hex(filePath)}::${explicitId}` : cyrb53hex(`block::${filePath}::${body}`);
+                this.addClozeCards(body, baseId, filePath, deckId, deck, context, body.trim(), meta);
                 continue;
             }
 
-            const frontMatch = body.match(/<mgo-card-front(?:\s[^>]*)?>([\s\S]*?)<\/mgo-card-front>/i);
-            const backMatch = body.match(/<mgo-card-back(?:\s[^>]*)?>([\s\S]*?)<\/mgo-card-back>/i);
-            if (!frontMatch || !backMatch) continue;
-            const front = (frontMatch[1] || '').trim();
-            const back = (backMatch[1] || '').trim();
+            const { front, back } = parseCardBlockBody(body);
             if (!front || !back) continue;
 
             let finalFront = front;
             let finalBack = back;
             let type: Card['type'] = 'basic';
-            if (isReverse) { finalFront = back; finalBack = front; type = 'reversed'; }
-            else if (isTypeIn) { type = 'typein'; }
+            if (lang === 'mgo-reverse') { finalFront = back; finalBack = front; type = 'reversed'; }
+            else if (lang === 'mgo-typein') { type = 'typein'; }
 
-            const cardId = cardIdAttr ? `${cyrb53hex(filePath)}::${cardIdAttr}` : cyrb53hex(`${filePath}::${front}::${back}`);
+            const cardId = explicitId ? `${cyrb53hex(filePath)}::${explicitId}` : cyrb53hex(`block::${filePath}::${front}::${back}`);
             const card: Card = {
                 id: cardId, deckId, filePath, type,
                 originalText: match[0], front: finalFront, back: finalBack, context,
+                ...meta,
+                fsrsData: this.fsrsDataStore[cardId],
+            };
+            this.cards.set(cardId, card);
+            deck.cardIds.add(cardId);
+        }
+    }
+
+    /** 按挖空编号各生成一张卡片。 */
+    private addClozeCards(
+        body: string,
+        baseId: string,
+        filePath: string,
+        deckId: string,
+        deck: Deck,
+        context: string | undefined,
+        originalText: string,
+        meta: { title?: string; options?: string[]; hint?: string } = {},
+    ) {
+        for (const clozeNum of clozeNumbers(body)) {
+            const cardId = `${baseId}-${clozeNum}`;
+            const card: Card = {
+                id: cardId, deckId, filePath, type: 'cloze',
+                originalText, front: clozeFront(body, clozeNum), back: clozeBack(body), context,
+                ...meta,
                 fsrsData: this.fsrsDataStore[cardId],
             };
             this.cards.set(cardId, card);
@@ -747,6 +758,32 @@ export class DataManager {
         return Array.from(this.deckScopeIds(deck))
             .map(id => this.cards.get(id))
             .filter((card): card is Card => card !== undefined && card !== null);
+    }
+
+    /** 只属于该牌组本身的卡片（不含子牌组），用于仪表盘上按标签精确展示。 */
+    getOwnCardsByDeck(deckId: string): Card[] {
+        const deck = this.decks.get(deckId);
+        if (!deck) return [];
+        return Array.from(deck.cardIds)
+            .map(id => this.cards.get(id))
+            .filter((card): card is Card => card !== undefined && card !== null);
+    }
+
+    /** 该牌组本身的统计（不含子牌组）。 */
+    getOwnDeckStats(deckId: string): { new: number; due: number; learning: number } {
+        const now = new Date();
+        const stats = { new: 0, due: 0, learning: 0 };
+        for (const cardId of this.decks.get(deckId)?.cardIds ?? []) {
+            if (!this.cards.get(cardId)) continue;
+            const fsrsData = this.fsrsDataStore[cardId];
+            if (!fsrsData || fsrsData.state === State.New) {
+                stats.new++;
+            } else {
+                if (fsrsData.state === State.Learning || fsrsData.state === State.Relearning) stats.learning++;
+                if (fsrsData.due <= now) stats.due++;
+            }
+        }
+        return stats;
     }
 
     private getTodayLogs(): ReviewLog[] {

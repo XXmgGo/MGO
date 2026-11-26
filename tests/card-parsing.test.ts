@@ -92,6 +92,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { DataManager } from '../src/data/DataManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
+const fence = (lang: string, body: string) => '```' + lang + '\n' + body + '\n```';
+
 function createMockPlugin() {
     const app = {
         vault: {
@@ -121,24 +123,30 @@ function createMockPlugin() {
     };
 }
 
+function deckPlugin(content: string) {
+    const plugin = createMockPlugin();
+    plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
+        tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
+    });
+    plugin.app.vault.read = vi.fn().mockResolvedValue(content);
+    return plugin;
+}
+
+async function parse(content: string, path = 'test-note.md') {
+    const dm = new DataManager(deckPlugin(content) as never);
+    await dm.updateFile({ path, basename: path.replace(/\.md$/, '') } as never);
+    return dm;
+}
+
 describe('Card parsing', () => {
     describe('Basic cards', () => {
         it('parses a simple basic card', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
+            const dm = await parse(`---
 tags: [flashcards]
 ---
 
-<mgo-card cardId="test123"><mgo-card-front>
-What is the capital of France?
-</mgo-card-front><mgo-card-back>Paris</mgo-card-back>
-</mgo-card>
+${fence('mgo', 'What is the capital of France?\n---\nParis')}
 `);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(1);
             expect(cards[0].type).toBe('basic');
@@ -147,181 +155,68 @@ What is the capital of France?
         });
 
         it('parses multiple basic cards', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
+            const dm = await parse(`---
 tags: [flashcards]
 ---
 
-<mgo-card cardId="q1"><mgo-card-front>
-Front 1
-</mgo-card-front><mgo-card-back>Back 1</mgo-card-back>
-</mgo-card>
+${fence('mgo', 'Front 1\n---\nBack 1')}
 
-<mgo-card cardId="q2"><mgo-card-front>
-Front 2
-</mgo-card-front><mgo-card-back>Back 2</mgo-card-back>
-</mgo-card>
+${fence('mgo', 'Front 2\n---\nBack 2')}
 `);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
             expect(dm.getAllCards()).toHaveLength(2);
         });
 
-        it('handles cards without cardId', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card><mgo-card-front>
-Front without block ID
-</mgo-card-front><mgo-card-back>Back without block ID</mgo-card-back>
-</mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
-            expect(dm.getAllCards()).toHaveLength(1);
-            expect(dm.getAllCards()[0].id).not.toContain('::');
-        });
-
-        it('skips malformed cards with empty front', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="empty"><mgo-card-front>
-</mgo-card-front><mgo-card-back>Back only - no front</mgo-card-back>
-</mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
-            expect(dm.getAllCards()).toHaveLength(0);
-        });
-
-        it('stops the card at </mgo-card> and keeps following headings out of card', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="py-list-02"><mgo-card-front>
-How do you access single elements and slices of a list?
-</mgo-card-front><mgo-card-back>Use indexing: list[0]</mgo-card-back>
-</mgo-card>
-
-## 2. Next Section
-This heading and text should not be part of the card!
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
+        it('keeps multi-line fronts and backs', async () => {
+            const dm = await parse(fence('mgo', 'Line one\nLine two\n---\nAnswer one\n\nAnswer two'));
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(1);
-            expect(cards[0].front).toBe('How do you access single elements and slices of a list?');
-            expect(cards[0].back).toBe('Use indexing: list[0]');
-            expect(cards[0].back).not.toContain('Next Section');
-            expect(cards[0].front).not.toContain('mgo-card');
+            expect(cards[0].front).toBe('Line one\nLine two');
+            expect(cards[0].back).toBe('Answer one\n\nAnswer two');
         });
 
-        it('supports single-line cards and card-id attribute name variants', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="card-1"><mgo-card-front>Question 1</mgo-card-front><mgo-card-back>Answer 1</mgo-card-back></mgo-card>
-
-Prose notes here
-
-<mgo-card card-id="card-2"><mgo-card-front>Question 2</mgo-card-front><mgo-card-back>Answer 2</mgo-card-back></mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
-            const cards = dm.getAllCards();
-            expect(cards).toHaveLength(2);
-            expect(cards[0].back).toBe('Answer 1');
-            expect(cards[1].back).toBe('Answer 2');
-            expect(cards[1].id).toMatch(/::card-2$/);
-        });
-
-        it('keeps multi-line answers and adjacent cards separate', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="legacy-01"><mgo-card-front>
-Question 1
-</mgo-card-front><mgo-card-back>Answer 1
-Line 2 of answer</mgo-card-back>
-</mgo-card>
-<mgo-card cardId="legacy-02"><mgo-card-front>
-Question 2
-</mgo-card-front><mgo-card-back>Answer 2</mgo-card-back>
-</mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
+        it('keeps adjacent cards separate', async () => {
+            const dm = await parse(`${fence('mgo', 'Question 1\n---\nAnswer 1\nLine 2 of answer')}\n${fence('mgo', 'Question 2\n---\nAnswer 2')}`);
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(2);
             expect(cards[0].back).toBe('Answer 1\nLine 2 of answer');
             expect(cards[0].front).not.toContain('Question 2');
             expect(cards[1].back).toBe('Answer 2');
         });
-    });
 
-    describe('Inline cards (single-line mgo-card)', () => {
-        it('parses a simple inline basic card', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="sl-1"><mgo-card-front>What is the capital of France?</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
-            const cards = dm.getAllCards();
-            expect(cards).toHaveLength(1);
-            expect(cards[0].type).toBe('basic');
-            expect(cards[0].front).toBe('What is the capital of France?');
-            expect(cards[0].back).toBe('Paris');
+        it('skips blocks with an empty side or without a separator', async () => {
+            const dm = await parse([
+                fence('mgo', '\n---\nBack only - no front'),
+                fence('mgo', 'Front only - no separator'),
+                fence('mgo', 'Front\n---\n'),
+            ].join('\n\n'));
+            expect(dm.getAllCards()).toHaveLength(0);
         });
 
-        it('parses a reversed card (reverse attribute)', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
+        it('does not treat colons in text as cards', async () => {
+            const dm = await parse(`${fence('mgo', 'This is not::A card\n---\nThe real answer')}\n\nTime:: 12:30 is just plain prose outside a card.\n`);
+            const cards = dm.getAllCards();
+            expect(cards).toHaveLength(1);
+            expect(cards[0].front).toBe('This is not::A card');
+            expect(cards[0].back).toBe('The real answer');
+        });
 
-<mgo-card cardId="rev-1" reverse><mgo-card-front>Capital of France</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
+        it('gives every card a content-hash id', async () => {
+            const dm = await parse(`${fence('mgo', 'First\n---\nOne')}\n\n${fence('mgo', 'Second\n---\nTwo')}`);
+            const cards = dm.getAllCards();
+            expect(cards).toHaveLength(2);
+            expect(cards[0].id).toMatch(/^[a-f0-9]+$/);
+            expect(cards[0].id).not.toBe(cards[1].id);
+        });
+
+        it('ignores mgo fences with a different language', async () => {
+            const dm = await parse(`${fence('javascript', 'const a = 1')}\n\n${fence('mgo', 'Real\n---\nCard')}`);
+            expect(dm.getAllCards()).toHaveLength(1);
+        });
+    });
+
+    describe('Reversed and type-in cards', () => {
+        it('parses a reversed card', async () => {
+            const dm = await parse(fence('mgo-reverse', 'Capital of France\n---\nParis'));
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(1);
             expect(cards[0].type).toBe('reversed');
@@ -329,103 +224,30 @@ tags: [flashcards]
             expect(cards[0].back).toBe('Capital of France');
         });
 
-        it('parses multiple inline cards in one note', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="m1"><mgo-card-front>Q1</mgo-card-front><mgo-card-back>A1</mgo-card-back></mgo-card>
-<mgo-card cardId="m2"><mgo-card-front>Q2</mgo-card-front><mgo-card-back>A2</mgo-card-back></mgo-card>
-<mgo-card cardId="m3" reverse><mgo-card-front>Q3</mgo-card-front><mgo-card-back>A3</mgo-card-back></mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
-            expect(dm.getAllCards()).toHaveLength(3);
-        });
-
-        it('does not confuse colons in text for cards', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="colon-1"><mgo-card-front>This is not::A card</mgo-card-front><mgo-card-back>The real answer</mgo-card-back></mgo-card>
-
-Time:: 12:30 is just plain prose outside a card.
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
-            const cards = dm.getAllCards();
-            expect(cards).toHaveLength(1);
-            expect(cards[0].front).toBe('This is not::A card');
-            expect(cards[0].back).toBe('The real answer');
-        });
-
-        it('parses cardId into a stable deckId::cardId format', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="fsrs-abc123"><mgo-card-front>Capital of France</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
-            const cards = dm.getAllCards();
-            expect(cards).toHaveLength(1);
-            // cardId should produce a stable ID with hash::cardId format
-            expect(cards[0].id).toMatch(/^[a-f0-9]+::fsrs-abc123$/);
-            expect(cards[0].front).toBe('Capital of France');
-            expect(cards[0].back).toBe('Paris');
-        });
-
-        it('parses a typein card', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="ti-1" type="typein"><mgo-card-front>Type the capital of France</mgo-card-front><mgo-card-back>Paris</mgo-card-back></mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
+        it('parses a type-in card', async () => {
+            const dm = await parse(fence('mgo-typein', 'Type the capital of France\n---\nParis'));
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(1);
             expect(cards[0].type).toBe('typein');
             expect(cards[0].front).toBe('Type the capital of France');
             expect(cards[0].back).toBe('Paris');
         });
+
+        it('parses multiple cards of mixed types', async () => {
+            const dm = await parse([
+                fence('mgo', 'Q1\n---\nA1'),
+                fence('mgo', 'Q2\n---\nA2'),
+                fence('mgo-reverse', 'Q3\n---\nA3'),
+            ].join('\n'));
+            const cards = dm.getAllCards();
+            expect(cards).toHaveLength(3);
+            expect(cards.map((c) => c.type).sort()).toEqual(['basic', 'basic', 'reversed']);
+        });
     });
 
     describe('Cloze deletion cards', () => {
         it('parses a simple cloze card', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="cloze-1">
-The ==c1::mitochondria== is the powerhouse of the cell.
-</mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
+            const dm = await parse(fence('mgo', 'The ==c1::mitochondria== is the powerhouse of the cell.'));
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(1);
             expect(cards[0].type).toBe('cloze');
@@ -435,32 +257,16 @@ The ==c1::mitochondria== is the powerhouse of the cell.
         });
 
         it('creates separate cards for each cloze number', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="mito">
-The ==c1::mitochondria== is the powerhouse of the ==c2::cell==.
-</mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
+            const dm = await parse(fence('mgo', 'The ==c1::mitochondria== is the powerhouse of the ==c2::cell==.'));
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(2);
             expect(cards.every(c => c.type === 'cloze')).toBe(true);
-            expect(cards.every(c => /::mito-\d$/.test(c.id))).toBe(true);
 
-            // c1 card should hide mitochondria and show cell as plain text (no raw ==c2:: marker)
             const c1Card = cards.find(c => c.front.includes('[...]') && c.front.includes('cell'));
             expect(c1Card).toBeDefined();
             expect(c1Card!.front).toBe('The [...] is the powerhouse of the cell.');
             expect(c1Card!.front).not.toContain('==c2::');
 
-            // c2 card should hide cell and show mitochondria as plain text (no raw ==c1:: marker)
             const c2Card = cards.find(c => c.front.includes('[...]') && c.front.includes('mitochondria'));
             expect(c2Card).toBeDefined();
             expect(c2Card!.front).toBe('The mitochondria is the powerhouse of the [...].');
@@ -468,20 +274,8 @@ The ==c1::mitochondria== is the powerhouse of the ==c2::cell==.
         });
 
         it('supports optional hints and shared cloze numbers', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="oz">==c1::Canberra::capital== is in ==c2::Australia==, and ==c1::Wellington::capital== is in ==c2::New Zealand==.</mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
+            const dm = await parse(fence('mgo', '==c1::Canberra::capital== is in ==c2::Australia==, and ==c1::Wellington::capital== is in ==c2::New Zealand==.'));
             const cards = dm.getAllCards();
-            // Should create 2 cards total (c1 and c2), not 4
             expect(cards).toHaveLength(2);
 
             const c1Card = cards.find(c => c.front.includes('[capital]'));
@@ -495,134 +289,59 @@ tags: [flashcards]
             expect(c2Card!.back).toBe('Canberra is in Australia, and Wellington is in New Zealand.');
         });
 
-        it('does not leak content between an adjacent basic card and a cloze card with no blank line', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
----
-
-<mgo-card cardId="fsrs-b1"><mgo-card-front>
-What are basic types?
-</mgo-card-front><mgo-card-back>| Type | Description |
-| \`int\` | Integer |</mgo-card-back>
-</mgo-card>
-<mgo-card cardId="fsrs-c1">Use the ==c1::type()== function to check type.</mgo-card>
-`);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
+        it('does not leak content between an adjacent basic card and a cloze card', async () => {
+            const dm = await parse([
+                fence('mgo', 'What are basic types?\n---\n| Type | Description |\n| `int` | Integer |'),
+                fence('mgo', 'Use the ==c1::type()== function to check type.'),
+            ].join('\n'));
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(2);
 
             const basicCard = cards.find(c => c.type === 'basic')!;
             expect(basicCard.front).toBe('What are basic types?');
             expect(basicCard.back).toBe('| Type | Description |\n| `int` | Integer |');
-            expect(basicCard.back).not.toContain('mgo-card');
 
             const clozeCard = cards.find(c => c.type === 'cloze')!;
             expect(clozeCard.front).toBe('Use the [...] function to check type.');
             expect(clozeCard.back).toBe('Use the type() function to check type.');
-            expect(clozeCard.id).toMatch(/::fsrs-c1-1$/);
             expect(clozeCard.front).not.toContain('What are basic types');
         });
 
-        it('ignores cloze syntax that is not wrapped in an mgo-card block', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
+        it('ignores cloze syntax outside an mgo block', async () => {
+            const dm = await parse(`---
 tags: [flashcards]
 ---
 
 Answer with ==c1::inline notation== written as plain prose.
 `);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
-            const cards = dm.getAllCards();
-            expect(cards).toHaveLength(0);
+            expect(dm.getAllCards()).toHaveLength(0);
         });
+    });
 
-        it('parses real-world mixed deck with code blocks, tables, and clozes without leakage', async () => {
-            const fs = await import('fs');
-            const realPath = '/home/sapiens/Second Brain/Flashcards/associate data scientist/01 - introduction to python.md';
-            if (!fs.existsSync(realPath)) return;
-            const content = fs.readFileSync(realPath, 'utf8');
-
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(content);
-            await dm.updateFile({ path: realPath, basename: '01 - introduction to python' } as never);
-
-            const cards = dm.getAllCards();
-            expect(cards).toHaveLength(26);
-
-            for (const card of cards) {
-                expect(card.front).not.toMatch(/---\s*(?:end|card-end|card)\s*---/i);
-                expect(card.back).not.toMatch(/---\s*(?:end|card-end|card)\s*---/i);
-            }
-
-            const expCloze = cards.find(c => c.id.includes('fsrs-py1j2k3l4-1'));
-            expect(expCloze).toBeDefined();
-            expect(expCloze!.front).toBe('The [...] operator is used for exponentiation in Python (e.g., `height ** 2`). ^fsrs-py1j2k3l4');
-
-            const typeCloze = cards.find(c => c.id.includes('fsrs-py9p0q1r2-1'));
-            expect(typeCloze).toBeDefined();
-            expect(typeCloze!.front).toBe("Use the [...] function to check a variable's type (e.g., `type(bmi)` returns `<class 'float'>`). ^fsrs-py9p0q1r2");
-
-            // Python comments like "# Removing elements" inside code blocks must not leak as card context
-            const methodCard = cards.find(c => c.id.includes('fsrs-px3y4z5a6'));
-            expect(methodCard).toBeDefined();
-            expect(methodCard!.context).toBeUndefined();
-        });
-
-        it('ignores comments starting with # inside code blocks and frontmatter for heading breadcrumbs', async () => {
-            const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
-            plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
-            });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`---
+    describe('Context and decks', () => {
+        it('uses heading breadcrumbs as card context and ignores # in code', async () => {
+            const dm = await parse(`---
 tags: [flashcards]
 # YAML comment
 ---
 
 # Real Section
 
-<mgo-card cardId="card-1"><mgo-card-front>
-Question 1
-</mgo-card-front><mgo-card-back>
-\`\`\`python
-# Python comment inside code
-print("hello")
-\`\`\`
-</mgo-card-back>
-</mgo-card>
+${fence('mgo', 'Question 1\n---\n    # Python comment inside code\n    print("hello")')}
 
-<mgo-card cardId="card-2"><mgo-card-front>
-Question 2
-</mgo-card-front><mgo-card-back>Answer 2</mgo-card-back>
-</mgo-card>
+${fence('mgo', 'Question 2\n---\nAnswer 2')}
 `);
-            await dm.updateFile({ path: 'test-note.md', basename: 'test-note' } as never);
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(2);
             expect(cards[0].context).toBe('Real Section');
             expect(cards[1].context).toBe('Real Section');
         });
-    });
 
-    describe('Deck detection', () => {
         it('ignores files without the deck tag', async () => {
             const plugin = createMockPlugin();
-            const dm = new DataManager(plugin as never);
             plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({ tags: [] });
-            plugin.app.vault.read = vi.fn().mockResolvedValue(`<mgo-card cardId="q1"><mgo-card-front>Front</mgo-card-front><mgo-card-back>Back</mgo-card-back></mgo-card>`);
+            plugin.app.vault.read = vi.fn().mockResolvedValue(fence('mgo', 'Front\n---\nBack'));
+            const dm = new DataManager(plugin as never);
             await dm.updateFile({ path: 'no-deck-tag.md', basename: 'no-deck-tag' } as never);
             expect(dm.getAllCards()).toHaveLength(0);
             expect(dm.getDecks()).toHaveLength(0);

@@ -17,8 +17,8 @@ import { PouchDBManager } from '../src/database/PouchDBManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
 const NOTE = [
-    '<mgo-card cardId="abc123"><mgo-card-front>Block question</mgo-card-front><mgo-card-back>Block answer</mgo-card-back></mgo-card>',
-    '<mgo-card><mgo-card-front>Hashed question</mgo-card-front><mgo-card-back>Hashed answer</mgo-card-back></mgo-card>',
+    '```mgo\nBlock question\n---\nBlock answer\n```',
+    '```mgo\nHashed question\n---\nHashed answer\n```',
 ].join('\n');
 
 function indexNote(path: string, content: string, usePouchDB = false) {
@@ -53,7 +53,8 @@ describe('PouchDB card state persistence', () => {
         const dm = await indexNote('Decks/Biology.md', NOTE);
         const cardIds = dm.getAllCards().map((c) => c.id);
         expect(cardIds.length).toBeGreaterThanOrEqual(2);
-        expect(cardIds.some((id) => id.includes('::'))).toBe(true);
+        expect(new Set(cardIds).size).toBe(cardIds.length);
+        expect(cardIds.every((id) => /^[a-f0-9]+$/.test(id))).toBe(true);
 
         const name = `lemma_persist_${++dbCounter}`;
         const first = open(name);
