@@ -3141,14 +3141,6 @@
     border-top: 1px solid var(--background-modifier-border);
 }
 
-.mgo-card-render .mgo-quiz-detail {
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top: 1px dashed var(--background-modifier-border);
-    color: var(--text-muted);
-    font-size: 0.95em;
-}
-
 .theme-dark .mgo-card-render .mgo-quiz-option.is-correct {
     border-color: #4cc38a;
 }

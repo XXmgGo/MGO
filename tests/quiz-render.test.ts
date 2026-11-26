@@ -83,19 +83,6 @@ const quiz = [
     '正解：増える',
 ].join('\n');
 
-const quizWithDetail = [
-    '---',
-    'type: single-choice',
-    'options: [増え, 増える]',
-    'answer: 2',
-    '---',
-    '学生は（　）一方だ。',
-    '---',
-    '正解：増える',
-    '句意：学生一直在增加。',
-    '考察：「一方だ」接动词辞书形。',
-].join('\n');
-
 describe('note quiz rendering', () => {
     it('grades a click and can reset', async () => {
         const el = await render(quiz);
@@ -135,26 +122,6 @@ describe('note quiz rendering', () => {
         expect(btn.style.display).not.toBe('none');
         btn.click();
         expect(openLinkTextSpy).toHaveBeenCalledWith('详解句', 'note.md', true);
-    });
-
-    it('shows the 详解 button only after grading and toggles the analysis', async () => {
-        const el = await render(quizWithDetail);
-        const findBtn = () => Array.from(el.querySelectorAll('.mgo-quiz-reveal')).find((b) => b.textContent === '详解' || b.textContent === '收起详解') as HTMLElement;
-        const detail = el.querySelector('.mgo-quiz-detail') as HTMLElement;
-        expect(detail.style.display).toBe('none');
-        expect(findBtn().style.display).toBe('none');
-
-        (el.querySelectorAll('.mgo-quiz-option')[0] as HTMLElement).click();
-        expect(findBtn().style.display).not.toBe('none');
-        expect(detail.style.display).toBe('none');
-
-        findBtn().click();
-        expect(detail.style.display).not.toBe('none');
-        expect(findBtn().textContent).toBe('收起详解');
-
-        findBtn().click();
-        expect(detail.style.display).toBe('none');
-        expect(findBtn().textContent).toBe('详解');
     });
 
     it('checks a typed fill-in answer', async () => {

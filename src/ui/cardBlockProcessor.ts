@@ -1,6 +1,6 @@
 import { MarkdownRenderer, MarkdownRenderChild, Notice, setIcon, type Plugin } from 'obsidian';
 import { toHardBreaks } from '../data/constants';
-import { CARD_FENCE_LANGS, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, resolveQuizKind, revealCloze, splitQuizBack } from '../data/cardText';
+import { CARD_FENCE_LANGS, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../data/cardText';
 import { editCardAtSource } from './editCardSource';
 import { resolveAudioSrc } from './audioSrc';
 
@@ -127,21 +127,13 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             const detailFile = detailTarget
                 ? plugin.app.metadataCache?.getFirstLinkpathDest?.(detailTarget, ctx.sourcePath) ?? null
                 : null;
-            const split = splitQuizBack(back);
-            const renderBack = (host: HTMLElement, useSplit: boolean) => {
+            const renderBack = (host: HTMLElement) => {
                 const answerEl = host.createDiv({ cls: 'mgo-quiz-answer' });
                 answerEl.hide();
-                const shown = useSplit && split.answer ? split.answer : back;
-                if (shown) {
-                    void MarkdownRenderer.render(plugin.app, toHardBreaks(shown), answerEl, ctx.sourcePath, child);
+                if (back) {
+                    void MarkdownRenderer.render(plugin.app, toHardBreaks(back), answerEl, ctx.sourcePath, child);
                 }
-                let detailEl: HTMLElement | null = null;
-                if (useSplit && split.answer && split.detail) {
-                    detailEl = answerEl.createDiv({ cls: 'mgo-quiz-detail' });
-                    detailEl.hide();
-                    void MarkdownRenderer.render(plugin.app, toHardBreaks(split.detail), detailEl, ctx.sourcePath, child);
-                }
-                return { answerEl, detailEl };
+                return answerEl;
             };
 
             const renderActions = (host: HTMLElement) => {
@@ -171,9 +163,8 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 const feedback = quiz.createDiv({ cls: 'mgo-quiz-feedback' });
                 feedback.hide();
                 const { revealBtn, detailBtn, resetBtn } = renderActions(quiz);
-                const { answerEl, detailEl } = renderBack(quiz, true);
+                const answerEl = renderBack(quiz);
                 let answered = false;
-                let detailOpen = false;
 
                 const grade = (picked: number | null) => {
                     if (answered) return;
@@ -198,7 +189,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     feedback.show();
                     answerEl.show();
                     revealBtn.hide();
-                    if (detailEl || detailFile) detailBtn.show();
+                    if (detailFile) detailBtn.show();
                     resetBtn.show();
                 };
 
@@ -212,14 +203,8 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 });
                 revealBtn.addEventListener('click', () => grade(null));
                 detailBtn.addEventListener('click', () => {
-                    if (detailFile && detailTarget) {
-                        void plugin.app.workspace.openLinkText(detailTarget, ctx.sourcePath, true);
-                        return;
-                    }
-                    if (!detailEl) return;
-                    detailOpen = !detailOpen;
-                    if (detailOpen) detailEl.show(); else detailEl.hide();
-                    detailBtn.setText(detailOpen ? '收起详解' : '详解');
+                    if (!detailFile || !detailTarget) return;
+                    void plugin.app.workspace.openLinkText(detailTarget, ctx.sourcePath, true);
                 });
                 resetBtn.addEventListener('click', () => {
                     answered = false;
@@ -231,10 +216,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     feedback.empty();
                     feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
                     answerEl.hide();
-                    detailOpen = false;
-                    if (detailEl) detailEl.hide();
                     detailBtn.hide();
-                    detailBtn.setText('详解');
                     revealBtn.show();
                     resetBtn.hide();
                 });
@@ -256,8 +238,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 const feedback = card.createDiv({ cls: 'mgo-quiz-feedback' });
                 feedback.hide();
                 const { revealBtn, detailBtn, resetBtn } = renderActions(card);
-                const { answerEl, detailEl } = renderBack(card, true);
-                let detailOpen = false;
+                const answerEl = renderBack(card);
                 const normalize = (value: string) => value.normalize('NFKC').replace(/\s+/g, '');
                 let answered = false;
 
@@ -280,7 +261,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     feedback.show();
                     answerEl.show();
                     revealBtn.hide();
-                    if (detailEl || detailFile) detailBtn.show();
+                    if (detailFile) detailBtn.show();
                     resetBtn.show();
                 };
 
@@ -298,14 +279,8 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 });
                 revealBtn.addEventListener('click', () => finish(null));
                 detailBtn.addEventListener('click', () => {
-                    if (detailFile && detailTarget) {
-                        void plugin.app.workspace.openLinkText(detailTarget, ctx.sourcePath, true);
-                        return;
-                    }
-                    if (!detailEl) return;
-                    detailOpen = !detailOpen;
-                    if (detailOpen) detailEl.show(); else detailEl.hide();
-                    detailBtn.setText(detailOpen ? '收起详解' : '详解');
+                    if (!detailFile || !detailTarget) return;
+                    void plugin.app.workspace.openLinkText(detailTarget, ctx.sourcePath, true);
                 });
                 resetBtn.addEventListener('click', () => {
                     answered = false;
@@ -316,10 +291,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     feedback.empty();
                     feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
                     answerEl.hide();
-                    detailOpen = false;
-                    if (detailEl) detailEl.hide();
                     detailBtn.hide();
-                    detailBtn.setText('详解');
                     revealBtn.show();
                     resetBtn.hide();
                     input.focus();
@@ -332,7 +304,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 const stem = card.createDiv({ cls: 'mgo-quiz-stem' });
                 void MarkdownRenderer.render(plugin.app, toHardBreaks(front), stem, ctx.sourcePath, child);
                 const { revealBtn } = renderActions(card);
-                const { answerEl } = renderBack(card, false);
+                const answerEl = renderBack(card);
                 let shown = false;
                 revealBtn.addEventListener('click', () => {
                     shown = !shown;
