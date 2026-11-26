@@ -366,12 +366,13 @@
 /* 代码块处理器重建的卡片结构。实时预览里代码块不在 .markdown-rendered 下，
    所以选择器不能加前缀，两种视图才能一致。 */
 
-/* 卡片块在笔记里按纯段落显示：无背景、无边框、无圆角 */
+/* 卡片块在笔记里按纯段落显示：无背景、无边框、无圆角
+   顶部留出一条空隙给右上角 MGO 标记，避免标记压在第一行文字上。 */
 .mgo-card-render {
     position: relative;
     display: block;
-    margin: 1em 0;
-    padding: 0;
+    margin: 0.75em 0 1em;
+    padding: 18px 0 0;
     border: none;
     border-radius: 0;
     background: transparent;
@@ -410,6 +411,7 @@
     padding: 1px 5px;
     border-radius: 4px;
     font-size: 10px;
+    line-height: 1.2;
     font-weight: 700;
     letter-spacing: 0.04em;
     color: #9a9a9a;
