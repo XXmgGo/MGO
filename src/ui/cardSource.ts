@@ -33,6 +33,8 @@ export async function openCardSource(app: App, card: Card): Promise<void> {
     if (idx < 0) return;
     const from = editor.offsetToPos(idx);
     const to = editor.offsetToPos(idx + needle.length);
-    editor.setCursor(from);
+    // 光标停在卡片块上方一行：跳到笔记是为了看上下文，不该把围栏展开成源码。
+    const cursorLine = from.line > 0 ? from.line - 1 : to.line + 1;
+    editor.setCursor({ line: cursorLine, ch: 0 });
     editor.scrollIntoView({ from, to }, true);
 }

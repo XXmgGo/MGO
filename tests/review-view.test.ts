@@ -191,6 +191,7 @@ describe('ReviewView (tab)', () => {
             setCursor: vi.fn(),
             scrollIntoView: vi.fn(),
         };
+        const noteText = `# 标题\n\n${card.originalText}\n\n后面`;
         const mdView = Object.create(MarkdownView.prototype) as { file: unknown; editor: unknown };
         mdView.file = new TFile('notes/Deck.md');
         mdView.editor = editor;
@@ -202,6 +203,8 @@ describe('ReviewView (tab)', () => {
 
         await click(view.contentEl.querySelector('[aria-label="打开原文笔记"]') as HTMLElement);
         expect(editor.setCursor).toHaveBeenCalled();
+        const cursor = editor.setCursor.mock.calls[0][0] as { line: number; ch: number };
+        expect(cursor.line).toBeLessThan(noteText.indexOf(card.originalText));
         expect(editor.scrollIntoView).toHaveBeenCalled();
         expect(leaf.detach).not.toHaveBeenCalled();
     });
