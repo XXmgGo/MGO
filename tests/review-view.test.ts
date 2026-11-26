@@ -310,6 +310,24 @@ describe('ReviewView (tab)', () => {
         }
     });
 
+    it('uses a typing box for input cards and checks the answer', async () => {
+        const card: Card = {
+            id: 'input-1', deckId: 'deck-1', filePath: 'quiz.md', type: 'basic', originalText: '...',
+            front: 'お金をためたいと言っている一方で、＿＿＿＿。',
+            back: '正解：無駄遣いをしている\n句意：一面说要攒钱，一面却在乱花钱。',
+            answer: '無駄遣いをしている', kind: 'input',
+        };
+        const { view } = await openView([card]);
+        const input = view.contentEl.querySelector('.fsrs-typein-input') as HTMLInputElement;
+        expect(input).toBeTruthy();
+        expect((view.contentEl.querySelector('.fsrs-show-answer-btn') as HTMLElement).style.display).toBe('none');
+
+        input.value = '無駄遣いをしている';
+        await click(view.contentEl.querySelector('.fsrs-typein-check-btn') as HTMLElement);
+        expect(view.contentEl.querySelector('.fsrs-typein-feedback')!.textContent).toContain('回答正确');
+        expect((view.contentEl.querySelector('.fsrs-card-answer') as HTMLElement).style.display).not.toBe('none');
+    });
+
     it('renders options as a clickable quiz and grades the answer', async () => {
         const card: Card = {
             id: 'quiz-1', deckId: 'deck-1', filePath: 'quiz.md', type: 'basic', originalText: '...',

@@ -133,6 +133,7 @@ High blood pressure is a common illness among the elderly.
 |---|---|---|
 | `id` | text | Stable card identity; editing the front or back keeps its review history. A UUID per card is a good choice |
 | `title` | text | Display name in the dashboard card list under the deck (expand a folder); falls back to the front text |
+| `type` | text | Card type: `choice`, `input` or `basic`; inferred from the data when omitted |
 | `options` | list | Multiple-choice candidates; with `answer` set, review renders them as clickable options |
 | `answer` | text | Correct option: a 1-based index, a letter A–J, or the option text |
 | `reveal` | text | `true` folds the back into a "Show answer" toggle in the note; review is unchanged |
@@ -143,6 +144,7 @@ Rules:
 - The header must be the first thing in the block. Every line between the two `---` lines must be `key: value` or a `- list item`, otherwise the whole block is treated as plain content.
 - `options` accepts `[A, B, C]`, `options: A, B, C`, or a multi-line dash list.
 - `id` may only contain letters, digits, underscores and hyphens; an invalid id is ignored and the card falls back to its content hash.
+- `type` also accepts the aliases `quiz`, `blank`, `fill` and `typein`. A declared type that its data cannot satisfy (for example `choice` without a resolvable `answer`) falls back to a normal card; `type: basic` suppresses inference.
 - Cloze blocks accept the same header; the attributes apply to every card generated for the block's cloze numbers.
 - Unknown keys are preserved but have no effect (reserved for future attributes).
 
@@ -155,6 +157,7 @@ Give a card both `options` and `answer` and the review view turns it into a mult
 ---
 title: 一方だ
 id: 8d2c1f7e-...
+type: choice
 options: [増え, 増える, 増やす, 増やし]
 answer: 2
 ---
@@ -170,7 +173,7 @@ answer: 2
 - The note is interactive: clicking an option grades it, shows the answer and turns the button into "Redo". "Show answer" skips straight to the answer. There are no counters or stats in the note.
 - Answering in the note is practice only — it does not affect FSRS. Scheduling comes from the rating you give in the review view.
 - Single choice only.
-- A card with `answer` but no options gets a typed-answer box with a "Check" button in the note. Basic cards can also use `reveal: true` for a plain collapsed answer.
+- `type: input` with `answer: …` is a fill-in card: the note shows a typed-answer box with a "Check" button, and review shows the same typing box, checks against `answer`, then reveals the back. Basic cards can still use `reveal: true` for a plain collapsed answer.
 
 ## What you can put in a card
 

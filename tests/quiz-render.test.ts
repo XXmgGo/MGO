@@ -69,6 +69,7 @@ async function render(source: string): Promise<HTMLElement> {
 
 const quiz = [
     '---',
+    'type: choice',
     'options: [増え, 増える, 増やす, 増やし]',
     'answer: 2',
     '---',
@@ -100,7 +101,7 @@ describe('note quiz rendering', () => {
         const el = await render([
             '---',
             'answer: 無駄遣いをしている',
-            'reveal: true',
+            'type: input',
             '---',
             'お金をためたいと言っている一方で、＿＿＿＿。',
             '---',

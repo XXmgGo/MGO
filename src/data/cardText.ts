@@ -69,6 +69,8 @@ export function parseCardBlockBody(body: string): { front: string; back: string 
 export interface CardAttributes {
     title?: string;
     id?: string;
+    /** 卡片类型：choice / input / basic；不写时按 options + answer 推断。 */
+    type?: string;
     options?: string[];
     /** 选择题正确答案：1 起始序号、A–J 字母，或选项原文。 */
     answer?: string;
@@ -76,6 +78,44 @@ export interface CardAttributes {
     /** 语音地址：卡片右下角显示小喇叭，点击播放。 */
     audio?: string;
     [key: string]: string | string[] | undefined;
+}
+
+export type QuizKind = 'choice' | 'input';
+
+const QUIZ_TYPE_ALIASES: Record<string, QuizKind | 'basic'> = {
+    choice: 'choice',
+    quiz: 'choice',
+    mc: 'choice',
+    input: 'input',
+    blank: 'input',
+    fill: 'input',
+    typein: 'input',
+    basic: 'basic',
+    card: 'basic',
+};
+
+/**
+ * 卡片类型：显式 `type:` 优先，没写时按数据推断。
+ * - `choice` 需要 options + 可解析的 answer
+ * - `input` 需要 answer
+ * - `basic` 明确当普通卡；无法满足声明的类型时退回普通卡（null）。
+ */
+export function resolveQuizKind(
+    type: string | undefined,
+    options: readonly string[] | undefined,
+    answer: string | undefined,
+): QuizKind | null {
+    const declared = type ? QUIZ_TYPE_ALIASES[type.normalize('NFKC').trim().toLowerCase()] : undefined;
+    if (declared === 'basic') return null;
+    if (declared === 'choice') {
+        return resolveQuizAnswer(answer, options) === null ? null : 'choice';
+    }
+    if (declared === 'input') {
+        return answer && answer.trim() ? 'input' : null;
+    }
+    if (resolveQuizAnswer(answer, options) !== null) return 'choice';
+    if (answer && answer.trim()) return 'input';
+    return null;
 }
 
 /**

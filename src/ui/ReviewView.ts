@@ -2,7 +2,7 @@ import { ButtonComponent, Component, ItemView, MarkdownRenderer, Notice, TFile, 
 import { Rating, State } from 'ts-fsrs';
 import type { Card } from '../data/types';
 import { VIEW_ICON_NAME, VIEW_TYPE_REVIEW, isInPlaceImageCard, toHardBreaks } from '../data/constants';
-import { resolveQuizAnswer } from '../data/cardText';
+import { resolveQuizAnswer, resolveQuizKind } from '../data/cardText';
 import { openCardSource } from './cardSource';
 import { resolveAudioSrc } from './audioSrc';
 
@@ -283,7 +283,7 @@ export class ReviewView extends ItemView {
             .onClick(() => {
                 const card = this.getCurrentCard();
                 const typed = this.typeinInput.value.trim();
-                const correct = card.back.trim();
+                const correct = (card.kind === 'input' ? (card.answer ?? card.back) : card.back).trim();
                 if (!typed) return;
 
                 const exactMatch = typed.toLowerCase() === correct.toLowerCase();
@@ -518,7 +518,9 @@ export class ReviewView extends ItemView {
 
         this.state = 'question';
         const card = this.getCurrentCard();
-        this.isInPlaceImage = card.type !== 'typein' && isInPlaceImageCard(card);
+        const kind = card.kind ?? resolveQuizKind(undefined, card.options, card.answer);
+        const isTyped = card.type === 'typein' || kind === 'input';
+        this.isInPlaceImage = !isTyped && isInPlaceImageCard(card);
         this.activeInPlaceView = 'question';
 
         if (this.isInPlaceImage) {
@@ -553,7 +555,7 @@ export class ReviewView extends ItemView {
         this.renderQuiz(card);
         this.syncAudioUi(card);
 
-        if (card.type === 'typein') {
+        if (isTyped) {
             this.showAnswerButton.buttonEl.hide();
             this.typeinContainer.show();
             this.typeinInput.value = '';
@@ -637,6 +639,8 @@ export class ReviewView extends ItemView {
     private renderQuiz(card: Card): void {
         if (card.type === 'typein' || card.type === 'cloze' || this.isInPlaceImage) return;
         const options = card.options ?? [];
+        const kind = card.kind ?? resolveQuizKind(undefined, options, card.answer);
+        if (kind !== 'choice') return;
         const correctIndex = resolveQuizAnswer(card.answer, options);
         if (correctIndex === null) return;
 
