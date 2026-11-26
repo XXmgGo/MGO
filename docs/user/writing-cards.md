@@ -167,9 +167,10 @@ answer: 2
 
 - `answer` accepts a 1-based index (`2`), a letter (`B`) or the option text (`増える`). Prefer the text when you may reorder options.
 - At least two options are required. If `answer` cannot be matched, the card renders as a normal card.
-- The note renders the stem, a numbered option list and a "Show answer" toggle; there are no counters or stats in the note. Only the review view makes the options clickable.
+- The note is interactive: clicking an option grades it, shows the answer and turns the button into "Redo". "Show answer" skips straight to the answer. There are no counters or stats in the note.
+- Answering in the note is practice only — it does not affect FSRS. Scheduling comes from the rating you give in the review view.
 - Single choice only.
-- Basic cards can use `reveal: true` for the same collapsed-answer rendering in the note.
+- A card with `answer` but no options gets a typed-answer box with a "Check" button in the note. Basic cards can also use `reveal: true` for a plain collapsed answer.
 
 ## What you can put in a card
 

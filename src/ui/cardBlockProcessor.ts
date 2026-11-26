@@ -118,44 +118,180 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             const { front, back } = parseCardBlockBody(body);
             if (!front) return;
             const options = Array.isArray(attrs.options) ? attrs.options : [];
-            const answer = typeof attrs.answer === 'string' ? attrs.answer : undefined;
+            const answer = typeof attrs.answer === 'string' ? attrs.answer.trim() : undefined;
+            const correctIndex = resolveQuizAnswer(answer, options);
+            const reveal = typeof attrs.reveal === 'string' && /^(1|true|yes|on)$/i.test(attrs.reveal.trim());
 
-            const renderAnswerToggle = (host: HTMLElement) => {
-                const actions = host.createDiv({ cls: 'mgo-quiz-actions' });
-                const toggle = actions.createEl('button', { cls: 'mgo-quiz-reveal', text: '显示答案' });
+            const renderBack = (host: HTMLElement) => {
                 const answerEl = host.createDiv({ cls: 'mgo-quiz-answer' });
                 answerEl.hide();
                 if (back) {
                     void MarkdownRenderer.render(plugin.app, toHardBreaks(back), answerEl, ctx.sourcePath, child);
                 }
-                toggle.addEventListener('click', () => {
-                    const hidden = answerEl.style.display === 'none';
-                    if (hidden) answerEl.show(); else answerEl.hide();
-                    toggle.setText(hidden ? '收起答案' : '显示答案');
-                });
+                return answerEl;
             };
 
-            if (resolveQuizAnswer(answer, options) !== null) {
+            const renderActions = (host: HTMLElement) => {
+                const actions = host.createDiv({ cls: 'mgo-quiz-actions' });
+                const revealBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal', text: '显示答案' });
+                const resetBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal mgo-quiz-reset', text: '重做' });
+                resetBtn.hide();
+                return { revealBtn, resetBtn };
+            };
+
+            if (correctIndex !== null) {
                 const quiz = el.createDiv({ cls: 'mgo-quiz-card' });
                 const stem = quiz.createDiv({ cls: 'mgo-quiz-stem' });
                 void MarkdownRenderer.render(plugin.app, toHardBreaks(front), stem, ctx.sourcePath, child);
 
                 const list = quiz.createDiv({ cls: 'mgo-quiz-options' });
+                const rows: HTMLElement[] = [];
                 options.forEach((option, index) => {
-                    const row = list.createDiv({ cls: 'mgo-quiz-option' });
+                    const row = list.createDiv({ cls: 'mgo-quiz-option', attr: { role: 'button', tabindex: '0' } });
                     row.createSpan({ cls: 'mgo-quiz-key', text: String(index + 1) });
                     row.createSpan({ cls: 'mgo-quiz-text', text: option });
+                    rows.push(row);
                 });
-                renderAnswerToggle(quiz);
+
+                const feedback = quiz.createDiv({ cls: 'mgo-quiz-feedback' });
+                feedback.hide();
+                const { revealBtn, resetBtn } = renderActions(quiz);
+                const answerEl = renderBack(quiz);
+                let answered = false;
+
+                const grade = (picked: number | null) => {
+                    if (answered) return;
+                    answered = true;
+                    rows.forEach((row, index) => {
+                        row.addClass('is-locked');
+                        row.setAttribute('aria-disabled', 'true');
+                        if (index === correctIndex) row.addClass('is-correct');
+                        if (picked !== null && index === picked && index !== correctIndex) row.addClass('is-wrong');
+                    });
+                    feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
+                    if (picked === null) {
+                        feedback.setText('已显示答案');
+                        feedback.addClass('is-skipped');
+                    } else if (picked === correctIndex) {
+                        feedback.setText('回答正确');
+                        feedback.addClass('is-correct');
+                    } else {
+                        feedback.setText(`回答错误，正确答案：${correctIndex + 1}`);
+                        feedback.addClass('is-wrong');
+                    }
+                    feedback.show();
+                    answerEl.show();
+                    revealBtn.hide();
+                    resetBtn.show();
+                };
+
+                rows.forEach((row, index) => {
+                    row.addEventListener('click', () => grade(index));
+                    row.addEventListener('keydown', (evt: KeyboardEvent) => {
+                        if (evt.key !== 'Enter' && evt.key !== ' ') return;
+                        evt.preventDefault();
+                        grade(index);
+                    });
+                });
+                revealBtn.addEventListener('click', () => grade(null));
+                resetBtn.addEventListener('click', () => {
+                    answered = false;
+                    rows.forEach((row) => {
+                        row.removeClass('is-locked', 'is-correct', 'is-wrong');
+                        row.removeAttribute('aria-disabled');
+                    });
+                    feedback.hide();
+                    feedback.empty();
+                    feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
+                    answerEl.hide();
+                    revealBtn.show();
+                    resetBtn.hide();
+                });
                 return;
             }
 
-            const reveal = typeof attrs.reveal === 'string' && /^(1|true|yes|on)$/i.test(attrs.reveal.trim());
+            if (answer) {
+                const card = el.createDiv({ cls: 'mgo-quiz-card mgo-reveal-card' });
+                const stem = card.createDiv({ cls: 'mgo-quiz-stem' });
+                void MarkdownRenderer.render(plugin.app, toHardBreaks(front), stem, ctx.sourcePath, child);
+
+                const inputRow = card.createDiv({ cls: 'mgo-quiz-input-row' });
+                const input = inputRow.createEl('input', {
+                    cls: 'mgo-quiz-input',
+                    attr: { type: 'text', placeholder: '输入答案…', autocomplete: 'off', spellcheck: 'false' },
+                });
+                const checkBtn = inputRow.createEl('button', { cls: 'mgo-quiz-reveal', text: '检查' });
+
+                const feedback = card.createDiv({ cls: 'mgo-quiz-feedback' });
+                feedback.hide();
+                const { revealBtn, resetBtn } = renderActions(card);
+                const answerEl = renderBack(card);
+                const normalize = (value: string) => value.normalize('NFKC').replace(/\s+/g, '');
+                let answered = false;
+
+                const finish = (ok: boolean | null) => {
+                    if (answered) return;
+                    answered = true;
+                    input.disabled = true;
+                    checkBtn.disabled = true;
+                    feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
+                    if (ok === null) {
+                        feedback.setText('已显示答案');
+                        feedback.addClass('is-skipped');
+                    } else if (ok) {
+                        feedback.setText('回答正确');
+                        feedback.addClass('is-correct');
+                    } else {
+                        feedback.setText(`回答错误，正确答案：${answer}`);
+                        feedback.addClass('is-wrong');
+                    }
+                    feedback.show();
+                    answerEl.show();
+                    revealBtn.hide();
+                    resetBtn.show();
+                };
+
+                const check = () => {
+                    if (answered) return;
+                    const typed = normalize(input.value);
+                    if (!typed) return;
+                    finish(typed === normalize(answer));
+                };
+                checkBtn.addEventListener('click', check);
+                input.addEventListener('keydown', (evt: KeyboardEvent) => {
+                    if (evt.key !== 'Enter') return;
+                    evt.preventDefault();
+                    check();
+                });
+                revealBtn.addEventListener('click', () => finish(null));
+                resetBtn.addEventListener('click', () => {
+                    answered = false;
+                    input.disabled = false;
+                    input.value = '';
+                    checkBtn.disabled = false;
+                    feedback.hide();
+                    feedback.empty();
+                    feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
+                    answerEl.hide();
+                    revealBtn.show();
+                    resetBtn.hide();
+                    input.focus();
+                });
+                return;
+            }
+
             if (reveal && back) {
                 const card = el.createDiv({ cls: 'mgo-quiz-card mgo-reveal-card' });
                 const stem = card.createDiv({ cls: 'mgo-quiz-stem' });
                 void MarkdownRenderer.render(plugin.app, toHardBreaks(front), stem, ctx.sourcePath, child);
-                renderAnswerToggle(card);
+                const { revealBtn } = renderActions(card);
+                const answerEl = renderBack(card);
+                let shown = false;
+                revealBtn.addEventListener('click', () => {
+                    shown = !shown;
+                    if (shown) answerEl.show(); else answerEl.hide();
+                    revealBtn.setText(shown ? '收起答案' : '显示答案');
+                });
                 return;
             }
 
