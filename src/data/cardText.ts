@@ -69,7 +69,7 @@ export function parseCardBlockBody(body: string): { front: string; back: string 
 export interface CardAttributes {
     title?: string;
     id?: string;
-    /** 卡片类型：choice / input / basic；不写时按 options + answer 推断。 */
+    /** 卡片类型：single-choice / input / basic；不写时按 options + answer 推断。 */
     type?: string;
     options?: string[];
     /** 选择题正确答案：1 起始序号、A–J 字母，或选项原文。 */
@@ -83,7 +83,7 @@ export interface CardAttributes {
 export type QuizKind = 'choice' | 'input';
 
 const QUIZ_TYPE_ALIASES: Record<string, QuizKind | 'basic'> = {
-    choice: 'choice',
+    'single-choice': 'choice',
     quiz: 'choice',
     mc: 'choice',
     input: 'input',
@@ -96,7 +96,7 @@ const QUIZ_TYPE_ALIASES: Record<string, QuizKind | 'basic'> = {
 
 /**
  * 卡片类型：显式 `type:` 优先，没写时按数据推断。
- * - `choice` 需要 options + 可解析的 answer
+ * - `single-choice` 需要 options + 可解析的 answer
  * - `input` 需要 answer
  * - `basic` 明确当普通卡；无法满足声明的类型时退回普通卡（null）。
  */

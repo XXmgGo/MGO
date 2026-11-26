@@ -110,13 +110,14 @@ describe('code fence card syntax (pure helpers)', () => {
     it('resolves an explicit type before inferring from the data', () => {
         const options = ['増え', '増える'];
         expect(resolveQuizKind(undefined, options, '2')).toBe('choice');
+        expect(resolveQuizKind('single-choice', options, '2')).toBe('choice');
         expect(resolveQuizKind('choice', options, '2')).toBe('choice');
         expect(resolveQuizKind('QUIZ', options, 'B')).toBe('choice');
         expect(resolveQuizKind('input', undefined, '増える')).toBe('input');
         expect(resolveQuizKind('blank', undefined, '増える')).toBe('input');
         expect(resolveQuizKind(undefined, undefined, '増える')).toBe('input');
         expect(resolveQuizKind('basic', options, '2')).toBeNull();
-        expect(resolveQuizKind('choice', options, '9')).toBeNull();
+        expect(resolveQuizKind('single-choice', options, '9')).toBeNull();
         expect(resolveQuizKind('input', undefined, undefined)).toBeNull();
     });
 
@@ -220,7 +221,7 @@ describe('DataManager parses code fence cards', () => {
 
     it('stores title, options, answer and hint, and keeps an explicit id stable', async () => {
         const block = (front: string) =>
-            '```mgo\n---\ntitle: 单词卡\nid: fsrs-word-1\ntype: choice\noptions: [食べる, 飲む]\nanswer: 1\nhint: 动词\n---\n' + front + '\n---\n吃\n```';
+            '```mgo\n---\ntitle: 单词卡\nid: fsrs-word-1\ntype: single-choice\noptions: [食べる, 飲む]\nanswer: 1\nhint: 动词\n---\n' + front + '\n---\n吃\n```';
         const first = new DataManager(createPlugin('# 牌组\n\n' + block('食べる')) as never);
         await first.buildIndex();
         const card = first.getAllCards()[0];
