@@ -182,6 +182,30 @@ function createPlugin(markdown: string, path = 'Deck.md') {
     };
 }
 
+function createMultiFilePlugin(files: Array<{ path: string; markdown: string; tags: string[] }>) {
+    const byPath = new Map(files.map(f => [f.path, f]));
+    const fileObjs = files.map(f => ({ path: f.path, basename: f.path.replace(/\.md$/, ''), stat: { mtime: 1 } }));
+    return {
+        app: {
+            vault: {
+                getMarkdownFiles: () => fileObjs,
+                read: async (file: { path: string }) => byPath.get(file.path)?.markdown ?? '',
+                on: () => () => {},
+            },
+            metadataCache: {
+                getFileCache: (file: { path: string }) => ({ frontmatter: { tags: byPath.get(file.path)?.tags ?? [] } }),
+                getCache: () => null,
+            },
+            workspace: { getLeavesOfType: () => [] },
+        },
+        settings: { ...DEFAULT_SETTINGS, usePouchDB: false, deckTags: ['日本語'] },
+        loadData: async () => null,
+        saveData: async () => undefined,
+        saveSettings: async () => undefined,
+        refreshDashboardView: () => {},
+    };
+}
+
 describe('DataManager parses code fence cards', () => {
     it('registers a multi-line basic card and keeps line breaks', async () => {
         const md = '# 牌组\n\n' + fence('mgo', '私は3年も国へ帰っていないので、\n早く家族に会いたくてたまらない。\n---\n我已经3年没有回家了，\n非常想早点见到家人。');
@@ -256,6 +280,18 @@ describe('DataManager parses code fence cards', () => {
         expect(stats.new).toBe(0);
         expect(stats.due).toBe(0);
         expect(stats.learning).toBe(1);
+    });
+
+    it('dedupes cards across nested decks in the all-decks queue', async () => {
+        const dm = new DataManager(createMultiFilePlugin([
+            { path: 'a.md', markdown: '# A\n\n```mgo\nA 正面\n---\nA 背面\n```', tags: ['日本語'] },
+            { path: 'b.md', markdown: '# B\n\n```mgo\nB 正面\n---\nB 背面\n```', tags: ['日本語/例文'] },
+        ]) as never);
+        await dm.buildIndex();
+        expect(dm.getDecks()).toHaveLength(2);
+
+        const queue = dm.getAllDecksQueue();
+        expect(queue.map(c => c.front).sort()).toEqual(['A 正面', 'B 正面']);
     });
 
     it('uses explicit ids for cloze cards too', async () => {

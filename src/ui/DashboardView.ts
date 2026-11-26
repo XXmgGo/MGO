@@ -76,8 +76,7 @@ export class DashboardView extends ItemView {
         };
 
         const studyAllBtn = createDashBtn('play', '复习全部到期', () => {
-            const allDueCards = this.plugin.dataManager.getDecks()
-                .flatMap((d: Deck) => this.plugin.dataManager.getReviewQueue(d.id));
+            const allDueCards = this.plugin.dataManager.getAllDecksQueue();
             if (allDueCards.length === 0) {
                 const limited = this.plugin.dataManager.getDecks().some((d: Deck) => d.stats.new > 0 || d.stats.due > 0);
                 new Notice(limited
