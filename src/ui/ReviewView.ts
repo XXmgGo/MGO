@@ -3,6 +3,7 @@ import { Rating, State } from 'ts-fsrs';
 import type { Card } from '../data/types';
 import { VIEW_ICON_NAME, VIEW_TYPE_REVIEW, isInPlaceImageCard, toHardBreaks } from '../data/constants';
 import { openCardSource } from './cardSource';
+import { resolveAudioSrc } from './audioSrc';
 
 type FSRSFlashcardsPlugin = import('../plugin/main').FSRSFlashcardsPlugin;
 
@@ -582,7 +583,7 @@ export class ReviewView extends ItemView {
 
     /** 播放 / 停止当前卡片的语音。 */
     private toggleAudio(): void {
-        const url = this.getCurrentCard()?.audio;
+        const url = resolveAudioSrc(this.app, this.getCurrentCard()?.audio);
         if (!url) return;
         if (this.audioPlayer) { this.stopAudio(); return; }
 

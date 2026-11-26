@@ -2,6 +2,7 @@ import { MarkdownRenderer, MarkdownRenderChild, Notice, setIcon, type Plugin } f
 import { toHardBreaks } from '../data/constants';
 import { CARD_FENCE_LANGS, hasCloze, parseCardBlockAttributes, parseCardBlockBody, revealCloze } from '../data/cardText';
 import { editCardAtSource } from './editCardSource';
+import { resolveAudioSrc } from './audioSrc';
 
 let currentAudio: HTMLAudioElement | null = null;
 
@@ -105,7 +106,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             const body = content.trim();
             if (!body) return;
 
-            const audioUrl = typeof attrs.audio === 'string' ? attrs.audio.trim() : '';
+            const audioUrl = resolveAudioSrc(plugin.app, typeof attrs.audio === 'string' ? attrs.audio : '');
             if (audioUrl) attachAudioButton(el, audioUrl);
 
             if (hasCloze(body)) {

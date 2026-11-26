@@ -180,4 +180,25 @@ describe('card code block processor', () => {
         expect(el.classList.contains('mgo-card-has-audio')).toBe(false);
         expect(el.querySelector('.mgo-card-audio')).toBeNull();
     });
+
+    it('adds the audio button for a vault: local path', async () => {
+        const app = { vault: { adapter: { getResourcePath: (path: string) => `app://vault/${path}` } } };
+        const handler = createProcessor(app)['mgo'];
+        const el = document.createElement('div');
+        handler('---\ntitle: 标题\naudio: vault:_resource/a.mp3\n---\n正面\n---\n背面', el, { sourcePath: 'x.md', addChild: () => {} });
+        await flush();
+
+        expect(el.classList.contains('mgo-card-has-audio')).toBe(true);
+        expect(el.querySelector('.mgo-card-audio')).not.toBeNull();
+    });
+
+    it('hides the audio button when a local path cannot be resolved', async () => {
+        const handler = createProcessor({})['mgo'];
+        const el = document.createElement('div');
+        handler('---\ntitle: 标题\naudio: vault:_resource/a.mp3\n---\n正面\n---\n背面', el, { sourcePath: 'x.md', addChild: () => {} });
+        await flush();
+
+        expect(el.classList.contains('mgo-card-has-audio')).toBe(false);
+        expect(el.querySelector('.mgo-card-audio')).toBeNull();
+    });
 });
