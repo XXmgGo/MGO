@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **Code fence card syntax:** Cards are now written as ` ```mgo ` code blocks, with a standalone `---` line separating the front from the back (both sides accept multiple lines). `mgo-reverse` and `mgo-typein` variants cover reversed and type-in cards. Rendering goes through Obsidian's native code-block processor, so line breaks inside cards display correctly in both reading view and live preview.
 - **Card attributes:** an optional metadata header at the top of an `mgo` block (a `---` pair, frontmatter style). `id` gives the card a stable identity so edits keep review history; `title` names the card in the dashboard's expandable card list; `options` and `hint` are stored for upcoming multiple-choice and hint features. Attributes are not rendered in the note. Unknown keys are preserved.
+- **Refresh the current card (R):** a refresh button in the review top bar and the `R` shortcut re-read the card's note and replace the queued card with the edited version, so content changes show up without leaving the session.
 
 ### Changed
 - **Review opens as a workspace tab:** review sessions now live in their own tab instead of a full-screen modal, so they stay open next to your notes. The top bar gains an "open source note" button; it and the `E` shortcut open the card's note in another tab and scroll to the card block without closing the review. Escape and the ✕ button close the review tab.

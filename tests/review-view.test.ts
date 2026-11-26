@@ -212,6 +212,27 @@ describe('ReviewView (tab)', () => {
         expect(leaf.detach).toHaveBeenCalled();
     });
 
+    it('refreshes the current card from its note', async () => {
+        const card = makeCard('c1', 'notes/Deck.md');
+        card.front = '旧正面';
+        card.back = '旧背面';
+        const { view } = await openView([card]);
+
+        const internal = view as unknown as {
+            plugin: { dataManager: Record<string, unknown>; refreshDashboardView: () => void };
+            app: { vault: { getAbstractFileByPath: (p: string) => unknown } };
+        };
+        const refreshed = { ...card, id: 'c1-refreshed', front: '新正面', back: '新背面' };
+        internal.plugin.dataManager.getAllCards = () => [refreshed];
+        internal.plugin.dataManager.updateFile = vi.fn(async () => true);
+        internal.app.vault.getAbstractFileByPath = () => new TFile('notes/Deck.md');
+
+        await click(view.contentEl.querySelector('[aria-label="刷新卡片（R）"]') as HTMLElement);
+
+        expect(internal.plugin.dataManager.updateFile).toHaveBeenCalled();
+        expect(view.contentEl.querySelector('.fsrs-card-front')!.textContent).toContain('新正面');
+    });
+
     it('handles in-place image cards with tap-to-flip', async () => {
         const card: Card = {
             id: 'image-card-1', deckId: 'deck-1', filePath: 'anatomy.md', type: 'basic', originalText: '...',

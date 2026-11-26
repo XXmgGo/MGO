@@ -51,6 +51,7 @@ Each button shows a small interval hint: `<1d` for under a day, then days (`4d`)
 | `1`, `2`, `3`, `4` | Answer shown | Rate Again, Hard, Good, Easy |
 | `Space`, `Enter`, `P` or `F` | Image card, answer shown | Toggle between the question image and the answer image |
 | `E` | Any time | Open this card's note in another tab at the card's position; the review tab stays open |
+| `R` | Any time | Re-read the current card from its note and update the question and answer |
 | `⌘Z` / `Z` | After the first rating | Undo the last rating (also the dimmed **⌘Z 撤销** shortcut in the footer) |
 | `Esc` | Any time | Close the review tab |
 

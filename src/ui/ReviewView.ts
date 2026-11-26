@@ -1,4 +1,4 @@
-import { ButtonComponent, Component, ItemView, MarkdownRenderer, Notice, WorkspaceLeaf, setIcon, type ViewStateResult } from 'obsidian';
+import { ButtonComponent, Component, ItemView, MarkdownRenderer, Notice, TFile, WorkspaceLeaf, setIcon, type ViewStateResult } from 'obsidian';
 import { Rating, State } from 'ts-fsrs';
 import type { Card } from '../data/types';
 import { VIEW_ICON_NAME, VIEW_TYPE_REVIEW, isInPlaceImageCard, toHardBreaks } from '../data/constants';
@@ -135,6 +135,10 @@ export class ReviewView extends ItemView {
         const progress = topbar.createDiv({ cls: 'fsrs-review-progress' });
         this.progressFill = progress.createDiv({ cls: 'fsrs-review-progress-fill' });
 
+        const refreshBtn = topbar.createDiv({ cls: 'fsrs-review-icon-btn', attr: { 'aria-label': '刷新卡片（R）' } });
+        setIcon(refreshBtn, 'refresh-cw');
+        refreshBtn.addEventListener('click', () => void this.refreshCurrentCard());
+
         const sourceBtn = topbar.createDiv({ cls: 'fsrs-review-icon-btn', attr: { 'aria-label': '打开原文笔记' } });
         setIcon(sourceBtn, 'file-text');
         sourceBtn.addEventListener('click', () => void this.openCardSource());
@@ -190,6 +194,13 @@ export class ReviewView extends ItemView {
         editHint.createEl('kbd', { text: 'E' });
         editHint.createSpan({ text: ' 编辑' });
         editHint.addEventListener('click', () => void this.openCardSource());
+
+        hints.createSpan({ cls: 'fsrs-review-hint-divider', text: '·' });
+
+        const refreshHint = hints.createSpan({ cls: 'fsrs-review-hint', attr: { 'aria-label': '刷新卡片' } });
+        refreshHint.createEl('kbd', { text: 'R' });
+        refreshHint.createSpan({ text: ' 刷新' });
+        refreshHint.addEventListener('click', () => void this.refreshCurrentCard());
 
         hints.createSpan({ cls: 'fsrs-review-hint-divider', text: '·' });
 
@@ -289,6 +300,38 @@ export class ReviewView extends ItemView {
         const card = this.getCurrentCard();
         if (!card) return;
         await openCardSource(this.app, card);
+    }
+
+    /** 重新读取当前卡片的原文笔记，替换队列里的旧内容并重新渲染。 */
+    private async refreshCurrentCard(): Promise<void> {
+        const card = this.getCurrentCard();
+        if (!card) return;
+
+        const file = this.app.vault.getAbstractFileByPath(card.filePath);
+        if (!(file instanceof TFile)) {
+            new Notice('找不到这张卡片的原文笔记。');
+            return;
+        }
+
+        const oldFileCards = this.plugin.dataManager.getAllCards().filter((c) => c.filePath === card.filePath);
+        const oldIndex = oldFileCards.findIndex((c) => c.id === card.id);
+
+        await this.plugin.dataManager.updateFile(file);
+
+        const pool = this.plugin.dataManager.getAllCards().filter((c) => c.filePath === card.filePath);
+        const next = pool.find((c) => c.id === card.id)
+            ?? pool.find((c) => c.front === card.front && c.back === card.back)
+            ?? (oldIndex >= 0 ? pool[oldIndex] : undefined)
+            ?? pool[0];
+        if (!next) {
+            new Notice('原文里已经找不到这张卡片了。');
+            return;
+        }
+
+        this.queue[this.currentCardIndex] = next;
+        this.plugin.refreshDashboardView();
+        new Notice('已刷新卡片内容');
+        void this.showNextCard();
     }
 
     private toggleMoreMenu() {
@@ -588,6 +631,11 @@ export class ReviewView extends ItemView {
         if (evt.key.toLowerCase() === 'e' && !evt.shiftKey && !evt.altKey && !evt.ctrlKey && !evt.metaKey) {
             evt.preventDefault();
             void this.openCardSource();
+            return;
+        }
+        if (evt.key.toLowerCase() === 'r' && !evt.shiftKey && !evt.altKey && !evt.ctrlKey && !evt.metaKey) {
+            evt.preventDefault();
+            void this.refreshCurrentCard();
             return;
         }
         if (evt.key.toLowerCase() === 'z' && !evt.shiftKey && !evt.altKey) {
