@@ -1029,6 +1029,8 @@ export class DataManager {
         }
 
         this.updateGamification(now, rating, newFsrsData);
+        // 每次评分后重算牌组统计：否则仪表盘的「到期/新卡」会一直停在打开插件时的数字。
+        this.recalculateAllDeckStats();
         void this.save();
     }
 

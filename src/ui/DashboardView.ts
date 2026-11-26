@@ -13,6 +13,8 @@ export class DashboardView extends ItemView {
     private plugin: FSRSFlashcardsPlugin;
     /** 展开文件夹时才渲染的卡片列表（大牌组避免一次性建太多 DOM）。 */
     private pendingCardLists = new Map<HTMLElement, () => void>();
+    /** 记住展开过的文件夹，重渲染（切回标签页）后保持原样。 */
+    private expandedPaths = new Set<string>();
     constructor(leaf: WorkspaceLeaf, plugin: FSRSFlashcardsPlugin) {
         super(leaf);
         this.plugin = plugin;
@@ -20,7 +22,15 @@ export class DashboardView extends ItemView {
     getViewType(): string { return VIEW_TYPE_DASHBOARD; }
     getDisplayText(): string { return 'MGO 牌组'; }
     getIcon(): string { return VIEW_ICON_NAME; }
-    async onOpen() { this.render(); }
+    async onOpen() {
+        // 复习/浏览标签页评分后统计会变，切回仪表盘时按「此刻」重算并重绘一次。
+        this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf) => {
+            if (leaf !== this.leaf) return;
+            this.plugin.dataManager.recalculateAllDeckStats();
+            this.render();
+        }));
+        this.render();
+    }
 
     render() {
         this.contentEl.empty();
@@ -242,11 +252,13 @@ export class DashboardView extends ItemView {
         const decksContainer = folderContainer.createDiv({ cls: 'fsrs-folder-decks' });
         decksContainer.hide();
 
-        let isCollapsed = true;
-        folderHeader.addClass('is-collapsed');
+        let isCollapsed = !this.expandedPaths.has(path);
+        folderHeader.addClass(isCollapsed ? 'is-collapsed' : 'is-expanded');
+        folderHeader.setAttribute('aria-expanded', (!isCollapsed).toString());
 
         const toggleFolder = () => {
             isCollapsed = !isCollapsed;
+            if (isCollapsed) this.expandedPaths.delete(path); else this.expandedPaths.add(path);
             folderHeader.toggleClass('is-collapsed', isCollapsed);
             folderHeader.toggleClass('is-expanded', !isCollapsed);
             folderHeader.setAttribute('aria-expanded', (!isCollapsed).toString());
@@ -272,6 +284,14 @@ export class DashboardView extends ItemView {
         // 递归渲染子节点（挂进本节点的展开容器内）
         for (const child of this.childPaths(path, nodePaths)) {
             this.renderTagNode(child, deckByPath, nodePaths, decksContainer);
+        }
+
+        // 上次是展开状态：恢复图标与子内容
+        if (!isCollapsed) {
+            decksContainer.show();
+            setIcon(chevronIcon, 'chevron-down');
+            setIcon(folderIcon, 'folder-open');
+            this.flushCardLists(decksContainer);
         }
     }
 

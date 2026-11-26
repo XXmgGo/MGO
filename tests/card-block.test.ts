@@ -43,6 +43,7 @@ vi.mock('../src/database/PouchDBManager', () => {
 });
 
 import { describe, it, expect, vi } from 'vitest';
+import { Rating } from 'ts-fsrs';
 import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, revealCloze } from '../src/data/cardText';
 import { DataManager } from '../src/data/DataManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
@@ -212,6 +213,20 @@ describe('DataManager parses code fence cards', () => {
         const dm = new DataManager(createPlugin(md) as never);
         await dm.buildIndex();
         expect(dm.getAllCards()[0].audio).toBe('https://cdn.example.com/a.mp3');
+    });
+
+    it('recalculates deck stats right after a rating', async () => {
+        const md = '# 牌组\n\n```mgo\n正面\n---\n背面\n```';
+        const dm = new DataManager(createPlugin(md) as never);
+        await dm.buildIndex();
+        expect(dm.getDecks()[0].stats.new).toBe(1);
+
+        dm.updateCard(dm.getAllCards()[0], Rating.Good);
+
+        const stats = dm.getDecks()[0].stats;
+        expect(stats.new).toBe(0);
+        expect(stats.due).toBe(0);
+        expect(stats.learning).toBe(1);
     });
 
     it('uses explicit ids for cloze cards too', async () => {
