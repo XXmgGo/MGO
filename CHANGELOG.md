@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Code fence card syntax:** Cards are now written as ` ```mgo ` code blocks, with a standalone `---` line separating the front from the back (both sides accept multiple lines). `mgo-reverse` and `mgo-typein` variants cover reversed and type-in cards. Rendering goes through Obsidian's native code-block processor, so line breaks inside cards display correctly in both reading view and live preview.
+- **Card attributes:** an optional metadata header at the top of an `mgo` block (a `---` pair, frontmatter style). `id` gives the card a stable identity so edits keep review history; `title` names the card in the dashboard's expandable card list; `options` and `hint` are stored for upcoming multiple-choice and hint features. Attributes are not rendered in the note. Unknown keys are preserved.
+
+### Changed
+- **Review opens as a workspace tab:** review sessions now live in their own tab instead of a full-screen modal, so they stay open next to your notes. The top bar gains an "open source note" button; it and the `E` shortcut open the card's note in another tab and scroll to the card block without closing the review. Escape and the ✕ button close the review tab.
+- **Browse opens as a workspace tab:** the card browser is now a tab as well, with the deck name, position counter, a source-note link, previous/next buttons and the same jump-to-card behaviour. The browse modal was removed.
+- **Plain in-note cards with an MGO edit badge:** cards render as ordinary text (no background box), with a small `MGO` badge at the top-right; clicking it moves the editor cursor into the fence so the source is editable (switching the note to source mode when needed). Obsidian's own code-block button is hidden for card fences.
+- **Review window redesign:** a clean full-screen layout with a custom top bar (close, deck name, queue-mode pill, progress bar, overflow menu), a centered rounded card panel, a full-width **Show answer** button with a Space-key hint, and footer shortcuts (E edit, ⌘Z undo, Esc finish). Undo stays visible but dimmed until a rating exists.
+- All card templates (commands, guided modal, import) now generate `mgo` fences instead of HTML tags.
+- Docs, in-app help and the settings cheat sheet describe the fence syntax.
+
+### Fixed
+- **Crash on card creation:** The live-preview tag-hiding extension could emit replace decorations that crossed line breaks, which CodeMirror forbids; it caused `Decorations that replace line breaks...` and a cascade of viewport `TypeError`s (`scanTile`, `preserve`). The extension was removed in favor of the code-block renderer.
+
 ## [1.2.1] - 2026-10-31
 
 This release adds explicit card ending delimiters, sibling card burying, per-deck frontmatter settings overrides, leech detection, atomic review log batching, automatic streak and XP recovery from review logs, cloze hint support, and fixes review window button layout, comment-based breadcrumbs, and multi-cloze card formatting.

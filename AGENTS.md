@@ -132,17 +132,16 @@ Use the 4-tab pattern from `FSRSSettingsTab`:
 - Do not apply `stroke: none` to `svg.mgo-icon` in `styles.css`
 
 ### Card syntax & formats
-1. **Basic**: `---card---` followed by `---` divider and optional `---end---`
-2. **Single-line**: `Question::Answer`
-3. **Reversed**: `Question:::Answer`
-4. **Cloze deletion**: `==c1::hidden text==`
-5. **In-place image occlusion**: `![[image-front.png]]::![[image-back.png]]` (auto-detected, in-place peek toggle)
-6. **Type-in active recall**: `?type` flag in single-line (`Q::A ?type`) or block format (`---card--- ?type`)
-7. **Whole-note review**: `#review` tag in frontmatter or body
+1. **Basic**: ` ```mgo ` fence, front and back separated by a standalone `---` line (both sides multi-line)
+2. **Reversed**: ` ```mgo-reverse ` fence (front/back swapped at review time)
+3. **Type-in active recall**: ` ```mgo-typein ` fence
+4. **Cloze deletion**: `==c1::hidden text==` (also `==c1::answer::hint==`) inside an `mgo` fence; one card per number
+5. **In-place image occlusion**: an `mgo` fence whose front/back are each a single `![[image.png]]` link (auto-detected, in-place peek toggle)
+6. **Whole-note review**: `#review` tag in frontmatter or body
 
 ### Card IDs
-- With block ID (`^abc123`): `deckId::blockId`
-- Without: `cyrb53hex(filePath + '::' + front)` or `cyrb53hex(filePath + '::' + paragraph + '::' + clozeNum)`
+- Code fence cards: `cyrb53hex('block::' + filePath + '::' + front + '::' + back)`; cloze: `cyrb53hex('block::' + filePath + '::' + body) + '-c<N>'`
+- Card IDs are content hashes: editing a card resets its history; renaming a note inside Obsidian re-keys the IDs positionally
 
 ### FSRS state machine
 - `State.New` -> no fsrsData or state is New

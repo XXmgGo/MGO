@@ -7,13 +7,12 @@ All core features are implemented and functional:
 ### Phase 1 — Foundation (completed)
 - [x] Modular code structure (`src/data/`, `src/ui/`, `src/plugin/`)
 - [x] Test suite — Vitest, 83 tests, Obsidian mocks and a real PouchDB on `fake-indexeddb`
-- [x] Single-line card syntax (`Q::A` basic, `Q:::A` reversed)
-- [x] Stable block IDs for single-line cards (`^blockId` suffix)
+- [x] Code fence card syntax (` ```mgo ` / ` ```mgo-reverse ` / ` ```mgo-typein `, `---` splits front/back)
 - [x] Whole-note review (`#review` tag system)
 - [x] Daily review limits with cross-session load balancing
 - [x] Card context breadcrumbs (heading hierarchy displayed in review)
 - [x] FSRS-5 scheduling (ts-fsrs 4.7.1, 19-weight default parameter set)
-- [x] Basic card format (`---card---`)
+- [x] Basic card format (` ```mgo ` fence)
 - [x] Cloze deletion format (`==c1::text==`)
 - [x] Dashboard with deck list, folder grouping, stat pills
 - [x] Full-screen review modal with keyboard shortcuts + swipe gestures
@@ -32,7 +31,7 @@ All core features are implemented and functional:
 ### Phase 2 — Differentiators (in progress)
 - [x] FSRS weight optimizer (evolutionary strategy, pure TypeScript)
 - [x] Swipe gesture review (left/right/up/down, pointer events)
-- [x] Type-in-answer cards (active recall typing with ?type flag)
+- [x] Type-in-answer cards (` ```mgo-typein ` fence, active recall typing)
 - [x] In-place image occlusion display (auto-detect, tap-to-flip/peek, responsive viewport containment)
 - [x] Guided card creation modal (`CreateCardModal` with type dropdown and live preview)
 - [x] Guided deck creation modal (`CreateDeckModal` with auto `#flashcards` tagging)
