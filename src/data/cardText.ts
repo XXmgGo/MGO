@@ -89,6 +89,8 @@ export interface CardAttributes {
     /** 选择题正确答案：1 起始序号、A–J 字母，或选项原文。 */
     answer?: string;
     hint?: string;
+    /** 详解笔记名（通常是以正确句子命名的笔记）：题卡作答后可打开。 */
+    detail?: string;
     /** 语音地址：卡片右下角显示小喇叭，点击播放。 */
     audio?: string;
     [key: string]: string | string[] | undefined;

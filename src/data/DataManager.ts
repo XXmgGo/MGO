@@ -917,6 +917,19 @@ export class DataManager {
         return this.composeQueue(this.scopeIdsByTagPath(tagPath), undefined);
     }
 
+    /**
+     * 所有牌组合并后的队列（仪表盘「复习全部到期」用）。
+     * 父子牌组的范围互相重叠，必须先按卡片 id 去重，每日上限也只扣一次，
+     * 否则同一张卡会按「经过几个牌组」重复进入队列。
+     */
+    getAllDecksQueue(): Card[] {
+        const ids = new Set<string>();
+        for (const deck of this.decks.values()) {
+            for (const id of this.deckScopeIds(deck)) ids.add(id);
+        }
+        return this.composeQueue(ids);
+    }
+
     private composeQueue(scopeIds: Set<string>, settings?: DeckSettings): Card[] {
         const now = new Date();
         const allCards = Array.from(scopeIds)

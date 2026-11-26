@@ -134,6 +134,7 @@ High blood pressure is a common illness among the elderly.
 | `id` | text | Stable card identity; editing the front or back keeps its review history. A UUID per card is a good choice |
 | `title` | text | Display name in the dashboard card list under the deck (expand a folder); falls back to the front text |
 | `type` | text | Card type: `single-choice`, `input` or `basic`; inferred from the data when omitted |
+| `detail` | text | Link target of a detail note (often named after the answered sentence); question cards get a 详解 button that opens it |
 | `options` | list | Multiple-choice candidates; with `answer` set, review renders them as clickable options |
 | `answer` | text | Correct option: a 1-based index, a letter A–J, or the option text |
 | `reveal` | text | `true` folds the back into a "Show answer" toggle in the note; review is unchanged |

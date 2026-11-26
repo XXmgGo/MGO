@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 const processors = new Map<string, (source: string, el: HTMLElement, ctx: unknown) => void>();
+const openLinkTextSpy = vi.fn();
 
 vi.mock('obsidian', () => {
     class MarkdownRenderChild {
@@ -49,8 +50,12 @@ beforeAll(() => {
         for (const [k, v] of Object.entries(props)) this.style.setProperty(k, v);
     };
 
+    const appMock = {
+        metadataCache: { getFirstLinkpathDest: (link: string) => (link === '详解句' ? { path: '详解句.md' } : null) },
+        workspace: { openLinkText: openLinkTextSpy },
+    };
     const plugin = {
-        app: {},
+        app: appMock,
         registerMarkdownCodeBlockProcessor: (lang: string, cb: unknown) => {
             processors.set(lang, cb as never);
         },
@@ -108,6 +113,28 @@ describe('note quiz rendering', () => {
         reset.click();
         expect(options[0].classList.contains('is-wrong')).toBe(false);
         expect((el.querySelector('.mgo-quiz-answer') as HTMLElement).style.display).toBe('none');
+    });
+
+    it('opens the detail note when the card declares detail', async () => {
+        const source = [
+            '---',
+            'type: single-choice',
+            'options: [増え, 増える]',
+            'answer: 2',
+            'detail: 详解句',
+            '---',
+            '学生は（　）一方だ。',
+            '---',
+            '正解：増える',
+            '句意：学生一直在增加。',
+        ].join('\n');
+        openLinkTextSpy.mockClear();
+        const el = await render(source);
+        (el.querySelectorAll('.mgo-quiz-option')[1] as HTMLElement).click();
+        const btn = Array.from(el.querySelectorAll('.mgo-quiz-reveal')).find((b) => b.textContent === '详解') as HTMLElement;
+        expect(btn.style.display).not.toBe('none');
+        btn.click();
+        expect(openLinkTextSpy).toHaveBeenCalledWith('详解句', 'note.md', true);
     });
 
     it('shows the 详解 button only after grading and toggles the analysis', async () => {

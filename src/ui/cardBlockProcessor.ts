@@ -123,6 +123,10 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             const correctIndex = resolveQuizAnswer(answer, options);
             const reveal = typeof attrs.reveal === 'string' && /^(1|true|yes|on)$/i.test(attrs.reveal.trim());
 
+            const detailTarget = typeof attrs.detail === 'string' ? attrs.detail.trim() : '';
+            const detailFile = detailTarget
+                ? plugin.app.metadataCache?.getFirstLinkpathDest?.(detailTarget, ctx.sourcePath) ?? null
+                : null;
             const split = splitQuizBack(back);
             const renderBack = (host: HTMLElement, useSplit: boolean) => {
                 const answerEl = host.createDiv({ cls: 'mgo-quiz-answer' });
@@ -194,7 +198,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     feedback.show();
                     answerEl.show();
                     revealBtn.hide();
-                    if (detailEl) detailBtn.show();
+                    if (detailEl || detailFile) detailBtn.show();
                     resetBtn.show();
                 };
 
@@ -208,6 +212,10 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 });
                 revealBtn.addEventListener('click', () => grade(null));
                 detailBtn.addEventListener('click', () => {
+                    if (detailFile && detailTarget) {
+                        void plugin.app.workspace.openLinkText(detailTarget, ctx.sourcePath, true);
+                        return;
+                    }
                     if (!detailEl) return;
                     detailOpen = !detailOpen;
                     if (detailOpen) detailEl.show(); else detailEl.hide();
@@ -272,7 +280,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     feedback.show();
                     answerEl.show();
                     revealBtn.hide();
-                    if (detailEl) detailBtn.show();
+                    if (detailEl || detailFile) detailBtn.show();
                     resetBtn.show();
                 };
 
@@ -290,6 +298,10 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 });
                 revealBtn.addEventListener('click', () => finish(null));
                 detailBtn.addEventListener('click', () => {
+                    if (detailFile && detailTarget) {
+                        void plugin.app.workspace.openLinkText(detailTarget, ctx.sourcePath, true);
+                        return;
+                    }
                     if (!detailEl) return;
                     detailOpen = !detailOpen;
                     if (detailOpen) detailEl.show(); else detailEl.hide();
