@@ -44,7 +44,7 @@ vi.mock('../src/database/PouchDBManager', () => {
 
 import { describe, it, expect, vi } from 'vitest';
 import { Rating } from 'ts-fsrs';
-import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../src/data/cardText';
+import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, resolveQuizKind, revealCloze, splitQuizBack } from '../src/data/cardText';
 import { DataManager } from '../src/data/DataManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
@@ -263,5 +263,18 @@ describe('DataManager parses code fence cards', () => {
         const dm = new DataManager(createPlugin(md) as never);
         await dm.buildIndex();
         expect(dm.getAllCards()[0].id).toMatch(/::fsrs-cl-1-1$/);
+    });
+});
+describe('splitQuizBack', () => {
+    it('splits the answer line from the analysis', () => {
+        const { answer, detail } = splitQuizBack('正解：② 増える\n句意：学生一直在增加。\n考察：「一方だ」接辞书形。');
+        expect(answer).toBe('正解：② 増える');
+        expect(detail).toContain('考察');
+    });
+
+    it('keeps a back without an answer line as detail', () => {
+        const { answer, detail } = splitQuizBack('ただの背面');
+        expect(answer).toBe('');
+        expect(detail).toBe('ただの背面');
     });
 });

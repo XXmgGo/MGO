@@ -50,6 +50,20 @@ export function parseCardBlockBody(body: string): { front: string; back: string 
 }
 
 /**
+ * 把题卡背面拆成“答案行”和“详解”：首行是 `正解：…`／`答案：…` 时，
+ * 答案行单独显示，其余（句意、考察…）收进「详解」。不像答案行就整段当详解。
+ */
+export function splitQuizBack(back: string): { answer: string; detail: string } {
+    const lines = back.split(/\r?\n/);
+    let i = 0;
+    while (i < lines.length && !lines[i].trim()) i++;
+    if (i >= lines.length || !/^\s*(正解|答案)\s*[：:]/.test(lines[i])) {
+        return { answer: '', detail: back.trim() };
+    }
+    return { answer: lines[i].trim(), detail: lines.slice(i + 1).join('\n').trim() };
+}
+
+/**
  * 卡片属性（写在块顶部的一对 `---` 之间）：
  *
  * ```mgo
