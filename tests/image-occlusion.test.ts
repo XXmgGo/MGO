@@ -338,10 +338,10 @@ describe('Card parsing for image occlusion cards', () => {
         const plugin = createMockPlugin();
         const dm = plugin.dataManager;
         plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-            tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
+            frontmatter: { MGO: 'flashcards' },
         });
         plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
+MGO: flashcards
 ---
 
 \`\`\`mgo\n![[heart-occluded.png]]\n---\n![[heart-revealed.png]]\n\`\`\`
@@ -359,10 +359,10 @@ tags: [flashcards]
         const plugin = createMockPlugin();
         const dm = plugin.dataManager;
         plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-            tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
+            frontmatter: { MGO: 'flashcards' },
         });
         plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
+MGO: flashcards
 ---
 
 \`\`\`mgo\n![[cell-mask.svg|500]]\n---\n![[cell-unmasked.svg|500]]\n\`\`\`
@@ -379,10 +379,10 @@ tags: [flashcards]
         const plugin = createMockPlugin();
         const dm = plugin.dataManager;
         plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-            tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
+            frontmatter: { MGO: 'flashcards' },
         });
         plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
+MGO: flashcards
 ---
 
 \`\`\`mgo
@@ -403,10 +403,10 @@ tags: [flashcards]
         const plugin = createMockPlugin();
         const dm = plugin.dataManager;
         plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-            tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
+            frontmatter: { MGO: 'flashcards' },
         });
         plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
+MGO: flashcards
 ---
 
 \`\`\`mgo-reverse

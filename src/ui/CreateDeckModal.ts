@@ -53,7 +53,7 @@ export class CreateDeckModal extends Modal {
     private async handleCreate() {
         const cleanTag = this.tagPath.replace(/^#/, '').trim();
         if (!cleanTag) {
-            new Notice('请输入牌组标签路径。');
+            new Notice('请输入牌组的 MGO 路径。');
             return;
         }
 
@@ -61,7 +61,7 @@ export class CreateDeckModal extends Modal {
         const lower = cleanTag.toLowerCase();
         const isUnderRoot = roots.some(r => lower === r || lower.startsWith(r + '/'));
         if (!isUnderRoot) {
-            new Notice(`标签需以已配置的牌组根标签开头（${roots.join('、')}）。`);
+            new Notice(`MGO 路径需以已配置的根路径开头（${roots.join('、')}）。`);
             return;
         }
 
@@ -84,14 +84,14 @@ export class CreateDeckModal extends Modal {
             return;
         }
 
-        const initialContent = `---\ntags:\n  - ${cleanTag}\n---\n\n# ${lastSegment}\n\n`;
+        const initialContent = `---\nMGO: ${cleanTag}\n---\n\n# ${lastSegment}\n\n`;
 
         const newFile = await this.app.vault.create(fullPath, initialContent);
         this.close();
 
         const leaf = this.app.workspace.getLeaf(false);
         await leaf.openFile(newFile);
-        new Notice(`牌组已创建：#${cleanTag}`);
+        new Notice(`牌组已创建：${cleanTag}`);
         this.plugin.refreshDashboardView();
     }
 }

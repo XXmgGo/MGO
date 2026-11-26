@@ -25,7 +25,7 @@ function createManager(initialContent: string, settings: Record<string, unknown>
     const plugin = {
         app: {
             vault: { getMarkdownFiles: () => [file], read: async () => content },
-            metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+            metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) },
         },
         settings: { ...DEFAULT_SETTINGS, usePouchDB: false, ...settings },
         loadData: async () => null,

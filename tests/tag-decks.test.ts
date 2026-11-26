@@ -57,8 +57,8 @@ function mockPlugin(deckTags: string[]) {
     };
 }
 
-function tagCache(...tags: string[]) {
-    return { tags: tags.map(t => ({ tag: '#' + t })) };
+function mgoCache(path: string) {
+    return { frontmatter: { MGO: path } };
 }
 
 function file(path: string) { return { path, basename: path.split('/').pop() }; }
@@ -67,8 +67,8 @@ describe('Tag-based decks', () => {
     it('merges cards from two notes with the same tag into one deck', async () => {
         const p = mockPlugin(['ja-card']);
         const dm = new DataManager(p as never);
-        p.caches.set('A.md', tagCache('ja-card'));
-        p.caches.set('B.md', tagCache('ja-card'));
+        p.caches.set('A.md', mgoCache('ja-card'));
+        p.caches.set('B.md', mgoCache('ja-card'));
         p.contents.set('A.md', `\`\`\`mgo\nQ1\n---\nA1\n\`\`\`\n`);
         p.contents.set('B.md', `\`\`\`mgo\nQ2\n---\nA2\n\`\`\`\n`);
         await dm.updateFile(file('A.md') as never);
@@ -83,8 +83,8 @@ describe('Tag-based decks', () => {
     it('nests subdecks by slash and a parent queue includes children', async () => {
         const p = mockPlugin(['ja-card']);
         const dm = new DataManager(p as never);
-        p.caches.set('gram.md', tagCache('ja-card/文法'));
-        p.caches.set('vocab.md', tagCache('ja-card/词汇'));
+        p.caches.set('gram.md', mgoCache('ja-card/文法'));
+        p.caches.set('vocab.md', mgoCache('ja-card/词汇'));
         p.contents.set('gram.md', `\`\`\`mgo\nQ1\n---\nA1\n\`\`\`\n`);
         p.contents.set('vocab.md', `\`\`\`mgo\nQ2\n---\nA2\n\`\`\`\n`);
         await dm.updateFile(file('gram.md') as never);
@@ -99,8 +99,8 @@ describe('Tag-based decks', () => {
     it('lists only a deck own cards, excluding subdecks', async () => {
         const p = mockPlugin(['ja-card']);
         const dm = new DataManager(p as never);
-        p.caches.set('Parent.md', tagCache('ja-card'));
-        p.caches.set('Child.md', tagCache('ja-card/文法'));
+        p.caches.set('Parent.md', mgoCache('ja-card'));
+        p.caches.set('Child.md', mgoCache('ja-card/文法'));
         p.contents.set('Parent.md', `\`\`\`mgo\nP\n---\nPA\n\`\`\`\n`);
         p.contents.set('Child.md', `\`\`\`mgo\nC\n---\nCA\n\`\`\`\n`);
         await dm.updateFile(file('Parent.md') as never);
@@ -116,25 +116,25 @@ describe('Tag-based decks', () => {
         expect(dm.getOwnDeckStats(parent.id).new).toBe(1);
     });
 
-    it('ignores a note carrying two different root deck tags', async () => {
+    it('uses the first entry when MGO is a list', async () => {
         const p = mockPlugin(['ja-card', 'en-card']);
         const dm = new DataManager(p as never);
-        p.caches.set('both.md', tagCache('ja-card', 'en-card'));
+        p.caches.set('both.md', { frontmatter: { MGO: ['ja-card', 'en-card'] } });
         p.contents.set('both.md', `\`\`\`mgo\nQ\n---\nA\n\`\`\`\n`);
         const changed = await dm.updateFile(file('both.md') as never);
-        expect(changed).toBe(false);
-        expect(dm.getDecks()).toHaveLength(0);
+        expect(changed).toBe(true);
+        expect(dm.getDecks()[0].tagPath).toBe('ja-card');
     });
 
-    it('keeps card id (progress key) when only the tag path changes', async () => {
+    it('keeps card id (progress key) when only the MGO path changes', async () => {
         const p = mockPlugin(['flashcards']);
         const dm = new DataManager(p as never);
-        p.caches.set('n.md', tagCache('flashcards'));
+        p.caches.set('n.md', mgoCache('flashcards'));
         p.contents.set('n.md', `\`\`\`mgo\nQ\n---\nA\n\`\`\`\n`);
         await dm.updateFile(file('n.md') as never);
         const idBefore = dm.getAllCards()[0].id;
-        // 把标签改成子牌组后重新处理同一文件
-        p.caches.set('n.md', tagCache('flashcards/文法'));
+        // 把 MGO 改成子牌组后重新处理同一文件
+        p.caches.set('n.md', mgoCache('flashcards/文法'));
         await dm.updateFile(file('n.md') as never);
         const card2 = dm.getAllCards()[0];
         // 卡片 id 由文件路径 + blockId 决定，与标签无关 → 进度键不变
@@ -142,10 +142,10 @@ describe('Tag-based decks', () => {
         expect(dm.getDecks()[0].tagPath).toBe('flashcards/文法');
     });
 
-    it('a note with no root deck tag is not a deck', async () => {
+    it('a note without MGO is not a deck', async () => {
         const p = mockPlugin(['ja-card']);
         const dm = new DataManager(p as never);
-        p.caches.set('other.md', tagCache('random'));
+        p.caches.set('other.md', { frontmatter: { tags: ['random'] } });
         p.contents.set('other.md', `Q::A ^z1\n`);
         const changed = await dm.updateFile(file('other.md') as never);
         expect(changed).toBe(false);

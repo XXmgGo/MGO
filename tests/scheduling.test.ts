@@ -26,7 +26,7 @@ async function createManager(cardCount: number, settings: Record<string, unknown
     const plugin = {
         app: {
             vault: { getMarkdownFiles: () => [file], read: async () => note(cardCount) },
-            metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+            metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) },
         },
         settings: { ...DEFAULT_SETTINGS, usePouchDB: false, ...settings },
         loadData: async () => null,
@@ -117,7 +117,7 @@ describe('re-indexing an edited deck note', () => {
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
-                metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+                metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) },
             },
             settings: { ...DEFAULT_SETTINGS, usePouchDB: false },
             loadData: async () => null,
@@ -144,7 +144,7 @@ describe('sibling card burying', () => {
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
-                metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+                metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) },
             },
             settings: { ...DEFAULT_SETTINGS, usePouchDB: false },
             loadData: async () => null,
@@ -164,7 +164,7 @@ describe('sibling card burying', () => {
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
-                metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+                metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) },
             },
             settings: { ...DEFAULT_SETTINGS, usePouchDB: false, burySiblings: true },
             loadData: async () => null,
@@ -184,7 +184,7 @@ describe('sibling card burying', () => {
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
-                metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+                metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) },
             },
             settings: { ...DEFAULT_SETTINGS, usePouchDB: false, burySiblings: true },
             loadData: async () => null,
@@ -208,7 +208,7 @@ describe('sibling card burying', () => {
         const plugin = {
             app: {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
-                metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+                metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) },
             },
             settings: { ...DEFAULT_SETTINGS, usePouchDB: false, burySiblings: false },
             loadData: async () => null,
@@ -231,7 +231,7 @@ describe('Per-deck settings overrides', () => {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
                 metadataCache: {
                     getFileCache: () => ({
-                        frontmatter: { tags: ['flashcards'], newCardsPerDay: 2 },
+                        frontmatter: { MGO: 'flashcards', newCardsPerDay: 2 },
                     }),
                 },
             },
@@ -254,7 +254,7 @@ describe('Per-deck settings overrides', () => {
                 vault: { getMarkdownFiles: () => [file], read: async () => content },
                 metadataCache: {
                     getFileCache: () => ({
-                        frontmatter: { tags: ['flashcards'], requestRetention: 0.99 },
+                        frontmatter: { MGO: 'flashcards', requestRetention: 0.99 },
                     }),
                 },
             },

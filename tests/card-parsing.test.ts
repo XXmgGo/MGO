@@ -126,7 +126,7 @@ function createMockPlugin() {
 function deckPlugin(content: string) {
     const plugin = createMockPlugin();
     plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-        tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
+        frontmatter: { MGO: 'flashcards' },
     });
     plugin.app.vault.read = vi.fn().mockResolvedValue(content);
     return plugin;
@@ -142,7 +142,7 @@ describe('Card parsing', () => {
     describe('Basic cards', () => {
         it('parses a simple basic card', async () => {
             const dm = await parse(`---
-tags: [flashcards]
+MGO: flashcards
 ---
 
 ${fence('mgo', 'What is the capital of France?\n---\nParis')}
@@ -156,7 +156,7 @@ ${fence('mgo', 'What is the capital of France?\n---\nParis')}
 
         it('parses multiple basic cards', async () => {
             const dm = await parse(`---
-tags: [flashcards]
+MGO: flashcards
 ---
 
 ${fence('mgo', 'Front 1\n---\nBack 1')}
@@ -309,7 +309,7 @@ ${fence('mgo', 'Front 2\n---\nBack 2')}
 
         it('ignores cloze syntax outside an mgo block', async () => {
             const dm = await parse(`---
-tags: [flashcards]
+MGO: flashcards
 ---
 
 Answer with ==c1::inline notation== written as plain prose.
@@ -321,7 +321,7 @@ Answer with ==c1::inline notation== written as plain prose.
     describe('Context and decks', () => {
         it('uses heading breadcrumbs as card context and ignores # in code', async () => {
             const dm = await parse(`---
-tags: [flashcards]
+MGO: flashcards
 # YAML comment
 ---
 

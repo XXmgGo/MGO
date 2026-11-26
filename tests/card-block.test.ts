@@ -171,7 +171,7 @@ function createPlugin(markdown: string, path = 'Deck.md') {
     return {
         app: {
             vault: { getMarkdownFiles: () => [file], read: async () => markdown, on: () => () => {} },
-            metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }), getCache: () => null },
+            metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }), getCache: () => null },
             workspace: { getLeavesOfType: () => [] },
         },
         settings: { ...DEFAULT_SETTINGS, usePouchDB: false },
@@ -182,7 +182,7 @@ function createPlugin(markdown: string, path = 'Deck.md') {
     };
 }
 
-function createMultiFilePlugin(files: Array<{ path: string; markdown: string; tags: string[] }>) {
+function createMultiFilePlugin(files: Array<{ path: string; markdown: string; mgo: string }>) {
     const byPath = new Map(files.map(f => [f.path, f]));
     const fileObjs = files.map(f => ({ path: f.path, basename: f.path.replace(/\.md$/, ''), stat: { mtime: 1 } }));
     return {
@@ -193,7 +193,7 @@ function createMultiFilePlugin(files: Array<{ path: string; markdown: string; ta
                 on: () => () => {},
             },
             metadataCache: {
-                getFileCache: (file: { path: string }) => ({ frontmatter: { tags: byPath.get(file.path)?.tags ?? [] } }),
+                getFileCache: (file: { path: string }) => ({ frontmatter: { MGO: byPath.get(file.path)?.mgo ?? '' } }),
                 getCache: () => null,
             },
             workspace: { getLeavesOfType: () => [] },
@@ -284,8 +284,8 @@ describe('DataManager parses code fence cards', () => {
 
     it('dedupes cards across nested decks in the all-decks queue', async () => {
         const dm = new DataManager(createMultiFilePlugin([
-            { path: 'a.md', markdown: '# A\n\n```mgo\nA 正面\n---\nA 背面\n```', tags: ['日本語'] },
-            { path: 'b.md', markdown: '# B\n\n```mgo\nB 正面\n---\nB 背面\n```', tags: ['日本語/例文'] },
+            { path: 'a.md', markdown: '# A\n\n```mgo\nA 正面\n---\nA 背面\n```', mgo: '日本語' },
+            { path: 'b.md', markdown: '# B\n\n```mgo\nB 正面\n---\nB 背面\n```', mgo: '日本語/例文' },
         ]) as never);
         await dm.buildIndex();
         expect(dm.getDecks()).toHaveLength(2);

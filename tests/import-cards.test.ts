@@ -6,7 +6,7 @@ describe('card import', () => {
         const text = '#separator:tab\n#html:true\n#tags column:3\nCapital of France?\tParis\tgeo\nWhat is 2+2?<br>(easy)\t<b>4</b>&nbsp;units\tmath\n';
         const out = convertToMGO(text, 'flashcards');
         expect(out.cards).toBe(2);
-        expect(out.markdown).toContain('tags: [flashcards]');
+        expect(out.markdown).toContain('MGO: flashcards');
         expect(out.markdown).toContain('```mgo\nCapital of France?\n---\nParis\n```');
         expect(out.markdown).toContain('```mgo\nWhat is 2+2?\n(easy)\n---\n4 units\n```');
     });
@@ -54,7 +54,7 @@ describe('card import', () => {
         expect(out.cards).toBe(4);
         const file = { path: 'Imported.md', basename: 'Imported', stat: { mtime: 1 } };
         const plugin = {
-            app: { vault: { getMarkdownFiles: () => [file], read: async () => out.markdown }, metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) } },
+            app: { vault: { getMarkdownFiles: () => [file], read: async () => out.markdown }, metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) } },
             settings: { ...DEFAULT_SETTINGS, usePouchDB: false },
             loadData: async () => null, saveData: async () => undefined,
         };

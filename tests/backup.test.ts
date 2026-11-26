@@ -22,7 +22,7 @@ function create(usePouchDB: boolean, databaseName = 'backup_db') {
     const plugin = {
         app: {
             vault: { getMarkdownFiles: () => [file], read: async () => CONTENT },
-            metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+            metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) },
         },
         manifest: { version: '9.9.9' },
         settings: { ...DEFAULT_SETTINGS, gamification: { ...DEFAULT_SETTINGS.gamification }, usePouchDB, databaseName },

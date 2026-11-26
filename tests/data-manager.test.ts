@@ -202,10 +202,10 @@ describe('DataManager', () => {
             const plugin = createMockPlugin();
             const dm = new DataManager(plugin as never);
             plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards', position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } }],
+                frontmatter: { MGO: 'flashcards' },
             });
             plugin.app.vault.read = vi.fn().mockResolvedValue(`---
-tags: [flashcards]
+MGO: flashcards
 ---
 
 \`\`\`mgo\nFront 1\n---\nBack 1\n\`\`\`
@@ -218,27 +218,27 @@ tags: [flashcards]
     });
 
     describe('isFileDeck and ensureDeckTag', () => {
-        it('detects when a file has deck tag in tags cache', () => {
+        it('detects a deck by the MGO metadata', () => {
             const plugin = createMockPlugin();
             const dm = new DataManager(plugin as never);
             plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
-                tags: [{ tag: '#flashcards' }],
+                frontmatter: { MGO: 'flashcards' },
             });
             const file = { path: 'notes/test.md', basename: 'test' };
             expect(dm.isFileDeck(file as never)).toBe(true);
         });
 
-        it('detects when a file has deck tag in frontmatter tags', () => {
+        it('ignores tags when MGO is absent', () => {
             const plugin = createMockPlugin();
             const dm = new DataManager(plugin as never);
             plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
                 frontmatter: { tags: ['flashcards', 'study'] },
             });
             const file = { path: 'notes/test.md', basename: 'test' };
-            expect(dm.isFileDeck(file as never)).toBe(true);
+            expect(dm.isFileDeck(file as never)).toBe(false);
         });
 
-        it('returns false when a file has no deck tag', () => {
+        it('returns false when a file has neither MGO nor tags', () => {
             const plugin = createMockPlugin();
             const dm = new DataManager(plugin as never);
             plugin.app.metadataCache.getFileCache = vi.fn().mockReturnValue({
@@ -254,7 +254,7 @@ tags: [flashcards]
             const processMock = vi.fn().mockImplementation((_file, fn) => {
                 const fm: Record<string, unknown> = {};
                 fn(fm);
-                expect(fm.tags).toContain('flashcards');
+                expect(fm.MGO).toBe('flashcards');
                 return Promise.resolve();
             });
             (plugin.app as unknown as { fileManager: { processFrontMatter: unknown } }).fileManager = {

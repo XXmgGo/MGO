@@ -26,7 +26,7 @@ function indexNote(path: string, content: string, usePouchDB = false) {
     const plugin = {
         app: {
             vault: { getMarkdownFiles: () => [file], read: async () => content },
-            metadataCache: { getFileCache: () => ({ frontmatter: { tags: ['flashcards'] } }) },
+            metadataCache: { getFileCache: () => ({ frontmatter: { MGO: 'flashcards' } }) },
         },
         settings: { ...DEFAULT_SETTINGS, usePouchDB },
         loadData: async () => null,

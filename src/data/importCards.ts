@@ -91,6 +91,6 @@ export function convertToMGO(text: string, deckTag: string): CardImportResult {
         blocks.push(cardMarkdown({ front, back: isCloze ? '' : back }));
     }
 
-    const markdown = `---\ntags: [${deckTag}]\n---\n\n${blocks.join('\n\n')}\n`;
+    const markdown = `---\nMGO: ${deckTag}\n---\n\n${blocks.join('\n\n')}\n`;
     return { markdown, cards: blocks.length, skipped };
 }

@@ -20,13 +20,12 @@ export class HelpModal extends Modal {
         header.createEl('p', { text: `v${this.plugin.manifest.version} — 基于 FSRS 算法的间隔重复闪卡插件。` });
 
         this.renderSection('创建牌组', [
-            `给任意笔记添加 #${this.plugin.settings.deckTags[0] ?? 'flashcards'} 标签，它就成了牌组的一员。`,
-            '可以在插件设置中配置多个牌组标签（逗号分隔）。',
-            '标签里的 / 表示子牌组层级：#ja-card/文法 的卡片归入 ja-card → 文法。',
-            '多个笔记打相同标签时，它们的卡片会合并进同一个牌组。',
+            '在笔记的 frontmatter 里写 MGO，它就成了牌组的一员。',
+            `MGO 的值是牌组路径，通常以 ${this.plugin.settings.deckTags[0] ?? 'flashcards'} 开头。`,
+            '路径里的 / 表示子牌组层级：MGO: ja-card/文法 的卡片归入 ja-card → 文法。',
+            '多个笔记写同一个 MGO 路径时，它们的卡片会合并进同一个牌组。',
         ], [
-            `使用 frontmatter：tags: [${this.plugin.settings.deckTags[0] ?? 'flashcards'}/文法]`,
-            `或使用行内标签：# 我的笔记 #${this.plugin.settings.deckTags[0] ?? 'flashcards'}/文法`,
+            'frontmatter 示例：MGO: 日本語/例文',
         ]);
 
         this.renderSection('卡片格式', [

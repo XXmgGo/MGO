@@ -235,35 +235,13 @@ export class DataManager {
      */
     getDeckTagPath(cache: CachedMetadata | null | undefined): string | null {
         if (!cache) return null;
-        const roots = this.plugin.settings.deckTags
-            .map(t => t.replace(/^#/, '').trim().toLowerCase())
-            .filter(Boolean);
-        if (roots.length === 0) return null;
-
-        const matched = new Set<string>();
-        const collect = (raw: string) => {
-            const tag = raw.replace(/^#/, '').trim().toLowerCase();
-            if (!tag) return;
-            for (const root of roots) {
-                if (tag === root || tag.startsWith(root + '/')) { matched.add(tag); return; }
-            }
-        };
-
         const frontmatter = isRecord(cache.frontmatter) ? cache.frontmatter : null;
-        if (frontmatter) {
-            const fmTags = frontmatter.tags ?? frontmatter.tag;
-            if (typeof fmTags === 'string') {
-                for (const part of fmTags.split(',')) collect(part);
-            } else if (Array.isArray(fmTags)) {
-                for (const item of fmTags) if (typeof item === 'string') collect(item);
-            }
-        }
-        if (cache.tags) {
-            for (const entry of cache.tags) collect(entry.tag);
-        }
-
-        if (matched.size !== 1) return null;
-        return matched.values().next().value as string;
+        if (!frontmatter) return null;
+        const raw = frontmatter.MGO ?? frontmatter.mgo;
+        const value = Array.isArray(raw) ? raw.find((v): v is string => typeof v === 'string') : raw;
+        if (typeof value !== 'string') return null;
+        const path = value.replace(/^#/, '').trim().toLowerCase();
+        return path || null;
     }
 
     private hasTag(cache: CachedMetadata | null | undefined, tagWithHash: string): boolean {
@@ -465,22 +443,13 @@ export class DataManager {
     public async ensureDeckTag(file: TFile): Promise<boolean> {
         if (this.isFileDeck(file)) return false;
 
-        const deckTagName = (this.plugin.settings.deckTags[0] ?? 'flashcards').replace(/^#/, '');
+        const deckPath = (this.plugin.settings.deckTags[0] ?? 'flashcards').replace(/^#/, '');
         if (this.plugin.app.fileManager?.processFrontMatter) {
             await this.plugin.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
-                const currentTags = fm.tags;
-                if (Array.isArray(currentTags)) {
-                    if (!currentTags.includes(deckTagName)) {
-                        currentTags.push(deckTagName);
-                    }
-                } else if (typeof currentTags === 'string') {
-                    fm.tags = [currentTags, deckTagName];
-                } else {
-                    fm.tags = [deckTagName];
-                }
+                fm.MGO = deckPath;
             });
         }
-        new Notice(`已将笔记标记为 #${deckTagName} 牌组`);
+        new Notice(`已为笔记写入 MGO: ${deckPath}`);
         return true;
     }
 

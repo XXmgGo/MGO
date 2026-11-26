@@ -1,8 +1,8 @@
 # Writing Cards
 
-Write MGO flashcards as plain Markdown in a tagged note: card blocks, reversed cards, cloze deletions, image occlusion and type-in.
+Write MGO flashcards as plain Markdown in a note with the `MGO` metadata: card blocks, reversed cards, cloze deletions, image occlusion and type-in.
 
-MGO reads cards from any note that carries the deck tag (see [Organizing decks](organizing-decks.md)). Cards are never imported or exported; the text in your note is the card.
+MGO reads cards from any note whose frontmatter has an `MGO` path (see [Organizing decks](organizing-decks.md)). Tags are not used for deck membership. Cards are never imported or exported; the text in your note is the card.
 
 ## Basic cards
 

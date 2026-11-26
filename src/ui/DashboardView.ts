@@ -390,7 +390,7 @@ export class DashboardView extends ItemView {
         emptyStateEl.createEl('h3', { text: '准备好开始学习了吗？', cls: 'fsrs-empty-title' });
 
         emptyStateEl.createEl('p', {
-            text: `在任意笔记中添加标签 #${this.plugin.settings.deckTags[0] ?? 'flashcards'} 即可创建闪卡，也可以直接在下方开始。`,
+            text: '在笔记的 frontmatter 里写 MGO（例如 MGO: 日本語/例文）即可创建牌组，也可以直接在下方开始。',
             cls: 'fsrs-empty-desc',
         });
 

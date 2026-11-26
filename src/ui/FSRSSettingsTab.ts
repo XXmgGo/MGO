@@ -107,8 +107,8 @@ export class FSRSSettingsTab extends PluginSettingTab {
         new Setting(containerEl).setName('牌组组织方式').setHeading();
 
         new Setting(containerEl)
-            .setName('牌组标签')
-            .setDesc('识别牌组笔记的根标签，多个用逗号分隔（例如 flashcards, ja-card, en-card）。标签里的 / 表示子牌组层级。')
+            .setName('牌组根路径')
+            .setDesc('MGO 元数据允许的根路径，多个用逗号分隔（例如 flashcards, 日本語）。路径里的 / 表示子牌组层级。')
             .addText((text) => text
                 .setPlaceholder('Flashcards, ja-card')
                 .setValue(this.plugin.settings.deckTags.join(', '))
