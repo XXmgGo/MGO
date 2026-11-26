@@ -170,6 +170,7 @@ export class ReviewView extends ItemView {
         const firstCard = this.getCurrentCard();
         if (firstCard.context) {
             contextEl.setText(firstCard.context);
+            contextEl.setAttribute('title', firstCard.context);
         } else {
             contextEl.addClass('fsrs-card-context-hidden');
         }
@@ -523,9 +524,11 @@ export class ReviewView extends ItemView {
         if (contextEl) {
             if (card.context) {
                 contextEl.setText(card.context);
+                contextEl.setAttribute('title', card.context);
                 contextEl.removeClass('fsrs-card-context-hidden');
             } else {
                 contextEl.addClass('fsrs-card-context-hidden');
+                contextEl.removeAttribute('title');
             }
         }
 

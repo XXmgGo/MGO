@@ -2099,6 +2099,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 /* ── Guided Card & Deck Creation ── */
@@ -2410,8 +2411,10 @@
 }
 
 .fsrs-review-view .fsrs-card-header .fsrs-card-context {
-    margin-bottom: 0;
+    flex: 0 1 auto;
+    align-self: center;
     min-width: 0;
+    margin-bottom: 0;
 }
 
 .fsrs-review-view .fsrs-card-audio-btn {
