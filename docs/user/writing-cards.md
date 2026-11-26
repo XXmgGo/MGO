@@ -106,8 +106,9 @@ The note itself is scheduled with FSRS. Start these sessions with the command **
 
 MGO identifies each card so it can keep its schedule.
 
-- A fence card has no ID attribute. Its ID is a hash of the deck note's path plus the card's front and back (cloze cards hash the whole block and append the cloze number).
-- Editing a card's content therefore creates a new card with no history. Write the final wording before studying, or export a backup first if you plan a large rewrite.
+- A fence card without an `id` attribute is identified by a hash of the deck note's path plus the card's front and back (cloze cards hash the whole block and append the cloze number).
+- Editing a card without an `id` therefore creates a new card with no history. Write the final wording before studying, or export a backup first if you plan a large rewrite.
+- Give the card an `id` to pin its identity: the card is then keyed by the note path plus that id, so editing the front or back keeps its history. Adding an `id` to an existing card later is safe — the old hash-based state and its review log are adopted on the next index.
 - Card IDs include the deck note's path. Renaming or moving a deck note inside Obsidian moves each card's history to its new ID. A rename made outside Obsidian is not detected, and those cards start as new. See [Troubleshooting](troubleshooting.md#progress-looks-reset).
 
 ## Card attributes
@@ -130,7 +131,7 @@ High blood pressure is a common illness among the elderly.
 
 | Attribute | Type | Effect |
 |---|---|---|
-| `id` | text | Stable card identity; editing the front or back keeps its review history |
+| `id` | text | Stable card identity; editing the front or back keeps its review history. A UUID per card is a good choice |
 | `title` | text | Display name in the dashboard card list under the deck (expand a folder); falls back to the front text |
 | `options` | list | Candidate answers reserved for the upcoming multiple-choice mode |
 | `hint` | text | Recall hint reserved for a future review option |

@@ -14,6 +14,7 @@ export class DataManager {
     private decks: Map<string, Deck> = new Map();
     private cards: Map<string, Card> = new Map();
     private fsrsDataStore: Record<string, FSRSData> = {};
+    private adoptedStateInFile = false;
     private noteReviews: Map<string, NoteReviewData> = new Map();
     private reviewHistory: ReviewLog[] = [];
     private pouchDB: PouchDBManager | null = null;
@@ -371,6 +372,7 @@ export class DataManager {
     }
 
     async updateFile(file: TFile): Promise<boolean> {
+        this.adoptedStateInFile = false;
         const cache = this.plugin.app.metadataCache.getFileCache(file);
         const deckPath = this.getDeckTagPath(cache);
         const reviewTag = '#review';
@@ -445,6 +447,11 @@ export class DataManager {
             this.fileMtimes.set(file.path, currentMtime);
         } else {
             this.fileMtimes.delete(file.path);
+        }
+
+        if (this.adoptedStateInFile) {
+            this.adoptedStateInFile = false;
+            if (!this.plugin.settings.usePouchDB) await this.save();
         }
 
         return stateChanged;
@@ -554,8 +561,9 @@ export class DataManager {
             const explicitId = typeof attrs.id === 'string' ? attrs.id : '';
 
             if (clozeNumbers(body).length > 0) {
-                const baseId = explicitId ? `${cyrb53hex(filePath)}::${explicitId}` : cyrb53hex(`block::${filePath}::${body}`);
-                this.addClozeCards(body, baseId, filePath, deckId, deck, context, body.trim(), meta);
+                const legacyBaseId = cyrb53hex(`block::${filePath}::${body}`);
+                const baseId = explicitId ? `${cyrb53hex(filePath)}::${explicitId}` : legacyBaseId;
+                this.addClozeCards(body, baseId, legacyBaseId, filePath, deckId, deck, context, body.trim(), meta);
                 continue;
             }
 
@@ -568,7 +576,9 @@ export class DataManager {
             if (lang === 'mgo-reverse') { finalFront = back; finalBack = front; type = 'reversed'; }
             else if (lang === 'mgo-typein') { type = 'typein'; }
 
-            const cardId = explicitId ? `${cyrb53hex(filePath)}::${explicitId}` : cyrb53hex(`block::${filePath}::${front}::${back}`);
+            const legacyId = cyrb53hex(`block::${filePath}::${front}::${back}`);
+            const cardId = explicitId ? `${cyrb53hex(filePath)}::${explicitId}` : legacyId;
+            if (explicitId) this.adoptLegacyState(cardId, legacyId, deckId, filePath);
             const card: Card = {
                 id: cardId, deckId, filePath, type,
                 originalText: match[0], front: finalFront, back: finalBack, context,
@@ -584,6 +594,7 @@ export class DataManager {
     private addClozeCards(
         body: string,
         baseId: string,
+        legacyBaseId: string,
         filePath: string,
         deckId: string,
         deck: Deck,
@@ -593,6 +604,9 @@ export class DataManager {
     ) {
         for (const clozeNum of clozeNumbers(body)) {
             const cardId = `${baseId}-${clozeNum}`;
+            if (baseId !== legacyBaseId) {
+                this.adoptLegacyState(cardId, `${legacyBaseId}-${clozeNum}`, deckId, filePath);
+            }
             const card: Card = {
                 id: cardId, deckId, filePath, type: 'cloze',
                 originalText, front: clozeFront(body, clozeNum), back: clozeBack(body), context,
@@ -604,8 +618,33 @@ export class DataManager {
         }
     }
 
+    /**
+     * 旧卡片按块内容指纹存进度；补上 id 后卡片 key 会变。新 key 还没有进度时，
+     * 把旧 key 的状态和复习日志认领过来，让「事后补 id」不丢复习进度。
+     */
+    private adoptLegacyState(newId: string, legacyId: string, deckId: string, filePath: string): void {
+        if (newId === legacyId) return;
+        const legacy = this.fsrsDataStore[legacyId];
+        if (!legacy) return;
+        const current = this.fsrsDataStore[newId];
+        if (current && current.reps > 0) return;
 
+        this.fsrsDataStore[newId] = legacy;
+        delete this.fsrsDataStore[legacyId];
+        for (const log of this.reviewHistory) {
+            if (log.cardId === legacyId) log.cardId = newId;
+        }
+        this.firstReviewAt = null;
+        this.adoptedStateInFile = true;
 
+        if (this.plugin.settings.usePouchDB && this.pouchDB) {
+            const db = this.pouchDB;
+            this.runInBackground(
+                () => db.rekeyCards([{ oldId: legacyId, newId, deckId, filePath }]),
+                'Failed to adopt card state:',
+            );
+        }
+    }
 
     /** 收集牌组自身 + 所有子牌组（tagPath 以 `父/` 开头）的卡片 id。 */
     private deckScopeIds(deck: Deck): Set<string> {
