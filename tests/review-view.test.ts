@@ -259,6 +259,54 @@ describe('ReviewView (tab)', () => {
         expect(v.inplaceIndicatorEl.textContent).toBe('问题（点击查看答案）');
     });
 
+    it('shows the speaker only for cards that carry an audio link', async () => {
+        const withAudio = makeCard('c1', 'a.md');
+        withAudio.audio = 'https://cdn.example.com/a.mp3';
+        const { view } = await openView([withAudio, makeCard('c2', 'b.md')]);
+
+        const btn = () => view.contentEl.querySelector('.fsrs-card-audio-btn') as HTMLElement;
+        const hint = () => view.contentEl.querySelector('[aria-label="播放语音"]') as HTMLElement;
+        expect(btn().style.display).not.toBe('none');
+        expect(hint().style.display).not.toBe('none');
+
+        await click(view.contentEl.querySelector('.fsrs-show-answer-btn') as HTMLElement);
+        await click(view.contentEl.querySelector('.fsrs-rating-good') as HTMLElement);
+
+        expect(btn().style.display).toBe('none');
+        expect(hint().style.display).toBe('none');
+    });
+
+    it('plays and stops the card audio from the speaker', async () => {
+        const play = vi.fn().mockResolvedValue(undefined);
+        const pause = vi.fn();
+        const created: string[] = [];
+        class FakeAudio {
+            constructor(src: string) { created.push(src); }
+            play = play;
+            pause = pause;
+            addEventListener = vi.fn();
+        }
+        const original = (window as Window & typeof globalThis).Audio;
+        (window as unknown as Record<string, unknown>).Audio = FakeAudio;
+        try {
+            const card = makeCard('c1', 'a.md');
+            card.audio = 'https://cdn.example.com/a.mp3';
+            const { view } = await openView([card]);
+            const btn = view.contentEl.querySelector('.fsrs-card-audio-btn') as HTMLElement;
+
+            await click(btn);
+            expect(created).toEqual(['https://cdn.example.com/a.mp3']);
+            expect(play).toHaveBeenCalled();
+            expect(btn.classList.contains('is-playing')).toBe(true);
+
+            await click(btn);
+            expect(pause).toHaveBeenCalled();
+            expect(btn.classList.contains('is-playing')).toBe(false);
+        } finally {
+            (window as unknown as Record<string, unknown>).Audio = original;
+        }
+    });
+
     it('keeps standard cards showing front and answer together', async () => {
         const card: Card = {
             id: 'text-card-1', deckId: 'deck-1', filePath: 'trivia.md', type: 'basic', originalText: '...',

@@ -2397,6 +2397,63 @@
     color: var(--mgo-pink);
 }
 
+/* 卡片头部一行：左上下文 pill，右语音入口 */
+.fsrs-review-view .fsrs-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.fsrs-review-view .fsrs-card-header.is-empty {
+    margin-bottom: 0;
+}
+
+.fsrs-review-view .fsrs-card-header .fsrs-card-context {
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+.fsrs-review-view .fsrs-card-audio-btn {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    margin-left: auto;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 127, 182, 0.35);
+    background: linear-gradient(120deg, rgba(255, 127, 182, 0.14), rgba(155, 123, 255, 0.14));
+    color: var(--mgo-ink-soft);
+    cursor: pointer;
+    transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.fsrs-review-view .fsrs-card-audio-btn svg {
+    width: 15px;
+    height: 15px;
+}
+
+.fsrs-review-view .fsrs-card-audio-btn:hover {
+    color: var(--mgo-pink);
+    border-color: rgba(255, 127, 182, 0.6);
+    background: linear-gradient(120deg, rgba(255, 127, 182, 0.24), rgba(155, 123, 255, 0.24));
+    transform: translateY(-1px);
+}
+
+.fsrs-review-view .fsrs-card-audio-btn.is-playing {
+    color: #ffffff;
+    border-color: transparent;
+    background: linear-gradient(120deg, #ff8fbe 0%, #b88cff 55%, #6fc9ff 100%);
+    box-shadow: 0 8px 20px -10px rgba(150, 96, 230, 0.8);
+}
+
+.theme-dark .fsrs-review-view .fsrs-card-audio-btn {
+    background: linear-gradient(120deg, rgba(255, 127, 182, 0.18), rgba(155, 123, 255, 0.2));
+    border-color: rgba(255, 158, 205, 0.4);
+}
+
 .fsrs-review-view .fsrs-card-front,
 .fsrs-review-view .fsrs-card-back {
     font-family: var(--mgo-font-display);

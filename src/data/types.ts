@@ -50,6 +50,8 @@ export interface CardData {
     options?: string[];
     /** 回忆提示，显示在正面下方。 */
     hint?: string;
+    /** 语音地址（卡片属性 audio）：复习、浏览界面的小喇叭播放它。 */
+    audio?: string;
 }
 
 export type FSRSData = FSRSCard;

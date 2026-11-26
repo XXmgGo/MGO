@@ -131,6 +131,11 @@ describe('code fence card syntax (pure helpers)', () => {
         expect(hasCloze(content)).toBe(true);
         expect(clozeNumbers(content)).toEqual(['1']);
     });
+
+    it('keeps the audio url verbatim in the attribute header', () => {
+        const body = '---\naudio: https://cdn.example.com/友だち-朗读.mp3\n---\nq\n---\na';
+        expect(parseCardBlockAttributes(body).attrs.audio).toBe('https://cdn.example.com/友だち-朗读.mp3');
+    });
 });
 
 function createPlugin(markdown: string, path = 'Deck.md') {
@@ -200,6 +205,13 @@ describe('DataManager parses code fence cards', () => {
         const second = new DataManager(createPlugin('# 牌组\n\n' + block('飲む')) as never);
         await second.buildIndex();
         expect(second.getAllCards()[0].id).toBe(card.id);
+    });
+
+    it('stores the audio attribute on the card', async () => {
+        const md = '# 牌组\n\n```mgo\n---\ntitle: 发音\naudio: https://cdn.example.com/a.mp3\n---\n食べる\n---\n吃\n```';
+        const dm = new DataManager(createPlugin(md) as never);
+        await dm.buildIndex();
+        expect(dm.getAllCards()[0].audio).toBe('https://cdn.example.com/a.mp3');
     });
 
     it('uses explicit ids for cloze cards too', async () => {

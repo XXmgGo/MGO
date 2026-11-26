@@ -549,6 +549,7 @@ export class DataManager {
                 title: typeof attrs.title === 'string' ? attrs.title : undefined,
                 options: Array.isArray(attrs.options) ? attrs.options : undefined,
                 hint: typeof attrs.hint === 'string' ? attrs.hint : undefined,
+                audio: typeof attrs.audio === 'string' ? attrs.audio : undefined,
             };
             const explicitId = typeof attrs.id === 'string' ? attrs.id : '';
 
@@ -588,7 +589,7 @@ export class DataManager {
         deck: Deck,
         context: string | undefined,
         originalText: string,
-        meta: { title?: string; options?: string[]; hint?: string } = {},
+        meta: { title?: string; options?: string[]; hint?: string; audio?: string } = {},
     ) {
         for (const clozeNum of clozeNumbers(body)) {
             const cardId = `${baseId}-${clozeNum}`;

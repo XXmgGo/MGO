@@ -41,6 +41,11 @@ export class ReviewView extends ItemView {
     private progressFill: HTMLElement | null = null;
     private moreMenu: HTMLElement | null = null;
     private menuOutsideHandler: ((evt: MouseEvent) => void) | null = null;
+    private cardHeaderEl: HTMLElement | null = null;
+    private audioBtn: HTMLElement | null = null;
+    private audioPlayer: HTMLAudioElement | null = null;
+    private audioHint: HTMLElement | null = null;
+    private audioHintDivider: HTMLElement | null = null;
 
     private gestureStartX = 0;
     private gestureStartY = 0;
@@ -93,6 +98,7 @@ export class ReviewView extends ItemView {
     }
 
     async onClose(): Promise<void> {
+        this.stopAudio();
         this.closeMoreMenu();
         for (const { target, type, handler } of this.boundHandlers) {
             target.removeEventListener(type, handler);
@@ -156,7 +162,10 @@ export class ReviewView extends ItemView {
         this.cardContainer = body.createDiv({ cls: 'fsrs-review-card' });
         this.cardContainer.setCssProps({ '--fsrs-card-font-size': `${this.plugin.settings.fontSize}px` });
 
-        const contextEl = this.cardContainer.createDiv({ cls: 'fsrs-card-context' });
+        const header = this.cardContainer.createDiv({ cls: 'fsrs-card-header' });
+        this.cardHeaderEl = header;
+
+        const contextEl = header.createDiv({ cls: 'fsrs-card-context' });
         contextEl.addEventListener('click', () => void this.openCardSource());
         const firstCard = this.getCurrentCard();
         if (firstCard.context) {
@@ -164,6 +173,23 @@ export class ReviewView extends ItemView {
         } else {
             contextEl.addClass('fsrs-card-context-hidden');
         }
+
+        // 卡片右上角的语音入口：播放这张卡的 audio 属性
+        this.audioBtn = header.createDiv({
+            cls: 'fsrs-card-audio-btn',
+            attr: { role: 'button', tabindex: '0', 'aria-label': '播放语音' },
+        });
+        setIcon(this.audioBtn, 'volume-2');
+        this.audioBtn.hide();
+        this.audioBtn.addEventListener('click', (evt: MouseEvent) => {
+            evt.stopPropagation();
+            this.toggleAudio();
+        });
+        this.audioBtn.addEventListener('keydown', (evt: KeyboardEvent) => {
+            if (evt.key !== 'Enter' && evt.key !== ' ') return;
+            evt.preventDefault();
+            this.toggleAudio();
+        });
 
         this.frontEl = this.cardContainer.createDiv({ cls: 'fsrs-card-front' });
         this.answerContainer = this.cardContainer.createDiv({ cls: 'fsrs-card-answer' });
@@ -201,6 +227,15 @@ export class ReviewView extends ItemView {
         refreshHint.createEl('kbd', { text: 'R' });
         refreshHint.createSpan({ text: ' 刷新' });
         refreshHint.addEventListener('click', () => void this.refreshCurrentCard());
+
+        this.audioHintDivider = hints.createSpan({ cls: 'fsrs-review-hint-divider', text: '·' });
+        this.audioHintDivider.hide();
+
+        this.audioHint = hints.createSpan({ cls: 'fsrs-review-hint', attr: { 'aria-label': '播放语音' } });
+        this.audioHint.createEl('kbd', { text: 'A' });
+        this.audioHint.createSpan({ text: ' 发音' });
+        this.audioHint.addEventListener('click', () => this.toggleAudio());
+        this.audioHint.hide();
 
         hints.createSpan({ cls: 'fsrs-review-hint-divider', text: '·' });
 
@@ -497,6 +532,7 @@ export class ReviewView extends ItemView {
         this.frontEl.show();
         await MarkdownRenderer.render(this.app, toHardBreaks(card.front), this.frontEl, card.filePath, this.renderComponent);
         await MarkdownRenderer.render(this.app, toHardBreaks(card.back), this.backEl, card.filePath, this.renderComponent);
+        this.syncAudioUi(card);
 
         if (card.type === 'typein') {
             this.showAnswerButton.buttonEl.hide();
@@ -511,6 +547,61 @@ export class ReviewView extends ItemView {
             this.showAnswerButton.buttonEl.show();
             this.typeinContainer.hide();
         }
+    }
+
+    /** 卡片切换时同步语音入口：有 audio 才显示小喇叭和「A 发音」提示。 */
+    private syncAudioUi(card: Card): void {
+        this.stopAudio();
+        const hasAudio = Boolean(card.audio);
+        if (this.audioBtn) {
+            if (hasAudio) this.audioBtn.show(); else this.audioBtn.hide();
+        }
+        if (this.audioHint) {
+            if (hasAudio) this.audioHint.show(); else this.audioHint.hide();
+        }
+        if (this.audioHintDivider) {
+            if (hasAudio) this.audioHintDivider.show(); else this.audioHintDivider.hide();
+        }
+        this.cardHeaderEl?.classList.toggle('is-empty', !card.context && !hasAudio);
+    }
+
+    private stopAudio(): void {
+        if (this.audioPlayer) {
+            try { this.audioPlayer.pause(); } catch { /* 元素可能已被卸载 */ }
+            this.audioPlayer = null;
+        }
+        if (this.audioBtn) {
+            this.audioBtn.removeClass('is-playing');
+            setIcon(this.audioBtn, 'volume-2');
+            this.audioBtn.setAttribute('aria-label', '播放语音');
+        }
+    }
+
+    /** 播放 / 停止当前卡片的语音。 */
+    private toggleAudio(): void {
+        const url = this.getCurrentCard()?.audio;
+        if (!url) return;
+        if (this.audioPlayer) { this.stopAudio(); return; }
+
+        const win = this.contentEl.ownerDocument.defaultView ?? window;
+        const audio = new win.Audio(url);
+        this.audioPlayer = audio;
+        if (this.audioBtn) {
+            this.audioBtn.addClass('is-playing');
+            setIcon(this.audioBtn, 'pause');
+            this.audioBtn.setAttribute('aria-label', '停止播放');
+        }
+        audio.addEventListener('ended', () => { if (this.audioPlayer === audio) this.stopAudio(); });
+        audio.addEventListener('error', () => {
+            if (this.audioPlayer !== audio) return;
+            this.stopAudio();
+            new Notice('音频加载失败');
+        });
+        void audio.play().catch(() => {
+            if (this.audioPlayer !== audio) return;
+            this.stopAudio();
+            new Notice('无法播放这段音频');
+        });
     }
 
     private showAnswer() {
@@ -637,6 +728,13 @@ export class ReviewView extends ItemView {
             evt.preventDefault();
             void this.refreshCurrentCard();
             return;
+        }
+        if (evt.key.toLowerCase() === 'a' && !evt.shiftKey && !evt.altKey && !evt.ctrlKey && !evt.metaKey) {
+            if (this.getCurrentCard()?.audio) {
+                evt.preventDefault();
+                this.toggleAudio();
+                return;
+            }
         }
         if (evt.key.toLowerCase() === 'z' && !evt.shiftKey && !evt.altKey) {
             evt.preventDefault();
