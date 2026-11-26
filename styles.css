@@ -2784,6 +2784,11 @@
     .fsrs-review-view .fsrs-completion-screen h2 {
         font-size: 26px;
     }
+
+    .fsrs-review-view .fsrs-review-body::before,
+    .fsrs-review-view .fsrs-review-body::after {
+        display: none;
+    }
 }
 
 @media (max-width: 500px) {
