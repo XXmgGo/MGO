@@ -2162,3 +2162,656 @@
         margin-top: 10px;
     }
 }
+
+
+/* ════════════════════════════════════════════
+   Anime skin — 复习标签页
+   只作用于 mgo-review-view（复习页），
+   不动仪表盘 / 浏览列表 / 设置页
+   ════════════════════════════════════════════ */
+
+.fsrs-review-view {
+    --mgo-ink: #332a47;
+    --mgo-ink-soft: #6f6383;
+    --mgo-ink-faint: #9a8fae;
+    --mgo-pink: #ff7fb6;
+    --mgo-pink-deep: #e8518f;
+    --mgo-violet: #9b7bff;
+    --mgo-sky: #58c8f6;
+    --mgo-red: #ef5a7e;
+    --mgo-orange: #f0954a;
+    --mgo-green: #2fbf93;
+    --mgo-blue: #3aa9e8;
+    --mgo-paper: rgba(255, 255, 255, 0.94);
+    --mgo-hover-paper: rgba(255, 255, 255, 0.9);
+    --mgo-line: rgba(146, 120, 196, 0.22);
+    --mgo-shadow: rgba(104, 74, 172, 0.42);
+    --mgo-font-display: "Hiragino Maru Gothic ProN", "Hiragino Sans", "M PLUS Rounded 1c", "Yu Gothic UI", "PingFang SC", var(--font-text);
+
+    background-color: #fbf7ff;
+    background-image:
+        radial-gradient(820px 460px at 10% -10%, rgba(255, 158, 203, 0.55), transparent 62%),
+        radial-gradient(720px 430px at 95% 0%, rgba(132, 199, 255, 0.5), transparent 60%),
+        radial-gradient(900px 580px at 56% 116%, rgba(178, 148, 255, 0.42), transparent 62%),
+        radial-gradient(480px 360px at 2% 94%, rgba(255, 213, 168, 0.45), transparent 66%);
+    background-repeat: no-repeat;
+}
+
+.fsrs-review-view .fsrs-review-container {
+    background: transparent;
+}
+
+/* ── 顶栏 ── */
+
+.fsrs-review-view .fsrs-review-icon-btn {
+    border-radius: 999px;
+    color: var(--mgo-ink-soft);
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 4px 12px -6px var(--mgo-shadow);
+    transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.fsrs-review-view .fsrs-review-icon-btn:hover {
+    background: #ffffff;
+    border-color: rgba(255, 127, 182, 0.45);
+    color: var(--mgo-pink-deep);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px -8px rgba(232, 81, 143, 0.45);
+}
+
+.fsrs-review-view .fsrs-review-deck {
+    font-family: var(--mgo-font-display);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--mgo-ink);
+    background-image: linear-gradient(100deg, #d64b8a 0%, #8659e6 58%, #3d9cde 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.fsrs-review-view .fsrs-review-mode {
+    padding: 4px 12px;
+    border: 1px solid rgba(255, 127, 182, 0.35);
+    background: linear-gradient(120deg, rgba(255, 127, 182, 0.16), rgba(155, 123, 255, 0.18));
+    color: #c74b86;
+    font-weight: 600;
+}
+
+.fsrs-review-view .fsrs-review-counter {
+    color: var(--mgo-ink-soft);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+.fsrs-review-view .fsrs-review-progress {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: inset 0 1px 3px rgba(120, 80, 190, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+.fsrs-review-view .fsrs-review-progress-fill {
+    background: linear-gradient(90deg, #ff8fbe, #a985ff 55%, #62c8f8);
+    box-shadow: 0 0 10px rgba(180, 120, 255, 0.7);
+}
+
+/* ── 卡片 ── */
+
+.fsrs-review-view .fsrs-review-body {
+    position: relative;
+}
+
+/* 背景里轻轻闪烁的小星星 */
+.fsrs-review-view .fsrs-review-body::before,
+.fsrs-review-view .fsrs-review-body::after {
+    position: absolute;
+    pointer-events: none;
+    line-height: 1;
+    animation: mgo-review-twinkle 6s ease-in-out infinite;
+}
+
+.fsrs-review-view .fsrs-review-body::before {
+    content: "✦";
+    left: 3.5%;
+    top: 12%;
+    font-size: 22px;
+    color: rgba(255, 127, 182, 0.55);
+}
+
+.fsrs-review-view .fsrs-review-body::after {
+    content: "✧";
+    right: 4.5%;
+    bottom: 16%;
+    font-size: 30px;
+    color: rgba(155, 123, 255, 0.5);
+    animation-delay: 2.4s;
+}
+
+@keyframes mgo-review-twinkle {
+    0%, 100% { opacity: 0.25; transform: scale(0.9) rotate(0deg); }
+    50% { opacity: 0.75; transform: scale(1.08) rotate(10deg); }
+}
+
+.fsrs-review-view .fsrs-review-card {
+    position: relative;
+    justify-content: safe center;
+    padding: 30px 46px 34px;
+    border: 1.5px solid transparent;
+    border-radius: 28px;
+    background:
+        linear-gradient(165deg, rgba(255, 251, 254, 0.95) 0%, rgba(252, 249, 255, 0.9) 52%, rgba(246, 248, 255, 0.86) 100%) padding-box,
+        linear-gradient(135deg, rgba(255, 127, 182, 0.7), rgba(255, 255, 255, 0.25) 32%, rgba(155, 123, 255, 0.5) 66%, rgba(88, 200, 246, 0.65)) border-box;
+    box-shadow:
+        0 34px 70px -34px var(--mgo-shadow),
+        0 10px 28px -18px rgba(232, 81, 143, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+}
+
+.fsrs-review-view .fsrs-review-card::-webkit-scrollbar {
+    width: 8px;
+}
+
+.fsrs-review-view .fsrs-review-card::-webkit-scrollbar-thumb {
+    background: rgba(155, 123, 255, 0.3);
+    border-radius: 999px;
+}
+
+/* 滑动评分的方向光晕（覆盖基础阴影，保留手势反馈） */
+.fsrs-review-view .fsrs-review-card.fsrs-swipe-left {
+    box-shadow: 0 34px 70px -34px var(--mgo-shadow), -16px 8px 40px -18px rgba(239, 90, 126, 0.6);
+}
+
+.fsrs-review-view .fsrs-review-card.fsrs-swipe-right {
+    box-shadow: 0 34px 70px -34px var(--mgo-shadow), 16px 8px 40px -18px rgba(47, 191, 147, 0.55);
+}
+
+.fsrs-review-view .fsrs-review-card.fsrs-swipe-up {
+    box-shadow: 0 34px 70px -34px var(--mgo-shadow), 0 -16px 40px -18px rgba(58, 169, 232, 0.55);
+}
+
+.fsrs-review-view .fsrs-review-card.fsrs-swipe-down {
+    box-shadow: 0 34px 70px -34px var(--mgo-shadow), 0 16px 40px -18px rgba(240, 149, 74, 0.55);
+}
+
+.fsrs-review-view .fsrs-card-context {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    padding: 3px 12px;
+    margin-bottom: 16px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, rgba(255, 127, 182, 0.12), rgba(155, 123, 255, 0.12));
+    color: var(--mgo-ink-soft);
+    font-size: var(--font-smallest);
+    letter-spacing: 0.02em;
+}
+
+.fsrs-review-view .fsrs-card-context::before {
+    content: "✧ ";
+    color: var(--mgo-pink);
+}
+
+.fsrs-review-view .fsrs-card-front,
+.fsrs-review-view .fsrs-card-back {
+    font-family: var(--mgo-font-display);
+    color: var(--mgo-ink);
+    line-height: 1.75;
+}
+
+.fsrs-review-view .fsrs-card-front p,
+.fsrs-review-view .fsrs-card-back p {
+    margin: 10px 0;
+}
+
+.fsrs-review-view .fsrs-card-answer hr {
+    border: 0;
+    height: 1px;
+    margin: 26px 0 24px;
+    position: relative;
+    overflow: visible;
+    background: linear-gradient(90deg, rgba(255, 127, 182, 0), rgba(255, 127, 182, 0.45) 18%, rgba(155, 123, 255, 0.45) 50%, rgba(88, 200, 246, 0.45) 82%, rgba(88, 200, 246, 0));
+}
+
+.fsrs-review-view .fsrs-card-answer hr::after {
+    content: "✦";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -52%);
+    font-size: 13px;
+    line-height: 1;
+    color: var(--mgo-violet);
+    text-shadow: 0 0 7px var(--mgo-paper), 0 0 14px var(--mgo-paper);
+}
+
+/* ── 底部：显示答案 / 评级 ── */
+
+.fsrs-review-view .fsrs-show-answer-btn {
+    display: flex;
+    max-width: 640px;
+    margin: 0 auto;
+    min-height: 54px;
+    border: none;
+    border-radius: 999px;
+    color: #ffffff;
+    background-color: #b88cff;
+    background-image: linear-gradient(115deg, #ff8fbe 0%, #b88cff 48%, #6fc9ff 100%);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    box-shadow:
+        0 18px 38px -18px rgba(150, 96, 230, 0.8),
+        0 6px 16px -10px rgba(255, 127, 182, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+
+.fsrs-review-view .fsrs-show-answer-btn::before {
+    content: "✦";
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.fsrs-review-view .fsrs-show-answer-btn:hover {
+    background-color: #b88cff;
+    background-image: linear-gradient(115deg, #ff8fbe 0%, #b88cff 48%, #6fc9ff 100%);
+    filter: brightness(1.05) saturate(1.04);
+    transform: translateY(-1px);
+    opacity: 1;
+    box-shadow:
+        0 22px 44px -18px rgba(150, 96, 230, 0.85),
+        0 8px 20px -10px rgba(255, 127, 182, 0.65),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.fsrs-review-view .fsrs-show-answer-btn:active {
+    transform: translateY(0) scale(0.996);
+}
+
+.fsrs-review-view .fsrs-show-answer-kbd {
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    padding: 2px 9px;
+    color: #ffffff;
+}
+
+.fsrs-review-view .fsrs-review-controls {
+    gap: 12px;
+}
+
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-again,
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-hard,
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-good,
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-easy {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    min-height: 64px;
+    padding: 10px 12px;
+    gap: 1px;
+    border: 1px solid var(--mgo-line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--mgo-ink);
+    box-shadow:
+        0 10px 24px -16px var(--mgo-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-again { --mgo-rating: var(--mgo-red); --mgo-rating-soft: rgba(239, 90, 126, 0.13); --mgo-rating-line: rgba(239, 90, 126, 0.5); --mgo-rating-glow: rgba(239, 90, 126, 0.4); }
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-hard  { --mgo-rating: var(--mgo-orange); --mgo-rating-soft: rgba(240, 149, 74, 0.14); --mgo-rating-line: rgba(240, 149, 74, 0.5); --mgo-rating-glow: rgba(240, 149, 74, 0.38); }
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-good  { --mgo-rating: var(--mgo-green); --mgo-rating-soft: rgba(47, 191, 147, 0.13); --mgo-rating-line: rgba(47, 191, 147, 0.5); --mgo-rating-glow: rgba(47, 191, 147, 0.36); }
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-easy  { --mgo-rating: var(--mgo-blue); --mgo-rating-soft: rgba(58, 169, 232, 0.13); --mgo-rating-line: rgba(58, 169, 232, 0.5); --mgo-rating-glow: rgba(58, 169, 232, 0.36); }
+
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-again::before,
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-hard::before,
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-good::before,
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-easy::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-bottom: 3px;
+    border-radius: 999px;
+    background: var(--mgo-rating);
+    box-shadow: 0 0 8px var(--mgo-rating-glow);
+    opacity: 0.85;
+}
+
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-again:hover,
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-hard:hover,
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-good:hover,
+.fsrs-review-view .fsrs-review-controls .fsrs-rating-easy:hover {
+    background: linear-gradient(160deg, var(--mgo-rating-soft), var(--mgo-hover-paper) 70%);
+    border-color: var(--mgo-rating-line);
+    color: var(--mgo-rating);
+    transform: translateY(-2px);
+    box-shadow:
+        0 16px 30px -14px var(--mgo-rating-glow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.fsrs-review-view .fsrs-rating-text {
+    font-family: var(--mgo-font-display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.fsrs-review-view .fsrs-interval-hint {
+    font-size: 11px;
+    color: inherit;
+    opacity: 0.6;
+}
+
+/* ── 快捷键提示 ── */
+
+.fsrs-review-view .fsrs-review-hint {
+    color: var(--mgo-ink-faint);
+    font-weight: 500;
+}
+
+.fsrs-review-view .fsrs-review-hint:hover {
+    color: var(--mgo-pink-deep);
+}
+
+.fsrs-review-view .fsrs-review-hint kbd {
+    padding: 1px 6px;
+    border: 1px solid var(--mgo-line);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--mgo-ink-soft);
+    box-shadow: 0 1px 0 rgba(120, 90, 180, 0.15);
+}
+
+.fsrs-review-view .fsrs-review-hint-divider {
+    color: rgba(146, 120, 196, 0.45);
+}
+
+/* ── 更多菜单 ── */
+
+.fsrs-review-view .fsrs-review-more-menu {
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 22px 44px -22px rgba(90, 60, 160, 0.5);
+}
+
+.fsrs-review-view .fsrs-review-more-item {
+    border-radius: 9px;
+    color: var(--mgo-ink);
+}
+
+.fsrs-review-view .fsrs-review-more-item:hover {
+    background: linear-gradient(120deg, rgba(255, 127, 182, 0.14), rgba(155, 123, 255, 0.14));
+    color: var(--mgo-pink-deep);
+}
+
+/* ── 打字题 ── */
+
+.fsrs-review-view .fsrs-typein-input {
+    padding: 12px 16px;
+    border: 1px solid var(--mgo-line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.78);
+    color: var(--mgo-ink);
+    box-shadow: inset 0 1px 2px rgba(90, 60, 150, 0.08);
+}
+
+.fsrs-review-view .fsrs-typein-input:focus {
+    border-color: rgba(255, 127, 182, 0.65);
+    box-shadow: 0 0 0 3px rgba(255, 127, 182, 0.18), 0 8px 20px -12px rgba(232, 81, 143, 0.5);
+}
+
+.fsrs-review-view .fsrs-typein-check-btn {
+    border: none;
+    border-radius: 999px;
+    color: #ffffff;
+    background-color: #b88cff;
+    background-image: linear-gradient(115deg, #ff8fbe 0%, #b88cff 48%, #6fc9ff 100%);
+    font-weight: 700;
+    box-shadow: 0 14px 30px -16px rgba(150, 96, 230, 0.7);
+}
+
+/* ── 空状态 / 完成页 ── */
+
+.fsrs-review-view .fsrs-review-idle {
+    color: var(--mgo-ink-soft);
+}
+
+.fsrs-review-view .fsrs-review-idle h3 {
+    font-family: var(--mgo-font-display);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    background-image: linear-gradient(110deg, #e8518f, #9b7bff 55%, #58c8f6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.fsrs-review-view .fsrs-completion-screen h2 {
+    font-family: var(--mgo-font-display);
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    background-image: linear-gradient(110deg, #e8518f, #9b7bff 55%, #58c8f6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.fsrs-review-view .fsrs-completion-screen p {
+    color: var(--mgo-ink-soft);
+}
+
+.fsrs-review-view .fsrs-completion-screen button {
+    min-height: 46px;
+    padding: 0 28px;
+    border: none;
+    border-radius: 999px;
+    color: #ffffff;
+    background-color: #b88cff;
+    background-image: linear-gradient(115deg, #ff8fbe 0%, #b88cff 48%, #6fc9ff 100%);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    box-shadow: 0 18px 36px -18px rgba(150, 96, 230, 0.8);
+}
+
+/* ── 深色：夜空配色 ── */
+
+.theme-dark .fsrs-review-view {
+    --mgo-ink: #f2ecff;
+    --mgo-ink-soft: #c0b1d9;
+    --mgo-ink-faint: #8e80a9;
+    --mgo-paper: #241c38;
+    --mgo-hover-paper: rgba(255, 255, 255, 0.08);
+    --mgo-line: rgba(178, 150, 255, 0.22);
+    --mgo-shadow: rgba(0, 0, 0, 0.85);
+
+    background-color: #151022;
+    background-image:
+        radial-gradient(820px 480px at 10% -10%, rgba(168, 84, 190, 0.5), transparent 62%),
+        radial-gradient(720px 440px at 95% 0%, rgba(58, 104, 196, 0.48), transparent 60%),
+        radial-gradient(900px 600px at 56% 116%, rgba(104, 66, 182, 0.42), transparent 62%),
+        radial-gradient(460px 340px at 2% 94%, rgba(198, 70, 140, 0.28), transparent 66%);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-icon-btn {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--mgo-ink-soft);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 127, 182, 0.45);
+    color: #ffa9cd;
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-deck {
+    background-image: linear-gradient(100deg, #ff9ac5 0%, #b79cff 58%, #7fd2ff 100%);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-mode {
+    border-color: rgba(255, 127, 182, 0.35);
+    background: linear-gradient(120deg, rgba(255, 127, 182, 0.16), rgba(155, 123, 255, 0.2));
+    color: #ffa9cd;
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-progress {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-card {
+    background:
+        linear-gradient(160deg, rgba(48, 37, 74, 0.94) 0%, rgba(33, 26, 52, 0.9) 55%, rgba(29, 30, 58, 0.9) 100%) padding-box,
+        linear-gradient(135deg, rgba(255, 127, 182, 0.5), rgba(155, 123, 255, 0.55) 55%, rgba(88, 200, 246, 0.5)) border-box;
+    box-shadow:
+        0 34px 70px -30px rgba(0, 0, 0, 0.9),
+        0 0 70px -28px rgba(155, 123, 255, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-body::before {
+    color: rgba(255, 158, 205, 0.75);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-body::after {
+    color: rgba(186, 160, 255, 0.7);
+}
+
+.theme-dark .fsrs-review-view .fsrs-card-context {
+    background: linear-gradient(120deg, rgba(255, 127, 182, 0.14), rgba(155, 123, 255, 0.16));
+    color: var(--mgo-ink-soft);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-controls .fsrs-rating-again,
+.theme-dark .fsrs-review-view .fsrs-review-controls .fsrs-rating-hard,
+.theme-dark .fsrs-review-view .fsrs-review-controls .fsrs-rating-good,
+.theme-dark .fsrs-review-view .fsrs-review-controls .fsrs-rating-easy {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 10px 24px -16px rgba(0, 0, 0, 0.9),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-controls .fsrs-rating-again:hover,
+.theme-dark .fsrs-review-view .fsrs-review-controls .fsrs-rating-hard:hover,
+.theme-dark .fsrs-review-view .fsrs-review-controls .fsrs-rating-good:hover,
+.theme-dark .fsrs-review-view .fsrs-review-controls .fsrs-rating-easy:hover {
+    background: linear-gradient(160deg, var(--mgo-rating-soft), rgba(255, 255, 255, 0.06) 70%);
+    box-shadow:
+        0 16px 30px -14px rgba(0, 0, 0, 0.9),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-hint kbd {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--mgo-ink-soft);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-hint-divider {
+    color: rgba(178, 150, 255, 0.35);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-more-menu {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(35, 27, 55, 0.94);
+    box-shadow: 0 22px 44px -20px rgba(0, 0, 0, 0.9);
+}
+
+.theme-dark .fsrs-review-view .fsrs-review-more-item:hover {
+    background: linear-gradient(120deg, rgba(255, 127, 182, 0.16), rgba(155, 123, 255, 0.18));
+    color: #ffa9cd;
+}
+
+.theme-dark .fsrs-review-view .fsrs-typein-input {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ── 小屏 / 触屏 ── */
+
+@media (pointer: coarse) {
+    .fsrs-review-view .fsrs-review-card {
+        padding: 22px 18px;
+        border-radius: 22px;
+    }
+
+    .fsrs-review-view .fsrs-review-controls .fsrs-rating-again,
+    .fsrs-review-view .fsrs-review-controls .fsrs-rating-hard,
+    .fsrs-review-view .fsrs-review-controls .fsrs-rating-good,
+    .fsrs-review-view .fsrs-review-controls .fsrs-rating-easy {
+        min-height: 60px;
+        padding: 8px 10px;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 700px) {
+    .fsrs-review-view .fsrs-review-deck {
+        font-size: 16px;
+    }
+
+    .fsrs-review-view .fsrs-review-card {
+        border-radius: 22px;
+        padding: 20px 16px;
+    }
+
+    .fsrs-review-view .fsrs-review-controls {
+        gap: 8px;
+    }
+
+    .fsrs-review-view .fsrs-rating-text {
+        font-size: 13px;
+    }
+
+    .fsrs-review-view .fsrs-interval-hint {
+        font-size: 10px;
+    }
+
+    .fsrs-review-view .fsrs-completion-screen h2 {
+        font-size: 26px;
+    }
+}
+
+@media (max-width: 500px) {
+    /* 窄屏：进度条让位给牌组名（1 / 41 已经说明进度） */
+    .fsrs-review-view .fsrs-review-progress {
+        display: none;
+    }
+
+    .fsrs-review-view .fsrs-review-mode {
+        padding: 2px 8px;
+        font-size: 11px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fsrs-review-view .fsrs-review-body::before,
+    .fsrs-review-view .fsrs-review-body::after {
+        animation: none;
+        opacity: 0.45;
+    }
+
+    .fsrs-review-view .fsrs-review-card,
+    .fsrs-review-view .fsrs-review-icon-btn,
+    .fsrs-review-view .fsrs-review-controls .fsrs-rating-again,
+    .fsrs-review-view .fsrs-review-controls .fsrs-rating-hard,
+    .fsrs-review-view .fsrs-review-controls .fsrs-rating-good,
+    .fsrs-review-view .fsrs-review-controls .fsrs-rating-easy,
+    .fsrs-review-view .fsrs-show-answer-btn {
+        transition: none;
+    }
+}

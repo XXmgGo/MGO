@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - **Refresh the current card (R):** a refresh button in the review top bar and the `R` shortcut re-read the card's note and replace the queued card with the edited version, so content changes show up without leaving the session.
 
 ### Changed
+- **Anime-style review skin:** the review tab now opens on a pastel aurora background around a glass card with a gradient rim and rounded display type. The deck title, mode pill, progress bar and Show answer button use the same pink-violet-sky palette, and the four rating buttons are colour-coded with soft hover glows. A night-sky variant follows the dark theme. All styling is scoped to the review tab; the dashboard and settings are untouched.
 - **Review opens as a workspace tab:** review sessions now live in their own tab instead of a full-screen modal, so they stay open next to your notes. The top bar gains an "open source note" button; it and the `E` shortcut open the card's note in another tab and scroll to the card block without closing the review. Escape and the ✕ button close the review tab.
 - **Browse opens as a workspace tab:** the card browser is now a tab as well, with the deck name, position counter, a source-note link, previous/next buttons and the same jump-to-card behaviour. The browse modal was removed.
 - **Plain in-note cards with an MGO edit badge:** cards render as ordinary text (no background box), with a small `MGO` badge at the top-right; clicking it moves the editor cursor into the fence so the source is editable (switching the note to source mode when needed). Obsidian's own code-block button is hidden for card fences.
@@ -19,6 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - **Crash on card creation:** The live-preview tag-hiding extension could emit replace decorations that crossed line breaks, which CodeMirror forbids; it caused `Decorations that replace line breaks...` and a cascade of viewport `TypeError`s (`scanTile`, `preserve`). The extension was removed in favor of the code-block renderer.
+- **Squashed context pill:** the card's furigana/context line could shrink to a sliver when card content overflowed the panel height; it now keeps its own height and the card scrolls instead.
 
 ## [1.2.1] - 2026-10-31
 
