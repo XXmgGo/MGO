@@ -1,6 +1,6 @@
 import { MarkdownRenderer, MarkdownRenderChild, Notice, setIcon, type Plugin } from 'obsidian';
 import { toHardBreaks } from '../data/constants';
-import { CARD_FENCE_LANGS, hasCloze, parseCardBlockAttributes, parseCardBlockBody, revealCloze } from '../data/cardText';
+import { CARD_FENCE_LANGS, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, revealCloze } from '../data/cardText';
 import { editCardAtSource } from './editCardSource';
 import { resolveAudioSrc } from './audioSrc';
 
@@ -119,6 +119,16 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             if (!front) return;
             const f = el.createDiv({ cls: 'mgo-front' });
             void MarkdownRenderer.render(plugin.app, toHardBreaks(front), f, ctx.sourcePath, child);
+            const options = Array.isArray(attrs.options) ? attrs.options : [];
+            const answer = typeof attrs.answer === 'string' ? attrs.answer : undefined;
+            if (resolveQuizAnswer(answer, options) !== null) {
+                const list = el.createDiv({ cls: 'mgo-quiz-options' });
+                options.forEach((option, index) => {
+                    const row = list.createDiv({ cls: 'mgo-quiz-option' });
+                    row.createSpan({ cls: 'mgo-quiz-key', text: String(index + 1) });
+                    row.createSpan({ cls: 'mgo-quiz-text', text: option });
+                });
+            }
             if (back) {
                 const b = el.createDiv({ cls: 'mgo-back' });
                 void MarkdownRenderer.render(plugin.app, toHardBreaks(back), b, ctx.sourcePath, child);

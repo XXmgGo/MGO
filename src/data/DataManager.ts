@@ -555,6 +555,7 @@ export class DataManager {
             const meta = {
                 title: typeof attrs.title === 'string' ? attrs.title : undefined,
                 options: Array.isArray(attrs.options) ? attrs.options : undefined,
+                answer: typeof attrs.answer === 'string' ? attrs.answer : undefined,
                 hint: typeof attrs.hint === 'string' ? attrs.hint : undefined,
                 audio: typeof attrs.audio === 'string' ? attrs.audio : undefined,
             };

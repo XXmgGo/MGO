@@ -85,6 +85,9 @@ MGO 使用 **FSRS-5**（Free Spaced Repetition Scheduler，通过 `ts-fsrs` 实�
 ### 卡片就住在笔记里
 直接在任意 Markdown 笔记中编写闪卡，无需导入、无需切换应用。
 
+### 选择题
+给卡片写 `options` 和 `answer`，复习时选项变成可点的按钮：点一下立刻判对错、显示背面，再按 FSRS 评分（答错建议「重来」、答对建议「良好」）。
+
 ````markdown
 ```mgo
 What is the powerhouse of the cell?

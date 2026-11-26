@@ -44,7 +44,7 @@ vi.mock('../src/database/PouchDBManager', () => {
 
 import { describe, it, expect, vi } from 'vitest';
 import { Rating } from 'ts-fsrs';
-import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, revealCloze } from '../src/data/cardText';
+import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, revealCloze } from '../src/data/cardText';
 import { DataManager } from '../src/data/DataManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
@@ -105,6 +105,19 @@ describe('code fence card syntax (pure helpers)', () => {
         expect(parseCardBlockAttributes(list).attrs.options).toEqual(['A', 'B', 'C']);
         const csv = '---\noptions: A, B, C\n---\nq\n---\na';
         expect(parseCardBlockAttributes(csv).attrs.options).toEqual(['A', 'B', 'C']);
+    });
+
+    it('resolves a quiz answer from an index, a letter or the option text', () => {
+        const options = ['増え', '増える', '増やす', '増やし'];
+        expect(resolveQuizAnswer('2', options)).toBe(1);
+        expect(resolveQuizAnswer('B', options)).toBe(1);
+        expect(resolveQuizAnswer('ｂ', options)).toBe(1);
+        expect(resolveQuizAnswer('増やす', options)).toBe(2);
+        expect(resolveQuizAnswer('9', options)).toBeNull();
+        expect(resolveQuizAnswer('D', options)).toBe(3);
+        expect(resolveQuizAnswer('', options)).toBeNull();
+        expect(resolveQuizAnswer(undefined, options)).toBeNull();
+        expect(resolveQuizAnswer('1', ['only one'])).toBeNull();
     });
 
     it('keeps the body untouched when there is no attribute header', () => {
@@ -192,14 +205,15 @@ describe('DataManager parses code fence cards', () => {
         ]);
     });
 
-    it('stores title, options and hint, and keeps an explicit id stable', async () => {
+    it('stores title, options, answer and hint, and keeps an explicit id stable', async () => {
         const block = (front: string) =>
-            '```mgo\n---\ntitle: 单词卡\nid: fsrs-word-1\noptions: [食べる, 飲む]\nhint: 动词\n---\n' + front + '\n---\n吃\n```';
+            '```mgo\n---\ntitle: 单词卡\nid: fsrs-word-1\noptions: [食べる, 飲む]\nanswer: 1\nhint: 动词\n---\n' + front + '\n---\n吃\n```';
         const first = new DataManager(createPlugin('# 牌组\n\n' + block('食べる')) as never);
         await first.buildIndex();
         const card = first.getAllCards()[0];
         expect(card.title).toBe('单词卡');
         expect(card.options).toEqual(['食べる', '飲む']);
+        expect(card.answer).toBe('1');
         expect(card.hint).toBe('动词');
         expect(card.id).toMatch(/::fsrs-word-1$/);
 

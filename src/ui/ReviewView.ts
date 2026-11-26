@@ -2,6 +2,7 @@ import { ButtonComponent, Component, ItemView, MarkdownRenderer, Notice, TFile, 
 import { Rating, State } from 'ts-fsrs';
 import type { Card } from '../data/types';
 import { VIEW_ICON_NAME, VIEW_TYPE_REVIEW, isInPlaceImageCard, toHardBreaks } from '../data/constants';
+import { resolveQuizAnswer } from '../data/cardText';
 import { openCardSource } from './cardSource';
 import { resolveAudioSrc } from './audioSrc';
 
@@ -36,6 +37,12 @@ export class ReviewView extends ItemView {
     private typeinInput: HTMLInputElement;
     private typeinFeedback: HTMLElement;
     private typeinCheckBtn: ButtonComponent;
+    private quizContainer: HTMLElement;
+    private quizOptions: string[] = [];
+    private quizCorrectIndex = -1;
+    private quizAnswered = false;
+    private quizCorrect = false;
+    private quizSkipped = false;
     private reviewShell: HTMLElement | null = null;
     private topbarEl: HTMLElement | null = null;
     private visibleCounter: HTMLElement | null = null;
@@ -194,6 +201,8 @@ export class ReviewView extends ItemView {
         });
 
         this.frontEl = this.cardContainer.createDiv({ cls: 'fsrs-card-front' });
+        this.quizContainer = this.cardContainer.createDiv({ cls: 'fsrs-quiz' });
+        this.quizContainer.hide();
         this.answerContainer = this.cardContainer.createDiv({ cls: 'fsrs-card-answer' });
         this.answerContainer.hide();
         this.answerContainer.createEl('hr');
@@ -488,10 +497,14 @@ export class ReviewView extends ItemView {
             { text: '简单', rating: Rating.Easy, cls: 'fsrs-rating-easy' },
         ];
 
+        const suggested = this.quizAnswered && !this.quizSkipped
+            ? (this.quizCorrect ? Rating.Good : Rating.Again)
+            : null;
         for (const { text, rating, cls } of ratings) {
             const btn = new ButtonComponent(this.controlsContainer)
                 .onClick(() => this.handleRating(rating));
             btn.buttonEl.addClass(cls);
+            if (rating === suggested) btn.buttonEl.addClass('fsrs-rating-suggested');
             btn.buttonEl.createSpan({ text, cls: 'fsrs-rating-text' });
             btn.buttonEl.createEl('small', { text: intervals[rating], cls: 'fsrs-interval-hint' });
         }
@@ -520,6 +533,7 @@ export class ReviewView extends ItemView {
 
         this.frontEl.empty();
         this.backEl.empty();
+        this.resetQuiz();
 
         const contextEl = this.cardContainer.querySelector('.fsrs-card-context') as HTMLElement;
         if (contextEl) {
@@ -536,6 +550,7 @@ export class ReviewView extends ItemView {
         this.frontEl.show();
         await MarkdownRenderer.render(this.app, toHardBreaks(card.front), this.frontEl, card.filePath, this.renderComponent);
         await MarkdownRenderer.render(this.app, toHardBreaks(card.back), this.backEl, card.filePath, this.renderComponent);
+        this.renderQuiz(card);
         this.syncAudioUi(card);
 
         if (card.type === 'typein') {
@@ -608,7 +623,84 @@ export class ReviewView extends ItemView {
         });
     }
 
+    private resetQuiz(): void {
+        this.quizOptions = [];
+        this.quizCorrectIndex = -1;
+        this.quizAnswered = false;
+        this.quizCorrect = false;
+        this.quizSkipped = false;
+        this.quizContainer.empty();
+        this.quizContainer.hide();
+    }
+
+    /** 卡片带 options + answer 时，把选项渲染成可点的选择题。 */
+    private renderQuiz(card: Card): void {
+        if (card.type === 'typein' || card.type === 'cloze' || this.isInPlaceImage) return;
+        const options = card.options ?? [];
+        const correctIndex = resolveQuizAnswer(card.answer, options);
+        if (correctIndex === null) return;
+
+        this.quizOptions = options;
+        this.quizCorrectIndex = correctIndex;
+        this.quizContainer.empty();
+        this.quizContainer.show();
+
+        const list = this.quizContainer.createDiv({ cls: 'fsrs-quiz-options' });
+        options.forEach((option, index) => {
+            const row = list.createDiv({
+                cls: 'fsrs-quiz-option',
+                attr: { role: 'button', tabindex: '0', 'aria-label': `选项 ${index + 1}` },
+            });
+            row.createSpan({ cls: 'fsrs-quiz-key', text: String(index + 1) });
+            row.createSpan({ cls: 'fsrs-quiz-text', text: option });
+            row.addEventListener('click', () => this.answerQuiz(index));
+            row.addEventListener('keydown', (evt: KeyboardEvent) => {
+                if (evt.key !== 'Enter' && evt.key !== ' ') return;
+                evt.preventDefault();
+                this.answerQuiz(index);
+            });
+        });
+    }
+
+    /** index < 0 表示不改答案、直接显示答案。 */
+    private answerQuiz(index: number): void {
+        if (this.state !== 'question' || this.quizCorrectIndex < 0 || this.quizAnswered) return;
+        const skipped = index < 0;
+        this.quizAnswered = true;
+        this.quizSkipped = skipped;
+        this.quizCorrect = !skipped && index === this.quizCorrectIndex;
+
+        Array.from(this.quizContainer.querySelectorAll('.fsrs-quiz-option')).forEach((el, i) => {
+            el.classList.add('is-locked');
+            el.setAttribute('aria-disabled', 'true');
+            if (i === this.quizCorrectIndex) el.classList.add('is-correct');
+            if (!skipped && i === index && i !== this.quizCorrectIndex) el.classList.add('is-wrong');
+        });
+
+        const feedback = this.quizContainer.createDiv({ cls: 'fsrs-quiz-feedback' });
+        if (skipped) {
+            feedback.setText(`已显示答案：${this.quizCorrectIndex + 1}`);
+            feedback.addClass('is-skipped');
+        } else if (this.quizCorrect) {
+            feedback.setText('回答正确');
+            feedback.addClass('is-correct');
+        } else {
+            feedback.setText(`回答错误，正确答案：${this.quizCorrectIndex + 1}`);
+            feedback.addClass('is-wrong');
+        }
+        this.revealAnswer();
+    }
+
     private showAnswer() {
+        if (this.state === 'answer') return;
+        if (this.quizCorrectIndex >= 0 && !this.quizAnswered) {
+            this.answerQuiz(-1);
+            return;
+        }
+        this.revealAnswer();
+    }
+
+    private revealAnswer() {
         if (this.state === 'answer') return;
         this.createControlButtons();
         this.state = 'answer';
@@ -747,6 +839,14 @@ export class ReviewView extends ItemView {
         }
 
         if (this.state === 'question') {
+            if (this.quizCorrectIndex >= 0 && !this.quizAnswered) {
+                const digit = evt.key === '0' ? 10 : (/^[1-9]$/.test(evt.key) ? Number(evt.key) : 0);
+                if (digit > 0 && digit <= this.quizOptions.length) {
+                    evt.preventDefault();
+                    this.answerQuiz(digit - 1);
+                    return;
+                }
+            }
             if (evt.key === ' ' || evt.key === 'Enter') {
                 evt.preventDefault();
                 this.showAnswer();

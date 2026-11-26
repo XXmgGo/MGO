@@ -133,7 +133,8 @@ High blood pressure is a common illness among the elderly.
 |---|---|---|
 | `id` | text | Stable card identity; editing the front or back keeps its review history. A UUID per card is a good choice |
 | `title` | text | Display name in the dashboard card list under the deck (expand a folder); falls back to the front text |
-| `options` | list | Candidate answers reserved for the upcoming multiple-choice mode |
+| `options` | list | Multiple-choice candidates; with `answer` set, review renders them as clickable options |
+| `answer` | text | Correct option: a 1-based index, a letter A–J, or the option text |
 | `hint` | text | Recall hint reserved for a future review option |
 
 Rules:
@@ -143,6 +144,30 @@ Rules:
 - `id` may only contain letters, digits, underscores and hyphens; an invalid id is ignored and the card falls back to its content hash.
 - Cloze blocks accept the same header; the attributes apply to every card generated for the block's cloze numbers.
 - Unknown keys are preserved but have no effect (reserved for future attributes).
+
+## Multiple-choice cards
+
+Give a card both `options` and `answer` and the review view turns it into a multiple-choice question: options become buttons, a click grades the pick and reveals the back, and a subtle outline suggests Again when wrong or Good when right. The rating itself stays yours. Number keys `1`–`9` pick an option (`0` is the tenth); Space reveals the answer without answering.
+
+````markdown
+```mgo
+---
+title: 一方だ
+id: 8d2c1f7e-...
+options: [増え, 増える, 増やす, 増やし]
+answer: 2
+---
+ここ数年、日本へ留学する学生は（　）一方だ。
+---
+増える
+ここ数年、日本へ留学する学生は増える一方だ。
+```
+````
+
+- `answer` accepts a 1-based index (`2`), a letter (`B`) or the option text (`増える`). Prefer the text when you may reorder options.
+- At least two options are required. If `answer` cannot be matched, the card renders as a normal card.
+- The note shows the options as a static numbered list; only the review view makes them clickable.
+- Single choice only.
 
 ## What you can put in a card
 

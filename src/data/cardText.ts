@@ -70,10 +70,34 @@ export interface CardAttributes {
     title?: string;
     id?: string;
     options?: string[];
+    /** 选择题正确答案：1 起始序号、A–J 字母，或选项原文。 */
+    answer?: string;
     hint?: string;
     /** 语音地址：卡片右下角显示小喇叭，点击播放。 */
     audio?: string;
     [key: string]: string | string[] | undefined;
+}
+
+/**
+ * 解析选择题的正确答案，返回 0 起始的选项下标。
+ * 支持 `answer: 2`、`answer: B`、`answer: 増える`；无选项或无法匹配时返回 null。
+ */
+export function resolveQuizAnswer(answer: string | undefined, options: readonly string[] | undefined): number | null {
+    if (!answer || !options || options.length < 2) return null;
+    const value = answer.normalize('NFKC').trim();
+    if (!value) return null;
+    if (/^\d+$/.test(value)) {
+        const index = Number(value) - 1;
+        return index >= 0 && index < options.length ? index : null;
+    }
+    if (/^[A-Za-z]$/.test(value)) {
+        const index = value.toUpperCase().charCodeAt(0) - 65;
+        return index >= 0 && index < options.length ? index : null;
+    }
+    const exact = options.findIndex(option => option.trim() === value);
+    if (exact !== -1) return exact;
+    const normalized = options.findIndex(option => option.normalize('NFKC').trim() === value);
+    return normalized !== -1 ? normalized : null;
 }
 
 function unquote(value: string): string {
@@ -127,7 +151,7 @@ function parseAttributeLines(lines: string[]): CardAttributes | null {
     if (attrs.id !== undefined && (typeof attrs.id !== 'string' || !/^[A-Za-z0-9_-]+$/.test(attrs.id))) {
         delete attrs.id;
     }
-    for (const key of ['title', 'hint']) {
+    for (const key of ['title', 'hint', 'answer']) {
         const v = attrs[key];
         if (Array.isArray(v)) attrs[key] = v.join(', ');
     }

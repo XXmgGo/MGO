@@ -310,6 +310,57 @@ describe('ReviewView (tab)', () => {
         }
     });
 
+    it('renders options as a clickable quiz and grades the answer', async () => {
+        const card: Card = {
+            id: 'quiz-1', deckId: 'deck-1', filePath: 'quiz.md', type: 'basic', originalText: '...',
+            front: '日本へ留学する学生は（　）一方だ。', back: '増える',
+            options: ['増え', '増える', '増やす', '増やし'], answer: '2',
+        };
+        const { view } = await openView([card]);
+        const options = Array.from(view.contentEl.querySelectorAll('.fsrs-quiz-option')) as HTMLElement[];
+        expect(options).toHaveLength(4);
+        expect(view.contentEl.querySelectorAll('.fsrs-quiz-feedback')).toHaveLength(0);
+
+        await click(options[0]);
+        expect(options[0].classList.contains('is-wrong')).toBe(true);
+        expect(options[1].classList.contains('is-correct')).toBe(true);
+        expect(view.contentEl.querySelector('.fsrs-quiz-feedback')!.textContent).toContain('回答错误');
+        expect(view.contentEl.querySelector('.fsrs-rating-again')!.classList.contains('fsrs-rating-suggested')).toBe(true);
+        expect((view.contentEl.querySelector('.fsrs-card-answer') as HTMLElement).style.display).not.toBe('none');
+    });
+
+    it('suggests Good for a correct pick and supports number keys', async () => {
+        const card: Card = {
+            id: 'quiz-2', deckId: 'deck-1', filePath: 'quiz.md', type: 'basic', originalText: '...',
+            front: '問題', back: '増える',
+            options: ['増え', '増える', '増やす', '増やし'], answer: 'B',
+        };
+        const { view } = await openView([card]);
+        (view as unknown as { handleKeyPress(evt: KeyboardEvent): void })
+            .handleKeyPress(new KeyboardEvent('keydown', { key: '2' }));
+        await new Promise((r) => setTimeout(r, 0));
+
+        const options = Array.from(view.contentEl.querySelectorAll('.fsrs-quiz-option')) as HTMLElement[];
+        expect(options[1].classList.contains('is-correct')).toBe(true);
+        expect(view.contentEl.querySelector('.fsrs-quiz-feedback')!.textContent).toContain('回答正确');
+        expect(view.contentEl.querySelector('.fsrs-rating-good')!.classList.contains('fsrs-rating-suggested')).toBe(true);
+    });
+
+    it('reveals the correct option when the answer is skipped', async () => {
+        const card: Card = {
+            id: 'quiz-3', deckId: 'deck-1', filePath: 'quiz.md', type: 'basic', originalText: '...',
+            front: '問題', back: '増える',
+            options: ['増え', '増える', '増やす', '増やし'], answer: '増える',
+        };
+        const { view } = await openView([card]);
+        await click(view.contentEl.querySelector('.fsrs-show-answer-btn') as HTMLElement);
+
+        const options = Array.from(view.contentEl.querySelectorAll('.fsrs-quiz-option')) as HTMLElement[];
+        expect(options[1].classList.contains('is-correct')).toBe(true);
+        expect(view.contentEl.querySelector('.fsrs-quiz-feedback')!.textContent).toContain('已显示答案');
+        expect(view.contentEl.querySelector('.fsrs-rating-good')!.classList.contains('fsrs-rating-suggested')).toBe(false);
+    });
+
     it('keeps standard cards showing front and answer together', async () => {
         const card: Card = {
             id: 'text-card-1', deckId: 'deck-1', filePath: 'trivia.md', type: 'basic', originalText: '...',
