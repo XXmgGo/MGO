@@ -1,7 +1,70 @@
-import { MarkdownRenderer, MarkdownRenderChild, type Plugin } from 'obsidian';
+import { MarkdownRenderer, MarkdownRenderChild, Notice, setIcon, type Plugin } from 'obsidian';
 import { toHardBreaks } from '../data/constants';
 import { CARD_FENCE_LANGS, hasCloze, parseCardBlockAttributes, parseCardBlockBody, revealCloze } from '../data/cardText';
 import { editCardAtSource } from './editCardSource';
+
+let currentAudio: HTMLAudioElement | null = null;
+
+function stopCurrentAudio(): void {
+    if (!currentAudio) return;
+    try { currentAudio.pause(); } catch { /* 元素可能已被卸载 */ }
+    currentAudio = null;
+}
+
+/**
+ * 卡片右下角的小喇叭：播放 `audio:` 属性里的语音。
+ * 反复点是「播放 / 停止」，开始播另一张卡时先停掉上一张。
+ */
+function attachAudioButton(el: HTMLElement, url: string): void {
+    el.addClass('mgo-card-has-audio');
+    const btn = el.createDiv({
+        cls: 'mgo-card-audio',
+        attr: { role: 'button', tabindex: '0', 'aria-label': '播放语音' },
+    });
+    setIcon(btn, 'volume-2');
+
+    let player: HTMLAudioElement | null = null;
+    const reset = () => {
+        player = null;
+        btn.removeClass('is-playing');
+        btn.setAttribute('aria-label', '播放语音');
+        setIcon(btn, 'volume-2');
+    };
+
+    const toggle = (ev?: Event) => {
+        ev?.preventDefault();
+        ev?.stopPropagation();
+        if (player) {
+            stopCurrentAudio();
+            reset();
+            return;
+        }
+        stopCurrentAudio();
+        const win = btn.ownerDocument.defaultView ?? window;
+        const audio = new win.Audio(url);
+        player = audio;
+        currentAudio = audio;
+        btn.addClass('is-playing');
+        btn.setAttribute('aria-label', '停止播放');
+        setIcon(btn, 'pause');
+        audio.addEventListener('ended', () => { if (player === audio) reset(); });
+        audio.addEventListener('error', () => {
+            if (player !== audio) return;
+            reset();
+            new Notice('音频加载失败');
+        });
+        void audio.play().catch(() => {
+            if (player !== audio) return;
+            reset();
+            new Notice('无法播放这段音频');
+        });
+    };
+
+    btn.addEventListener('click', toggle);
+    btn.addEventListener('keydown', (ev: KeyboardEvent) => {
+        if (ev.key === 'Enter' || ev.key === ' ') toggle(ev);
+    });
+}
 
 /**
  * 代码围栏卡片渲染器。
@@ -38,9 +101,12 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             if (!raw) return;
 
             // 属性段只作元数据（由 DataManager 读取），笔记里不渲染，只把它从正文中剥离。
-            const { content } = parseCardBlockAttributes(raw);
+            const { attrs, content } = parseCardBlockAttributes(raw);
             const body = content.trim();
             if (!body) return;
+
+            const audioUrl = typeof attrs.audio === 'string' ? attrs.audio.trim() : '';
+            if (audioUrl) attachAudioButton(el, audioUrl);
 
             if (hasCloze(body)) {
                 const c = el.createDiv({ cls: 'mgo-cloze' });

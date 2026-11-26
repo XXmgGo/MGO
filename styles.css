@@ -431,6 +431,48 @@
     background: var(--background-modifier-hover);
 }
 
+/* 有 audio 属性的卡片：底部留一条空隙放小喇叭，避免压住最后一行文字 */
+.mgo-card-render.mgo-card-has-audio {
+    padding-bottom: 18px;
+}
+
+/* 右下角小喇叭：点击播放 / 停止语音 */
+.mgo-card-audio {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 16px;
+    border-radius: 4px;
+    color: #9a9a9a;
+    opacity: 0.55;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.mgo-card-audio svg {
+    width: 13px;
+    height: 13px;
+}
+
+.mgo-card-render:hover .mgo-card-audio,
+.mgo-card-audio.is-playing {
+    opacity: 1;
+}
+
+.mgo-card-audio:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.mgo-card-audio.is-playing {
+    color: var(--text-accent);
+}
+
 /* 实时预览里代码块外壳同样透明，并隐藏右上角的代码块编辑按钮 */
 .markdown-source-view .cm-embed-block:has(.mgo-card-render) {
     background: transparent;

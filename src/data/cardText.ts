@@ -71,6 +71,8 @@ export interface CardAttributes {
     id?: string;
     options?: string[];
     hint?: string;
+    /** 语音地址：卡片右下角显示小喇叭，点击播放。 */
+    audio?: string;
     [key: string]: string | string[] | undefined;
 }
 

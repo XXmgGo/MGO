@@ -20,6 +20,7 @@ vi.mock('obsidian', () => {
         MarkdownRenderChild: class {
             constructor(public el: HTMLElement) {}
         },
+        setIcon: (el: HTMLElement, icon: string) => { el.setAttribute('data-icon', icon); },
     };
 });
 
@@ -122,5 +123,61 @@ describe('card code block processor', () => {
         handler('The ==c1::sky== is blue.', el, { sourcePath: 'x.md', addChild: () => {} });
         await flush();
         expect(el.querySelector('.mgo-cloze')!.textContent).toBe('The ==sky== is blue.');
+    });
+
+    it('renders a speaker button for the audio attribute', async () => {
+        const handler = createProcessor()['mgo'];
+        const el = document.createElement('div');
+        handler('---\naudio: https://cdn.example.com/a.mp3\n---\n正面\n---\n背面', el, { sourcePath: 'x.md', addChild: () => {} });
+        await flush();
+
+        expect(el.classList.contains('mgo-card-has-audio')).toBe(true);
+        const btn = el.querySelector('.mgo-card-audio') as HTMLElement;
+        expect(btn).not.toBeNull();
+        expect(btn.getAttribute('aria-label')).toBe('播放语音');
+    });
+
+    it('plays the audio when the speaker is clicked', async () => {
+        const play = vi.fn().mockResolvedValue(undefined);
+        const pause = vi.fn();
+        const created: string[] = [];
+        class FakeAudio {
+            constructor(src: string) { created.push(src); }
+            play = play;
+            pause = pause;
+            addEventListener = vi.fn();
+        }
+        const original = (window as Window & typeof globalThis).Audio;
+        (window as unknown as Record<string, unknown>).Audio = FakeAudio;
+        try {
+            const handler = createProcessor()['mgo'];
+            const el = document.createElement('div');
+            handler('---\naudio: https://cdn.example.com/a.mp3\n---\n正面\n---\n背面', el, { sourcePath: 'x.md', addChild: () => {} });
+            await flush();
+
+            const btn = el.querySelector('.mgo-card-audio') as HTMLElement;
+            btn.click();
+            await flush();
+
+            expect(created).toEqual(['https://cdn.example.com/a.mp3']);
+            expect(play).toHaveBeenCalled();
+            expect(btn.classList.contains('is-playing')).toBe(true);
+
+            btn.click();
+            expect(pause).toHaveBeenCalled();
+            expect(btn.classList.contains('is-playing')).toBe(false);
+        } finally {
+            (window as unknown as Record<string, unknown>).Audio = original;
+        }
+    });
+
+    it('keeps cards without audio free of the speaker button', async () => {
+        const handler = createProcessor()['mgo'];
+        const el = document.createElement('div');
+        handler('正面\n---\n背面', el, { sourcePath: 'x.md', addChild: () => {} });
+        await flush();
+
+        expect(el.classList.contains('mgo-card-has-audio')).toBe(false);
+        expect(el.querySelector('.mgo-card-audio')).toBeNull();
     });
 });
