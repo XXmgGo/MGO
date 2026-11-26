@@ -135,6 +135,7 @@ High blood pressure is a common illness among the elderly.
 | `title` | text | Display name in the dashboard card list under the deck (expand a folder); falls back to the front text |
 | `options` | list | Multiple-choice candidates; with `answer` set, review renders them as clickable options |
 | `answer` | text | Correct option: a 1-based index, a letter A–J, or the option text |
+| `reveal` | text | `true` folds the back into a "Show answer" toggle in the note; review is unchanged |
 | `hint` | text | Recall hint reserved for a future review option |
 
 Rules:
@@ -166,8 +167,9 @@ answer: 2
 
 - `answer` accepts a 1-based index (`2`), a letter (`B`) or the option text (`増える`). Prefer the text when you may reorder options.
 - At least two options are required. If `answer` cannot be matched, the card renders as a normal card.
-- The note shows the options as a static numbered list; only the review view makes them clickable.
+- The note renders the stem, a numbered option list and a "Show answer" toggle; there are no counters or stats in the note. Only the review view makes the options clickable.
 - Single choice only.
+- Basic cards can use `reveal: true` for the same collapsed-answer rendering in the note.
 
 ## What you can put in a card
 

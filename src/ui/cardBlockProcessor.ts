@@ -117,18 +117,50 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
 
             const { front, back } = parseCardBlockBody(body);
             if (!front) return;
-            const f = el.createDiv({ cls: 'mgo-front' });
-            void MarkdownRenderer.render(plugin.app, toHardBreaks(front), f, ctx.sourcePath, child);
             const options = Array.isArray(attrs.options) ? attrs.options : [];
             const answer = typeof attrs.answer === 'string' ? attrs.answer : undefined;
+
+            const renderAnswerToggle = (host: HTMLElement) => {
+                const actions = host.createDiv({ cls: 'mgo-quiz-actions' });
+                const toggle = actions.createEl('button', { cls: 'mgo-quiz-reveal', text: '显示答案' });
+                const answerEl = host.createDiv({ cls: 'mgo-quiz-answer' });
+                answerEl.hide();
+                if (back) {
+                    void MarkdownRenderer.render(plugin.app, toHardBreaks(back), answerEl, ctx.sourcePath, child);
+                }
+                toggle.addEventListener('click', () => {
+                    const hidden = answerEl.style.display === 'none';
+                    if (hidden) answerEl.show(); else answerEl.hide();
+                    toggle.setText(hidden ? '收起答案' : '显示答案');
+                });
+            };
+
             if (resolveQuizAnswer(answer, options) !== null) {
-                const list = el.createDiv({ cls: 'mgo-quiz-options' });
+                const quiz = el.createDiv({ cls: 'mgo-quiz-card' });
+                const stem = quiz.createDiv({ cls: 'mgo-quiz-stem' });
+                void MarkdownRenderer.render(plugin.app, toHardBreaks(front), stem, ctx.sourcePath, child);
+
+                const list = quiz.createDiv({ cls: 'mgo-quiz-options' });
                 options.forEach((option, index) => {
                     const row = list.createDiv({ cls: 'mgo-quiz-option' });
                     row.createSpan({ cls: 'mgo-quiz-key', text: String(index + 1) });
                     row.createSpan({ cls: 'mgo-quiz-text', text: option });
                 });
+                renderAnswerToggle(quiz);
+                return;
             }
+
+            const reveal = typeof attrs.reveal === 'string' && /^(1|true|yes|on)$/i.test(attrs.reveal.trim());
+            if (reveal && back) {
+                const card = el.createDiv({ cls: 'mgo-quiz-card mgo-reveal-card' });
+                const stem = card.createDiv({ cls: 'mgo-quiz-stem' });
+                void MarkdownRenderer.render(plugin.app, toHardBreaks(front), stem, ctx.sourcePath, child);
+                renderAnswerToggle(card);
+                return;
+            }
+
+            const f = el.createDiv({ cls: 'mgo-front' });
+            void MarkdownRenderer.render(plugin.app, toHardBreaks(front), f, ctx.sourcePath, child);
             if (back) {
                 const b = el.createDiv({ cls: 'mgo-back' });
                 void MarkdownRenderer.render(plugin.app, toHardBreaks(back), b, ctx.sourcePath, child);

@@ -3023,11 +3023,34 @@
 }
 
 /* ── 选择题卡片：笔记内静态选项列表 ───────────────────────────────── */
+.mgo-card-render .mgo-quiz-card {
+    margin: 2px 0;
+}
+
+.mgo-card-render .mgo-quiz-stem p:first-child {
+    margin-top: 0;
+}
+
 .mgo-card-render .mgo-quiz-options {
     margin: 8px 0 2px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 4px 14px;
+}
+
+.mgo-card-render .mgo-quiz-actions {
+    margin-top: 8px;
+}
+
+.mgo-card-render .mgo-quiz-reveal {
+    font-size: 0.8em;
+    padding: 2px 10px;
+}
+
+.mgo-card-render .mgo-quiz-answer {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--background-modifier-border);
 }
 
 .mgo-card-render .mgo-quiz-option {
