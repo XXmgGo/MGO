@@ -553,10 +553,10 @@ export class ReviewView extends ItemView {
         }
     }
 
-    /** 卡片切换时同步语音入口：有 audio 才显示小喇叭和「A 发音」提示。 */
+    /** 卡片切换时同步语音入口：audio 能解析出播放地址才显示小喇叭和「A 发音」提示。 */
     private syncAudioUi(card: Card): void {
         this.stopAudio();
-        const hasAudio = Boolean(card.audio);
+        const hasAudio = Boolean(resolveAudioSrc(this.app, card.audio));
         if (this.audioBtn) {
             if (hasAudio) this.audioBtn.show(); else this.audioBtn.hide();
         }
