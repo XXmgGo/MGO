@@ -284,71 +284,6 @@ export class DataManager {
         return false;
     }
 
-    private buildHeadingBreadcrumbs(lines: string[]): (string | undefined)[] {
-        const breadcrumbs = new Array<string | undefined>(lines.length);
-        const headingStack: string[] = [];
-        let inFrontmatter = false;
-        let inCodeBlock = false;
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const trimmed = line.trim();
-
-            if (i === 0 && trimmed === '---') {
-                inFrontmatter = true;
-                breadcrumbs[i] = undefined;
-                continue;
-            }
-            if (inFrontmatter) {
-                if (trimmed === '---') {
-                    inFrontmatter = false;
-                }
-                breadcrumbs[i] = undefined;
-                continue;
-            }
-
-            if (trimmed.startsWith('```') || trimmed.startsWith('~~~')) {
-                inCodeBlock = !inCodeBlock;
-                breadcrumbs[i] = headingStack.length > 0 ? headingStack.join(' > ') : undefined;
-                continue;
-            }
-
-            if (!inCodeBlock) {
-                const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
-                if (headingMatch) {
-                    const level = headingMatch[1].length;
-                    const text = headingMatch[2].trim();
-                    while (headingStack.length >= level) {
-                        headingStack.pop();
-                    }
-                    headingStack.push(text);
-                }
-            }
-
-            breadcrumbs[i] = headingStack.length > 0 ? headingStack.join(' > ') : undefined;
-        }
-
-        return breadcrumbs;
-    }
-
-    private findCardContext(content: string, breadcrumbs: (string | undefined)[], searchText: string): string | undefined {
-        const idx = content.indexOf(searchText);
-        if (idx < 0) return undefined;
-        if (this.lineStartsCache?.content !== content) {
-            const starts = [0];
-            for (let i = content.indexOf('\n'); i >= 0; i = content.indexOf('\n', i + 1)) starts.push(i + 1);
-            this.lineStartsCache = { content, starts };
-        }
-        const starts = this.lineStartsCache.starts;
-        let lo = 0;
-        let hi = starts.length - 1;
-        while (lo < hi) {
-            const mid = (lo + hi + 1) >> 1;
-            if (starts[mid] <= idx) lo = mid; else hi = mid - 1;
-        }
-        return lo < breadcrumbs.length ? breadcrumbs[lo] : undefined;
-    }
-
     async updateFile(file: TFile): Promise<boolean> {
         this.adoptedStateInFile = false;
         const cache = this.plugin.app.metadataCache.getFileCache(file);
@@ -505,8 +440,6 @@ export class DataManager {
     }
 
     private parseMgoCards(content: string, filePath: string, deckId: string, deck: Deck) {
-        const lines = content.split('\n');
-        const breadcrumbs = this.buildHeadingBreadcrumbs(lines);
         let match: RegExpExecArray | null;
 
         // 代码围栏卡片（```mgo / ```mgo-reverse / ```mgo-typein）：块内独立一行 --- 分隔正/背面。
@@ -520,10 +453,9 @@ export class DataManager {
             const body = cardContent.trim();
             if (!body) continue;
 
-            const headingContext = this.findCardContext(content, breadcrumbs, match[0]);
             const cardTitle = typeof attrs.title === 'string' && attrs.title.trim() ? attrs.title.trim() : '';
-            // 卡片名称：优先 title；没写就用卡片正面，最后才退回标题层级。
-            const context = cardTitle || headingContext;
+            // 卡片名称：优先 title；没写就用卡片正面；都没有就不显示。
+            const context = cardTitle;
             const options = Array.isArray(attrs.options) ? attrs.options : undefined;
             const answer = typeof attrs.answer === 'string' ? attrs.answer : undefined;
             const meta = {
@@ -549,7 +481,7 @@ export class DataManager {
 
             const { front, back } = parseCardBlockBody(body);
             if (!front || !back) continue;
-            const faceContext = cardTitle || front.replace(/\s+/g, ' ').trim() || headingContext;
+            const faceContext = cardTitle || front.replace(/\s+/g, ' ').trim();
 
             let finalFront = front;
             let finalBack = back;
