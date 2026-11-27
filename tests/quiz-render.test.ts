@@ -124,13 +124,12 @@ describe('note quiz rendering', () => {
         expect(openLinkTextSpy).toHaveBeenCalledWith('详解句', 'note.md', true);
     });
 
-    it('renders a display-only card frame for flashcard:false', async () => {
-        const el = await render(['---', 'flashcard: false', '---', '- 第一行', '- 第二行'].join('\n'));
-        const box = el.querySelector('.mgo-static-card') as HTMLElement;
-        expect(box).not.toBeNull();
-        expect(box.textContent).toContain('第一行');
-        expect(el.querySelector('.mgo-quiz-option')).toBeNull();
-        expect(el.querySelector('.mgo-quiz-reveal')).toBeNull();
+    it('keeps flashcard:false cards interactive in the note', async () => {
+        const source = ['---', 'type: single-choice', 'options: [A, B]', 'answer: B', 'flashcard: false', '---', '问题', '---', '正解：B'].join('\n');
+        const el = await render(source);
+        expect(el.querySelectorAll('.mgo-quiz-option')).toHaveLength(2);
+        (el.querySelectorAll('.mgo-quiz-option')[1] as HTMLElement).click();
+        expect(el.querySelector('.mgo-quiz-feedback')!.textContent).toContain('回答正确');
     });
 
     it('checks a typed fill-in answer', async () => {

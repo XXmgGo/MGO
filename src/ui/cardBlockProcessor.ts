@@ -109,20 +109,6 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             const audioUrl = resolveAudioSrc(plugin.app, typeof attrs.audio === 'string' ? attrs.audio : '');
             if (audioUrl) attachAudioButton(el, audioUrl);
 
-            // flashcard: false → 只渲染一个卡片框，不参与复习。
-            if (typeof attrs.flashcard === 'string' && /^(0|false|no|off)$/i.test(attrs.flashcard.trim())) {
-                const box = el.createDiv({ cls: 'mgo-quiz-card mgo-static-card' });
-                const { front: staticFront, back: staticBack } = parseCardBlockBody(body);
-                if (!staticFront) return;
-                const stem = box.createDiv({ cls: 'mgo-quiz-stem' });
-                void MarkdownRenderer.render(plugin.app, toHardBreaks(staticFront), stem, ctx.sourcePath, child);
-                if (staticBack) {
-                    const backEl = box.createDiv({ cls: 'mgo-quiz-answer' });
-                    void MarkdownRenderer.render(plugin.app, toHardBreaks(staticBack), backEl, ctx.sourcePath, child);
-                }
-                return;
-            }
-
             if (hasCloze(body)) {
                 const c = el.createDiv({ cls: 'mgo-cloze' });
                 void MarkdownRenderer.render(plugin.app, toHardBreaks(revealCloze(body)), c, ctx.sourcePath, child);
