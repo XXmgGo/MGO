@@ -23,11 +23,9 @@ export class DashboardView extends ItemView {
     getDisplayText(): string { return 'MGO 牌组'; }
     getIcon(): string { return VIEW_ICON_NAME; }
     async onOpen() {
-        // 复习/浏览标签页评分后统计会变，切回仪表盘时按「此刻」重算并重绘一次。
+        // 复习/浏览标签页评分后统计会变，切回仪表盘时重绘一次。
         this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf) => {
-            if (leaf !== this.leaf) return;
-            this.plugin.dataManager.recalculateAllDeckStats();
-            this.render();
+            if (leaf === this.leaf) this.render();
         }));
         this.render();
     }
@@ -40,6 +38,9 @@ export class DashboardView extends ItemView {
             return;
         }
 
+        // 顶部汇总用缓存统计、文件夹行用实时计算，不在此重算两边会对不上；
+        // 每次渲染都按「此刻」重算一次，保证到期/新卡是同一时刻的数字。
+        this.plugin.dataManager.recalculateAllDeckStats();
         this.renderHeader();
         this.renderDecks();
     }
