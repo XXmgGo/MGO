@@ -3243,10 +3243,11 @@
 }
 
 .mgo-card-render .mgo-quiz-multi-input {
-    width: 5.5em;
-    min-width: 3em;
+    width: 1em;
+    min-width: 1em;
+    box-sizing: content-box;
     margin: 0 3px;
-    padding: 0 4px;
+    padding: 0 2px;
     border: none;
     border-bottom: 1px solid var(--background-modifier-border-hover, var(--background-modifier-border));
     border-radius: 0;

@@ -220,6 +220,44 @@ describe('note quiz rendering', () => {
         expect(el.querySelectorAll('.mgo-quiz-multi-row.is-wrong')).toHaveLength(0);
     });
 
+    it('splits one multi-blank item into two inputs and grades both', async () => {
+        const source = [
+            '---',
+            'type: multi-input',
+            'options: [ば～ほど, ほど]',
+            'answers:',
+            '- ば ほど',
+            '- ほど',
+            '---',
+            '11 間違いが少なけれ（　）少ない（　）いい。',
+            '12 少なければ少ない（　）いい。',
+            '---',
+            '正解：11 ば ほど / 12 ほど',
+        ].join('\n');
+
+        const el = await render(source);
+        const rows = Array.from(el.querySelectorAll('.mgo-quiz-multi-row'));
+        const first = Array.from(rows[0].querySelectorAll('.mgo-quiz-multi-input')) as HTMLInputElement[];
+        expect(first).toHaveLength(2);
+        expect(first[0].style.width).toBe('1em');
+        expect(rows[1].querySelectorAll('.mgo-quiz-multi-input')).toHaveLength(1);
+
+        first[0].value = 'ば';
+        first[0].dispatchEvent(new Event('input'));
+        expect(first[0].style.width).toBe('1em');
+        first[0].value = 'ければ';
+        first[0].dispatchEvent(new Event('input'));
+        expect(first[0].style.width).toBe('3em');
+        first[0].value = 'ば';
+        first[1].value = 'ほど';
+        const second = rows[1].querySelector('.mgo-quiz-multi-input') as HTMLInputElement;
+        second.value = 'ほど';
+
+        const check = Array.from(el.querySelectorAll('button')).find((b) => b.textContent === '检查') as HTMLElement;
+        check.click();
+        expect(el.querySelector('.mgo-quiz-feedback')!.textContent).toContain('答对 2 / 2');
+    });
+
     it('fills every blank when a multi-input answer is revealed', async () => {
         const source = [
             '---',

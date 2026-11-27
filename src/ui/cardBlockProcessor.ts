@@ -5,26 +5,48 @@ import { editCardAtSource } from './editCardSource';
 import { resolveAudioSrc } from './audioSrc';
 
 const BLANK_RE = /（\s*）|\(\s*\)|＿{2,}|_{2,}/;
+const BLANK_RE_ALL = /（\s*）|\(\s*\)|＿{2,}|_{2,}/g;
 
 /**
- * 把第一处全角括号空位换成打字框；题干是按 Markdown 渲染过的，所以走文本节点替换。
- * 找不到空位时把输入框追加到行尾，至少不丢题。
+ * 把题干里的空位依次换成打字框；题干是按 Markdown 渲染过的，所以走文本节点替换。
+ * 空位不够时把剩下的输入框追加到行尾，多出来的空位保持原样，至少不丢题。
  */
-function insertBlank(host: HTMLElement, input: HTMLElement): void {
+function insertBlanks(host: HTMLElement, inputs: HTMLElement[]): void {
     const doc = host.ownerDocument;
+    const pending = inputs.slice();
     const walker = doc.createTreeWalker(host, 4 /* NodeFilter.SHOW_TEXT */);
-    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-        const text = node.nodeValue ?? '';
-        const m = text.match(BLANK_RE);
-        const at = m?.index ?? -1;
-        if (!m || at < 0 || !node.parentNode) continue;
-        const after = doc.createTextNode(text.slice(at + m[0].length));
-        node.parentNode.insertBefore(after, node.nextSibling);
-        node.parentNode.insertBefore(input, after);
-        node.nodeValue = text.slice(0, at);
-        return;
+    const texts: Text[] = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) texts.push(node as Text);
+
+    for (const original of texts) {
+        if (pending.length === 0) break;
+        let current: Text | null = original;
+        while (current && pending.length > 0) {
+            const text = current.nodeValue ?? '';
+            const m = text.match(BLANK_RE);
+            if (!m || m.index === undefined) break;
+            const after = doc.createTextNode(text.slice(m.index + m[0].length));
+            current.parentNode?.insertBefore(after, current.nextSibling);
+            current.parentNode?.insertBefore(pending[0], after);
+            current.nodeValue = text.slice(0, m.index);
+            pending.shift();
+            current = after;
+        }
     }
-    host.appendChild(input);
+    for (const rest of pending) host.appendChild(rest);
+}
+
+/** 输入框默认一个全角字宽，随输入内容变宽。 */
+function fitMultiInputWidth(input: HTMLInputElement): void {
+    const len = [...input.value].length;
+    input.setCssProps({ width: `${Math.max(1, len)}em` });
+}
+
+/** 一句里有多个空时，答案按空格/顿号拆成对应份数；对不上就整串当一个答案。 */
+function splitAnswerParts(answer: string, count: number): string[] {
+    if (count <= 1) return [answer];
+    const parts = answer.split(/[\s、,，／|｜]+/).filter(Boolean);
+    return parts.length === count ? parts : [answer];
 }
 
 // keyCode 229 用于识别输入法确认候选词，不能只看 isComposing。
@@ -204,18 +226,27 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     const row = list.createDiv({ cls: 'mgo-quiz-multi-row' });
                     row.createSpan({ cls: 'mgo-quiz-multi-no', text: item.no });
                     const textEl = row.createSpan({ cls: 'mgo-quiz-multi-text' });
-                    const input = row.createEl('input', {
-                        cls: 'mgo-quiz-input mgo-quiz-multi-input',
-                        attr: { type: 'text', autocomplete: 'off', spellcheck: 'false', 'aria-label': `第 ${item.no} 题答案` },
+                    const blankCount = (item.text.match(BLANK_RE_ALL) ?? []).length;
+                    const parts = splitAnswerParts(item.answer, blankCount);
+                    const inputs = parts.map((_part, index) => {
+                        const input = row.createEl('input', {
+                            cls: 'mgo-quiz-input mgo-quiz-multi-input',
+                            attr: {
+                                type: 'text',
+                                autocomplete: 'off',
+                                spellcheck: 'false',
+                                'aria-label': parts.length > 1 ? `第 ${item.no} 题第 ${index + 1} 空` : `第 ${item.no} 题答案`,
+                            },
+                        });
+                        input.setCssProps({ width: '1em' });
+                        input.addEventListener('input', () => fitMultiInputWidth(input));
+                        return input;
                     });
-                    // 输入框宽度按答案长度定，长答案（うではないか）也塞得下。
-                    const word = item.answer.replace(/^[A-Za-z]\s*[.．、:：]?\s+/, '');
-                    input.style.width = `${Math.min(9, Math.max(4, word.length + 2))}em`;
                     void MarkdownRenderer.render(plugin.app, item.text, textEl, ctx.sourcePath, child)
-                        .then(() => insertBlank(textEl, input));
+                        .then(() => insertBlanks(textEl, inputs));
                     const hint = row.createSpan({ cls: 'mgo-quiz-multi-answer' });
                     hint.hide();
-                    return { row, input, hint, item };
+                    return { row, inputs, parts, hint, item };
                 });
 
                 const feedback = card.createDiv({ cls: 'mgo-quiz-feedback' });
@@ -235,11 +266,14 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     answered = true;
                     let correct = 0;
                     for (const r of rows) {
-                        r.input.disabled = true;
+                        r.inputs.forEach((input) => { input.disabled = true; });
                         if (revealMode) {
-                            r.input.value = r.item.answer;
+                            r.inputs.forEach((input, index) => {
+                                input.value = r.parts[index] ?? '';
+                                fitMultiInputWidth(input);
+                            });
                             r.row.addClass('is-revealed');
-                        } else if (r.item.answer && answerMatches(r.input.value, r.item.answer)) {
+                        } else if (r.parts.length > 0 && r.parts.every((part, index) => r.inputs[index] && answerMatches(r.inputs[index].value, part))) {
                             correct++;
                             r.row.addClass('is-correct');
                         } else {
@@ -267,13 +301,15 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 checkBtn.addEventListener('click', () => finish(false));
                 revealBtn.addEventListener('click', () => finish(true));
                 rows.forEach((r, index) => {
-                    r.input.addEventListener('keydown', (evt: KeyboardEvent) => {
-                        if (evt.key !== 'Enter' || isComposingKey(evt)) return;
-                        evt.preventDefault();
-                        if (answered) return;
-                        const next = rows[index + 1];
-                        if (next) next.input.focus();
-                        else finish(false);
+                    r.inputs.forEach((input) => {
+                        input.addEventListener('keydown', (evt: KeyboardEvent) => {
+                            if (evt.key !== 'Enter' || isComposingKey(evt)) return;
+                            evt.preventDefault();
+                            if (answered) return;
+                            const next = rows[index + 1];
+                            if (next) next.inputs[0]?.focus();
+                            else finish(false);
+                        });
                     });
                 });
                 detailBtn.addEventListener('click', () => {
@@ -283,8 +319,11 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 resetBtn.addEventListener('click', () => {
                     answered = false;
                     for (const r of rows) {
-                        r.input.disabled = false;
-                        r.input.value = '';
+                        r.inputs.forEach((input) => {
+                            input.disabled = false;
+                            input.value = '';
+                            fitMultiInputWidth(input);
+                        });
                         r.row.removeClass('is-correct', 'is-wrong', 'is-revealed');
                         r.hint.hide();
                         r.hint.empty();
@@ -297,7 +336,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     checkBtn.show();
                     revealBtn.show();
                     resetBtn.hide();
-                    rows[0]?.input.focus();
+                    rows[0]?.inputs[0]?.focus();
                 });
                 return;
             }
