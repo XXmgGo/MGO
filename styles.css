@@ -3243,9 +3243,9 @@
 }
 
 .mgo-card-render .mgo-quiz-multi-input {
-    width: 1em;
-    min-width: 1em;
-    box-sizing: content-box;
+    width: 1.4em;
+    min-width: 1.4em;
+    box-sizing: border-box;
     margin: 0 3px;
     padding: 0 2px;
     border: none;

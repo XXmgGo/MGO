@@ -36,8 +36,24 @@ function insertBlanks(host: HTMLElement, inputs: HTMLElement[]): void {
     for (const rest of pending) host.appendChild(rest);
 }
 
-/** 输入框默认一个全角字宽，随输入内容变宽。 */
+/**
+ * 输入框宽度贴着内容走：用 canvas 按当前字体量文字宽度，加上内边距和一点余量，
+ * 空着时按一个全角字的宽度占位。量不了（无 canvas）就按字数粗算。
+ */
 function fitMultiInputWidth(input: HTMLInputElement): void {
+    const doc = input.ownerDocument;
+    const win = doc.defaultView ?? window;
+    const text = input.value || '　';
+    const style = win.getComputedStyle(input);
+    const ctx = typeof OffscreenCanvas !== 'undefined'
+        ? new OffscreenCanvas(1, 1).getContext('2d')
+        : null;
+    if (ctx) {
+        ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        const width = Math.ceil(ctx.measureText(text).width) + 6;
+        input.setCssProps({ width: `${width}px` });
+        return;
+    }
     const len = [...input.value].length;
     input.setCssProps({ width: `${Math.max(1, len)}em` });
 }
@@ -238,8 +254,8 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                                 'aria-label': parts.length > 1 ? `第 ${item.no} 题第 ${index + 1} 空` : `第 ${item.no} 题答案`,
                             },
                         });
-                        input.setCssProps({ width: '1em' });
                         input.addEventListener('input', () => fitMultiInputWidth(input));
+                        fitMultiInputWidth(input);
                         return input;
                     });
                     void MarkdownRenderer.render(plugin.app, item.text, textEl, ctx.sourcePath, child)
