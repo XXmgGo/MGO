@@ -23,7 +23,6 @@ vi.mock('obsidian', () => {
 });
 
 import { registerCardCodeBlocks } from '../src/ui/cardBlockProcessor';
-import { CHOICE_CARDS_ENABLED } from '../src/data/constants';
 
 type Opts = { cls?: string; text?: string; attr?: Record<string, string> };
 
@@ -84,11 +83,8 @@ const quiz = [
     '正解：増える',
 ].join('\n');
 
-// 选择题卡片开关关着时，这两条用例不适用（恢复开关后自动跑）。
-const itChoice = CHOICE_CARDS_ENABLED ? it : it.skip;
-
 describe('note quiz rendering', () => {
-    itChoice('grades a click and can reset', async () => {
+    it('grades a click and can reset', async () => {
         const el = await render(quiz);
         const options = Array.from(el.querySelectorAll('.mgo-quiz-option')) as HTMLElement[];
         expect(options).toHaveLength(4);
@@ -106,7 +102,7 @@ describe('note quiz rendering', () => {
         expect((el.querySelector('.mgo-quiz-answer') as HTMLElement).style.display).toBe('none');
     });
 
-    itChoice('opens the detail note when the card declares detail', async () => {
+    it('opens the detail note when the card declares detail', async () => {
         const source = [
             '---',
             'type: single-choice',
@@ -126,6 +122,15 @@ describe('note quiz rendering', () => {
         expect(btn.style.display).not.toBe('none');
         btn.click();
         expect(openLinkTextSpy).toHaveBeenCalledWith('详解句', 'note.md', true);
+    });
+
+    it('renders a display-only card frame for flashcard:false', async () => {
+        const el = await render(['---', 'flashcard: false', '---', '- 第一行', '- 第二行'].join('\n'));
+        const box = el.querySelector('.mgo-static-card') as HTMLElement;
+        expect(box).not.toBeNull();
+        expect(box.textContent).toContain('第一行');
+        expect(el.querySelector('.mgo-quiz-option')).toBeNull();
+        expect(el.querySelector('.mgo-quiz-reveal')).toBeNull();
     });
 
     it('checks a typed fill-in answer', async () => {

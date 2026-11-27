@@ -79,6 +79,8 @@ export interface CardAttributes {
     detail?: string;
     /** 语音地址：卡片右下角显示小喇叭，点击播放。 */
     audio?: string;
+    /** 写 `false` 时只按卡片框显示，不登记成闪卡。 */
+    flashcard?: string;
     [key: string]: string | string[] | undefined;
 }
 

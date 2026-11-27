@@ -1,5 +1,5 @@
 import { MarkdownRenderer, MarkdownRenderChild, Notice, setIcon, type Plugin } from 'obsidian';
-import { CHOICE_CARDS_ENABLED, toHardBreaks } from '../data/constants';
+import { toHardBreaks } from '../data/constants';
 import { CARD_FENCE_LANGS, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../data/cardText';
 import { editCardAtSource } from './editCardSource';
 import { resolveAudioSrc } from './audioSrc';
@@ -109,6 +109,20 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             const audioUrl = resolveAudioSrc(plugin.app, typeof attrs.audio === 'string' ? attrs.audio : '');
             if (audioUrl) attachAudioButton(el, audioUrl);
 
+            // flashcard: false → 只渲染一个卡片框，不参与复习。
+            if (typeof attrs.flashcard === 'string' && /^(0|false|no|off)$/i.test(attrs.flashcard.trim())) {
+                const box = el.createDiv({ cls: 'mgo-quiz-card mgo-static-card' });
+                const { front: staticFront, back: staticBack } = parseCardBlockBody(body);
+                if (!staticFront) return;
+                const stem = box.createDiv({ cls: 'mgo-quiz-stem' });
+                void MarkdownRenderer.render(plugin.app, toHardBreaks(staticFront), stem, ctx.sourcePath, child);
+                if (staticBack) {
+                    const backEl = box.createDiv({ cls: 'mgo-quiz-answer' });
+                    void MarkdownRenderer.render(plugin.app, toHardBreaks(staticBack), backEl, ctx.sourcePath, child);
+                }
+                return;
+            }
+
             if (hasCloze(body)) {
                 const c = el.createDiv({ cls: 'mgo-cloze' });
                 void MarkdownRenderer.render(plugin.app, toHardBreaks(revealCloze(body)), c, ctx.sourcePath, child);
@@ -119,9 +133,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             if (!front) return;
             const options = Array.isArray(attrs.options) ? attrs.options : [];
             const answer = typeof attrs.answer === 'string' ? attrs.answer.trim() : undefined;
-            const resolvedKind = resolveQuizKind(typeof attrs.type === 'string' ? attrs.type : undefined, options, answer);
-            // 临时开关：选择题暂不渲染成题卡，按普通卡片显示正/背面。
-            const kind = CHOICE_CARDS_ENABLED ? resolvedKind : (resolvedKind === 'choice' ? null : resolvedKind);
+            const kind = resolveQuizKind(typeof attrs.type === 'string' ? attrs.type : undefined, options, answer);
             const correctIndex = resolveQuizAnswer(answer, options);
             const reveal = typeof attrs.reveal === 'string' && /^(1|true|yes|on)$/i.test(attrs.reveal.trim());
 

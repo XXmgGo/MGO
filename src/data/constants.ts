@@ -10,8 +10,9 @@ export const VIEW_ICON_NAME = MGO_ICON_ID;
 export const STATUS_ICON_NAME = MGO_ICON_ID;
 
 /**
- * 临时开关：暂不把「选择题」（type: single-choice，A–J 词库那种）当闪卡。
- * 关着时这类围栏不进牌组/复习，笔记里按普通卡片显示；改回 true 即恢复。
+ * 临时开关：暂不把「选择题」（type: single-choice，A–J 词库那种）登记成闪卡。
+ * 关着时这类围栏不进牌组/复习/统计，但笔记里仍按原来的题卡样式渲染；
+ * 改回 true 即恢复入队。
  */
 export const CHOICE_CARDS_ENABLED = false;
 

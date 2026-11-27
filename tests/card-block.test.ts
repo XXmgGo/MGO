@@ -253,6 +253,13 @@ describe('DataManager parses code fence cards', () => {
         expect(dm.getAllCards()).toHaveLength(0);
     });
 
+    it('does not register flashcard:false fences as cards', async () => {
+        const md = '# 牌组\n\n```mgo\n---\nflashcard: false\n---\n- 第一行\n- 第二行\n```';
+        const dm = new DataManager(createPlugin(md) as never);
+        await dm.buildIndex();
+        expect(dm.getAllCards()).toHaveLength(0);
+    });
+
     itChoice('stores title, options, answer and hint, and keeps an explicit id stable', async () => {
         const block = (front: string) =>
             '```mgo\n---\ntitle: 单词卡\nid: fsrs-word-1\ntype: single-choice\noptions: [食べる, 飲む]\nanswer: 1\nhint: 动词\n---\n' + front + '\n---\n吃\n```';

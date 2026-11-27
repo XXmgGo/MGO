@@ -533,6 +533,8 @@ export class DataManager {
             };
             // 临时开关：选择题卡片暂不登记为闪卡（笔记里仍按普通卡片显示）。
             if (meta.kind === 'choice' && !CHOICE_CARDS_ENABLED) continue;
+            // flashcard: false → 只显示成卡片框，不进牌组/复习。
+            if (typeof attrs.flashcard === 'string' && /^(0|false|no|off)$/i.test(attrs.flashcard.trim())) continue;
             const explicitId = typeof attrs.id === 'string' ? attrs.id : '';
 
             if (clozeNumbers(body).length > 0) {
