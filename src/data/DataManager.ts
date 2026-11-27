@@ -521,10 +521,9 @@ export class DataManager {
             if (!body) continue;
 
             const headingContext = this.findCardContext(content, breadcrumbs, match[0]);
-            // 卡片名称优先用属性头的 title；没写才退回标题层级（面包屑）。
-            const context = typeof attrs.title === 'string' && attrs.title.trim()
-                ? attrs.title.trim()
-                : headingContext;
+            const cardTitle = typeof attrs.title === 'string' && attrs.title.trim() ? attrs.title.trim() : '';
+            // 卡片名称：优先 title；没写就用卡片正面，最后才退回标题层级。
+            const context = cardTitle || headingContext;
             const options = Array.isArray(attrs.options) ? attrs.options : undefined;
             const answer = typeof attrs.answer === 'string' ? attrs.answer : undefined;
             const meta = {
@@ -550,6 +549,7 @@ export class DataManager {
 
             const { front, back } = parseCardBlockBody(body);
             if (!front || !back) continue;
+            const faceContext = cardTitle || front.replace(/\s+/g, ' ').trim() || headingContext;
 
             let finalFront = front;
             let finalBack = back;
@@ -562,7 +562,7 @@ export class DataManager {
             if (explicitId) this.adoptLegacyState(cardId, legacyId, deckId, filePath);
             const card: Card = {
                 id: cardId, deckId, filePath, type,
-                originalText: match[0], front: finalFront, back: finalBack, context,
+                originalText: match[0], front: finalFront, back: finalBack, context: faceContext,
                 ...meta,
                 fsrsData: this.fsrsDataStore[cardId],
             };

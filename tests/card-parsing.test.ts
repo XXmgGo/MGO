@@ -319,7 +319,7 @@ Answer with ==c1::inline notation== written as plain prose.
     });
 
     describe('Context and decks', () => {
-        it('uses heading breadcrumbs as card context and ignores # in code', async () => {
+        it('falls back to the card front when neither title nor heading exists', async () => {
             const dm = await parse(`---
 MGO: flashcards
 # YAML comment
@@ -333,8 +333,9 @@ ${fence('mgo', 'Question 2\n---\nAnswer 2')}
 `);
             const cards = dm.getAllCards();
             expect(cards).toHaveLength(2);
-            expect(cards[0].context).toBe('Real Section');
-            expect(cards[1].context).toBe('Real Section');
+            // 没写 title：名称取卡片正面内容
+            expect(cards[0].context).toBe('Question 1');
+            expect(cards[1].context).toBe('Question 2');
         });
 
         it('ignores files without the deck tag', async () => {
