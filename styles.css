@@ -3058,36 +3058,64 @@
     border-color: #ef5563;
 }
 
-/* ── 选择题卡片：笔记内可交互题卡 ─────────────────────────────────── */
+/* ── 题卡：笔记内可交互卡片（简洁样式） ───────────────────────────── */
+
+/* 正确 / 错误用的柔和色调，浅色和深色各一套 */
+.mgo-card-render {
+    --mgo-tone-ok: #1f7a52;
+    --mgo-tone-ok-bg: rgba(46, 158, 107, 0.1);
+    --mgo-tone-bad: #a8232f;
+    --mgo-tone-bad-bg: rgba(192, 36, 52, 0.09);
+}
+
+.theme-dark .mgo-card-render {
+    --mgo-tone-ok: #63d29b;
+    --mgo-tone-ok-bg: rgba(76, 195, 138, 0.14);
+    --mgo-tone-bad: #ff8f99;
+    --mgo-tone-bad-bg: rgba(239, 85, 99, 0.16);
+}
+
+/* 卡片外壳：细边框、大圆角、几乎看不见的投影 */
 .mgo-card-render .mgo-quiz-card {
-    margin: 2px 0;
-    padding: 12px 14px;
+    margin: 6px 0;
+    padding: 16px 18px;
     border: 1px solid var(--background-modifier-border);
-    border-radius: 12px;
+    border-radius: 16px;
     background: var(--background-secondary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.mgo-card-render .mgo-quiz-stem {
+    line-height: 1.75;
 }
 
 .mgo-card-render .mgo-quiz-stem p:first-child {
     margin-top: 0;
 }
 
+.mgo-card-render .mgo-quiz-stem p:last-child {
+    margin-bottom: 0;
+}
+
+/* 选项：默认无边框，悬停才浮出底色 */
 .mgo-card-render .mgo-quiz-options {
-    margin: 10px 0 2px;
+    margin: 14px 0 2px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 6px 12px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 4px 10px;
 }
 
 .mgo-card-render .mgo-quiz-option {
     display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 7px 10px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 9px;
+    align-items: baseline;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 0.92em;
-    transition: background-color 120ms ease, border-color 120ms ease;
+    font-size: 0.93em;
+    line-height: 1.5;
+    transition: background-color 140ms ease, color 140ms ease, opacity 140ms ease;
 }
 
 .mgo-card-render .mgo-quiz-option:hover {
@@ -3096,61 +3124,73 @@
 
 .mgo-card-render .mgo-quiz-option:focus-visible {
     outline: 2px solid var(--interactive-accent);
-    outline-offset: 2px;
+    outline-offset: 1px;
 }
 
 .mgo-card-render .mgo-quiz-option.is-locked {
     cursor: default;
+    opacity: 0.55;
 }
 
 .mgo-card-render .mgo-quiz-option.is-locked:hover {
     background: transparent;
 }
 
+.mgo-card-render .mgo-quiz-option.is-correct,
+.mgo-card-render .mgo-quiz-option.is-wrong {
+    opacity: 1;
+}
+
 .mgo-card-render .mgo-quiz-option.is-correct {
-    border-color: #2e9e6b;
-    background: rgba(46, 158, 107, 0.14);
+    background: var(--mgo-tone-ok-bg);
+    color: var(--mgo-tone-ok);
 }
 
 .mgo-card-render .mgo-quiz-option.is-wrong {
-    border-color: #c02434;
-    background: rgba(192, 36, 52, 0.14);
+    background: var(--mgo-tone-bad-bg);
+    color: var(--mgo-tone-bad);
 }
 
+/* 选项序号：小号、对齐数字，不画圆 */
 .mgo-card-render .mgo-quiz-key {
     flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5em;
-    height: 1.5em;
-    border-radius: 50%;
-    background: var(--background-modifier-border);
-    font-size: 0.8em;
-    color: var(--text-normal);
+    min-width: 1.2em;
+    font-size: 0.78em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-faint, var(--text-muted));
+    text-align: center;
+}
+
+.mgo-card-render .mgo-quiz-option.is-correct .mgo-quiz-key,
+.mgo-card-render .mgo-quiz-option.is-wrong .mgo-quiz-key {
+    color: inherit;
+    opacity: 0.65;
 }
 
 .mgo-card-render .mgo-quiz-feedback {
-    margin-top: 9px;
-    font-size: 0.9em;
+    margin-top: 10px;
+    font-size: 0.86em;
+    color: var(--text-muted);
 }
 
 .mgo-card-render .mgo-quiz-feedback.is-correct {
-    color: #2e9e6b;
+    color: var(--mgo-tone-ok);
 }
 
 .mgo-card-render .mgo-quiz-feedback.is-wrong {
-    color: #c02434;
+    color: var(--mgo-tone-bad);
 }
 
 .mgo-card-render .mgo-quiz-feedback.is-skipped {
     color: var(--text-muted);
 }
 
+/* 输入式卡片：输入区同样用下划线，不用输入框 */
 .mgo-card-render .mgo-quiz-input-row {
     display: flex;
+    align-items: center;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: 12px;
 }
 
 .mgo-card-render .mgo-quiz-input {
@@ -3158,79 +3198,101 @@
     min-width: 0;
 }
 
+.mgo-card-render .mgo-quiz-input:not(.mgo-quiz-multi-input) {
+    padding: 3px 2px;
+    border: none;
+    border-bottom: 1px solid var(--background-modifier-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.mgo-card-render .mgo-quiz-input:not(.mgo-quiz-multi-input):focus {
+    outline: none;
+    border-bottom-color: var(--interactive-accent);
+    box-shadow: none;
+}
+
+/* 操作按钮：纯文字胶囊，悬停才有底色 */
 .mgo-card-render .mgo-quiz-actions {
-    margin-top: 9px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
 }
 
 .mgo-card-render .mgo-quiz-reveal {
+    height: auto;
+    min-height: 0;
+    padding: 3px 10px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted);
     font-size: 0.8em;
-    padding: 2px 10px;
+    line-height: 1.7;
+    cursor: pointer;
+}
+
+.mgo-card-render .mgo-quiz-reveal:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
 }
 
 .mgo-card-render .mgo-quiz-actions .mgo-quiz-reveal + .mgo-quiz-reveal {
-    margin-left: 8px;
+    margin-left: 0;
 }
 
 .mgo-card-render .mgo-quiz-answer {
-    margin-top: 10px;
-    padding-top: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
     border-top: 1px solid var(--background-modifier-border);
+    font-size: 0.94em;
 }
 
-.theme-dark .mgo-card-render .mgo-quiz-option.is-correct {
-    border-color: #4cc38a;
-}
+/* ── 多句填空题（multi-input）：共用词库 + 一句一个下划线 ───────────── */
 
-.theme-dark .mgo-card-render .mgo-quiz-option.is-wrong {
-    border-color: #ef5563;
-}
-
-.theme-dark .mgo-card-render .mgo-quiz-feedback.is-correct {
-    color: #4cc38a;
-}
-
-.theme-dark .mgo-card-render .mgo-quiz-feedback.is-wrong {
-    color: #ef5563;
-}
-
-/* ── 多句填空题（multi-input）：一句一个下划线输入框 ───────────────── */
 .mgo-card-render .mgo-quiz-multi-bank {
     display: flex;
     flex-wrap: wrap;
-    gap: 2px 18px;
-    margin: 0 0 10px;
-    font-size: 0.9em;
-    line-height: 1.8;
+    gap: 4px 16px;
+    margin: 2px 0 14px;
+    font-size: 0.88em;
+    line-height: 1.7;
 }
 
 .mgo-card-render .mgo-quiz-multi-bank-item {
     display: inline-flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 5px;
     white-space: nowrap;
 }
 
 .mgo-card-render .mgo-quiz-multi-bank-key {
-    min-width: 1.4em;
-    color: var(--text-muted);
+    min-width: 1em;
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-faint, var(--text-muted));
 }
 
 .mgo-card-render .mgo-quiz-multi-list {
-    margin: 4px 0 2px;
+    margin: 2px 0 0;
 }
 
 .mgo-card-render .mgo-quiz-multi-row {
-    margin: 4px 0;
-    line-height: 2.2;
+    margin: 2px 0;
+    line-height: 2.1;
 }
 
 .mgo-card-render .mgo-quiz-multi-no {
     display: inline-block;
-    min-width: 1.7em;
-    margin-right: 4px;
-    font-size: 0.78em;
-    color: var(--text-muted);
-    vertical-align: 1px;
+    min-width: 1.6em;
+    margin-right: 6px;
+    font-size: 0.75em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-faint, var(--text-muted));
+    vertical-align: 2px;
 }
 
 .mgo-card-render .mgo-quiz-multi-text {
@@ -3249,14 +3311,14 @@
     margin: 0 3px;
     padding: 0 2px;
     border: none;
-    border-bottom: 1px solid var(--background-modifier-border-hover, var(--background-modifier-border));
+    border-bottom: 1px solid var(--background-modifier-border);
     border-radius: 0;
     background: transparent;
     box-shadow: none;
     font: inherit;
     line-height: 1.5;
     text-align: center;
-    color: var(--text-accent);
+    color: var(--text-normal);
 }
 
 .mgo-card-render .mgo-quiz-multi-input:focus {
@@ -3271,13 +3333,13 @@
 }
 
 .mgo-card-render .mgo-quiz-multi-row.is-correct .mgo-quiz-multi-input {
-    color: #2e9e6b;
-    border-bottom-color: #2e9e6b;
+    color: var(--mgo-tone-ok);
+    border-bottom-color: var(--mgo-tone-ok);
 }
 
 .mgo-card-render .mgo-quiz-multi-row.is-wrong .mgo-quiz-multi-input {
-    color: #c02434;
-    border-bottom-color: #c02434;
+    color: var(--mgo-tone-bad);
+    border-bottom-color: var(--mgo-tone-bad);
 }
 
 .mgo-card-render .mgo-quiz-multi-row.is-revealed .mgo-quiz-multi-input {
@@ -3286,21 +3348,7 @@
 }
 
 .mgo-card-render .mgo-quiz-multi-answer {
-    margin-left: 6px;
-    font-size: 0.82em;
-    color: #c02434;
-}
-
-.theme-dark .mgo-card-render .mgo-quiz-multi-row.is-correct .mgo-quiz-multi-input {
-    color: #4cc38a;
-    border-bottom-color: #4cc38a;
-}
-
-.theme-dark .mgo-card-render .mgo-quiz-multi-row.is-wrong .mgo-quiz-multi-input,
-.theme-dark .mgo-card-render .mgo-quiz-multi-answer {
-    color: #ef5563;
-}
-
-.theme-dark .mgo-card-render .mgo-quiz-multi-row.is-wrong .mgo-quiz-multi-input {
-    border-bottom-color: #ef5563;
+    margin-left: 8px;
+    font-size: 0.8em;
+    color: var(--mgo-tone-bad);
 }
