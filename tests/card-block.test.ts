@@ -44,7 +44,7 @@ vi.mock('../src/database/PouchDBManager', () => {
 
 import { describe, it, expect, vi } from 'vitest';
 import { Rating } from 'ts-fsrs';
-import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../src/data/cardText';
+import { CARD_BLOCK_RE, answerMatches, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, parseMultiInputItems, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../src/data/cardText';
 import { DataManager } from '../src/data/DataManager';
 import { CHOICE_CARDS_ENABLED, DEFAULT_SETTINGS } from '../src/data/constants';
 
@@ -119,6 +119,24 @@ describe('code fence card syntax (pure helpers)', () => {
         expect(resolveQuizKind('basic', options, '2')).toBeNull();
         expect(resolveQuizKind('single-choice', options, '9')).toBeNull();
         expect(resolveQuizKind('input', undefined, undefined)).toBeNull();
+        expect(resolveQuizKind('multi-input', undefined, undefined)).toBe('multi');
+        expect(resolveQuizKind('multi', undefined, undefined)).toBe('multi');
+    });
+
+    it('splits multi-input lines into numbered items and matches typed answers', () => {
+        const items = parseMultiInputItems(
+            '11 子どもを教育する（　）こと。\n12 心配する（　）こと。\nただの行',
+            ['C 上で', 'あまり'],
+        );
+        expect(items).toEqual([
+            { no: '11', text: '子どもを教育する（　）こと。', answer: 'C 上で' },
+            { no: '12', text: '心配する（　）こと。', answer: 'あまり' },
+            { no: '3', text: 'ただの行', answer: '' },
+        ]);
+        expect(answerMatches('上で', 'C 上で')).toBe(true);
+        expect(answerMatches(' C 上で ', 'C 上で')).toBe(true);
+        expect(answerMatches('うえで', 'C 上で')).toBe(false);
+        expect(answerMatches('', 'C 上で')).toBe(false);
     });
 
     it('resolves a quiz answer from an index, a letter or the option text', () => {
@@ -255,6 +273,13 @@ describe('DataManager parses code fence cards', () => {
 
     it('does not register flashcard:false fences as cards', async () => {
         const md = '# 牌组\n\n```mgo\n---\nflashcard: false\n---\n- 第一行\n- 第二行\n```';
+        const dm = new DataManager(createPlugin(md) as never);
+        await dm.buildIndex();
+        expect(dm.getAllCards()).toHaveLength(0);
+    });
+
+    it('does not register multi-input cards as flashcards', async () => {
+        const md = '# 牌组\n\n```mgo\n---\ntype: multi-input\nanswers: [上で, あまり]\n---\n11 子どもを教育する（　）…\n12 息子の病気を心配する（　）…\n---\n正解：11 上で / 12 あまり\n```';
         const dm = new DataManager(createPlugin(md) as never);
         await dm.buildIndex();
         expect(dm.getAllCards()).toHaveLength(0);

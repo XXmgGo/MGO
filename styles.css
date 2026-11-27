@@ -3192,3 +3192,93 @@
 .theme-dark .mgo-card-render .mgo-quiz-feedback.is-wrong {
     color: #ef5563;
 }
+
+/* ── 多句填空题（multi-input）：一句一个下划线输入框 ───────────────── */
+.mgo-card-render .mgo-quiz-multi-list {
+    margin: 4px 0 2px;
+}
+
+.mgo-card-render .mgo-quiz-multi-row {
+    margin: 4px 0;
+    line-height: 2.2;
+}
+
+.mgo-card-render .mgo-quiz-multi-no {
+    display: inline-block;
+    min-width: 1.7em;
+    margin-right: 4px;
+    font-size: 0.78em;
+    color: var(--text-muted);
+    vertical-align: 1px;
+}
+
+.mgo-card-render .mgo-quiz-multi-text {
+    display: inline;
+}
+
+.mgo-card-render .mgo-quiz-multi-text > p {
+    display: inline;
+    margin: 0;
+}
+
+.mgo-card-render .mgo-quiz-multi-input {
+    width: 5.5em;
+    min-width: 3em;
+    margin: 0 3px;
+    padding: 0 4px;
+    border: none;
+    border-bottom: 1px solid var(--background-modifier-border-hover, var(--background-modifier-border));
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font: inherit;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--text-accent);
+}
+
+.mgo-card-render .mgo-quiz-multi-input:focus {
+    outline: none;
+    border-bottom-color: var(--interactive-accent);
+    box-shadow: none;
+}
+
+.mgo-card-render .mgo-quiz-multi-input:disabled {
+    opacity: 1;
+    background: transparent;
+}
+
+.mgo-card-render .mgo-quiz-multi-row.is-correct .mgo-quiz-multi-input {
+    color: #2e9e6b;
+    border-bottom-color: #2e9e6b;
+}
+
+.mgo-card-render .mgo-quiz-multi-row.is-wrong .mgo-quiz-multi-input {
+    color: #c02434;
+    border-bottom-color: #c02434;
+}
+
+.mgo-card-render .mgo-quiz-multi-row.is-revealed .mgo-quiz-multi-input {
+    color: var(--text-muted);
+    border-bottom-style: dashed;
+}
+
+.mgo-card-render .mgo-quiz-multi-answer {
+    margin-left: 6px;
+    font-size: 0.82em;
+    color: #c02434;
+}
+
+.theme-dark .mgo-card-render .mgo-quiz-multi-row.is-correct .mgo-quiz-multi-input {
+    color: #4cc38a;
+    border-bottom-color: #4cc38a;
+}
+
+.theme-dark .mgo-card-render .mgo-quiz-multi-row.is-wrong .mgo-quiz-multi-input,
+.theme-dark .mgo-card-render .mgo-quiz-multi-answer {
+    color: #ef5563;
+}
+
+.theme-dark .mgo-card-render .mgo-quiz-multi-row.is-wrong .mgo-quiz-multi-input {
+    border-bottom-color: #ef5563;
+}

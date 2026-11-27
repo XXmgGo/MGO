@@ -1,8 +1,33 @@
 import { MarkdownRenderer, MarkdownRenderChild, Notice, setIcon, type Plugin } from 'obsidian';
 import { toHardBreaks } from '../data/constants';
-import { CARD_FENCE_LANGS, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../data/cardText';
+import { CARD_FENCE_LANGS, answerMatches, hasCloze, parseCardBlockAttributes, parseCardBlockBody, parseMultiInputItems, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../data/cardText';
 import { editCardAtSource } from './editCardSource';
 import { resolveAudioSrc } from './audioSrc';
+
+const BLANK_RE = /（\s*）|\(\s*\)|＿{2,}|_{2,}/;
+
+/**
+ * 把第一处（　）换成打字框；题干是按 Markdown 渲染过的，所以走文本节点替换。
+ * 找不到空位时把输入框追加到行尾，至少不丢题。
+ */
+function insertBlank(host: HTMLElement, input: HTMLElement): void {
+    const doc = host.ownerDocument;
+    const walker = doc.createTreeWalker(host, 4 /* NodeFilter.SHOW_TEXT */);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const text = node.nodeValue ?? '';
+        const m = text.match(BLANK_RE);
+        const at = m?.index ?? -1;
+        if (!m || at < 0 || !node.parentNode) continue;
+        const after = doc.createTextNode(text.slice(at + m[0].length));
+        node.parentNode.insertBefore(after, node.nextSibling);
+        node.parentNode.insertBefore(input, after);
+        node.nodeValue = text.slice(0, at);
+        return;
+    }
+    host.appendChild(input);
+}
+
+const isComposingKey = (evt: KeyboardEvent): boolean => evt.isComposing || evt.keyCode === 229;
 
 let currentAudio: HTMLAudioElement | null = null;
 
@@ -146,6 +171,119 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 return { revealBtn, detailBtn, resetBtn };
             };
 
+            if (kind === 'multi') {
+                const answersRaw = Array.isArray(attrs.answers)
+                    ? attrs.answers
+                    : typeof attrs.answers === 'string'
+                        ? attrs.answers.split(/[、,，／|｜]/)
+                        : [];
+                const items = parseMultiInputItems(front, answersRaw);
+                if (items.length === 0) return;
+
+                const card = el.createDiv({ cls: 'mgo-quiz-card mgo-multi-card' });
+                const list = card.createDiv({ cls: 'mgo-quiz-multi-list' });
+                const rows = items.map((item) => {
+                    const row = list.createDiv({ cls: 'mgo-quiz-multi-row' });
+                    row.createSpan({ cls: 'mgo-quiz-multi-no', text: item.no });
+                    const textEl = row.createSpan({ cls: 'mgo-quiz-multi-text' });
+                    const input = row.createEl('input', {
+                        cls: 'mgo-quiz-input mgo-quiz-multi-input',
+                        attr: { type: 'text', autocomplete: 'off', spellcheck: 'false', 'aria-label': `第 ${item.no} 题答案` },
+                    });
+                    // 输入框宽度按答案长度定，长答案（うではないか）也塞得下。
+                    const word = item.answer.replace(/^[A-Za-z]\s*[.．、:：]?\s+/, '');
+                    input.style.width = `${Math.min(9, Math.max(4, word.length + 2))}em`;
+                    void MarkdownRenderer.render(plugin.app, item.text, textEl, ctx.sourcePath, child)
+                        .then(() => insertBlank(textEl, input));
+                    const hint = row.createSpan({ cls: 'mgo-quiz-multi-answer' });
+                    hint.hide();
+                    return { row, input, hint, item };
+                });
+
+                const feedback = card.createDiv({ cls: 'mgo-quiz-feedback' });
+                feedback.hide();
+                const actions = card.createDiv({ cls: 'mgo-quiz-actions' });
+                const checkBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal', text: '检查' });
+                const revealBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal', text: '显示答案' });
+                const detailBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal mgo-quiz-detail-toggle', text: '详解' });
+                detailBtn.hide();
+                const resetBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal mgo-quiz-reset', text: '重做' });
+                resetBtn.hide();
+                const answerEl = renderBack(card);
+                let answered = false;
+
+                const finish = (revealMode: boolean) => {
+                    if (answered) return;
+                    answered = true;
+                    let correct = 0;
+                    for (const r of rows) {
+                        r.input.disabled = true;
+                        if (revealMode) {
+                            r.input.value = r.item.answer;
+                            r.row.addClass('is-revealed');
+                        } else if (r.item.answer && answerMatches(r.input.value, r.item.answer)) {
+                            correct++;
+                            r.row.addClass('is-correct');
+                        } else {
+                            r.row.addClass('is-wrong');
+                            r.hint.setText(r.item.answer ? `正解：${r.item.answer}` : '没给答案');
+                            r.hint.show();
+                        }
+                    }
+                    feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
+                    if (revealMode) {
+                        feedback.setText('已显示答案');
+                        feedback.addClass('is-skipped');
+                    } else {
+                        feedback.setText(`答对 ${correct} / ${rows.length}`);
+                        feedback.addClass(correct === rows.length ? 'is-correct' : 'is-wrong');
+                    }
+                    feedback.show();
+                    answerEl.show();
+                    checkBtn.hide();
+                    revealBtn.hide();
+                    if (detailFile) detailBtn.show();
+                    resetBtn.show();
+                };
+
+                checkBtn.addEventListener('click', () => finish(false));
+                revealBtn.addEventListener('click', () => finish(true));
+                rows.forEach((r, index) => {
+                    r.input.addEventListener('keydown', (evt: KeyboardEvent) => {
+                        if (evt.key !== 'Enter' || isComposingKey(evt)) return;
+                        evt.preventDefault();
+                        if (answered) return;
+                        const next = rows[index + 1];
+                        if (next) next.input.focus();
+                        else finish(false);
+                    });
+                });
+                detailBtn.addEventListener('click', () => {
+                    if (!detailFile || !detailTarget) return;
+                    void plugin.app.workspace.openLinkText(detailTarget, ctx.sourcePath, true);
+                });
+                resetBtn.addEventListener('click', () => {
+                    answered = false;
+                    for (const r of rows) {
+                        r.input.disabled = false;
+                        r.input.value = '';
+                        r.row.removeClass('is-correct', 'is-wrong', 'is-revealed');
+                        r.hint.hide();
+                        r.hint.empty();
+                    }
+                    feedback.hide();
+                    feedback.empty();
+                    feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
+                    answerEl.hide();
+                    detailBtn.hide();
+                    checkBtn.show();
+                    revealBtn.show();
+                    resetBtn.hide();
+                    rows[0]?.input.focus();
+                });
+                return;
+            }
+
             if (kind === 'choice' && correctIndex !== null) {
                 const quiz = el.createDiv({ cls: 'mgo-quiz-card' });
                 const stem = quiz.createDiv({ cls: 'mgo-quiz-stem' });
@@ -273,7 +411,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 };
                 checkBtn.addEventListener('click', check);
                 input.addEventListener('keydown', (evt: KeyboardEvent) => {
-                    if (evt.key !== 'Enter') return;
+                    if (evt.key !== 'Enter' || isComposingKey(evt)) return;
                     evt.preventDefault();
                     check();
                 });

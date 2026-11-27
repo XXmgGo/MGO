@@ -84,7 +84,7 @@ export interface CardAttributes {
     [key: string]: string | string[] | undefined;
 }
 
-export type QuizKind = 'choice' | 'input';
+export type QuizKind = 'choice' | 'input' | 'multi';
 
 const QUIZ_TYPE_ALIASES: Record<string, QuizKind | 'basic'> = {
     'single-choice': 'choice',
@@ -94,6 +94,9 @@ const QUIZ_TYPE_ALIASES: Record<string, QuizKind | 'basic'> = {
     blank: 'input',
     fill: 'input',
     typein: 'input',
+    'multi-input': 'multi',
+    multiinput: 'multi',
+    multi: 'multi',
     basic: 'basic',
     card: 'basic',
 };
@@ -102,6 +105,7 @@ const QUIZ_TYPE_ALIASES: Record<string, QuizKind | 'basic'> = {
  * 卡片类型：显式 `type:` 优先，没写时按数据推断。
  * - `single-choice` 需要 options + 可解析的 answer
  * - `input` 需要 answer
+ * - `multi-input` 多句共用词库的填空题：正面每行一句、`answers:` 逐行给答案
  * - `basic` 明确当普通卡；无法满足声明的类型时退回普通卡（null）。
  */
 export function resolveQuizKind(
@@ -111,6 +115,7 @@ export function resolveQuizKind(
 ): QuizKind | null {
     const declared = type ? QUIZ_TYPE_ALIASES[type.normalize('NFKC').trim().toLowerCase()] : undefined;
     if (declared === 'basic') return null;
+    if (declared === 'multi') return 'multi';
     if (declared === 'choice') {
         return resolveQuizAnswer(answer, options) === null ? null : 'choice';
     }
@@ -142,6 +147,50 @@ export function resolveQuizAnswer(answer: string | undefined, options: readonly 
     if (exact !== -1) return exact;
     const normalized = options.findIndex(option => option.normalize('NFKC').trim() === value);
     return normalized !== -1 ? normalized : null;
+}
+
+/** 多句填空题（multi-input）里的一句：题号、题干、答案。 */
+export interface MultiInputItem {
+    no: string;
+    text: string;
+    answer: string;
+}
+
+const MULTI_NO_RE = /^(\d{1,3})\s*[.．、:：|｜]?\s+(.+)$/;
+
+/**
+ * 拆出多句填空题的每一行：行首是题号（`11 子どもを…`）时单独取出来，
+ * 没写题号就按出现顺序编号；答案按顺序从 `answers:` 里取。
+ */
+export function parseMultiInputItems(front: string, answers: readonly string[]): MultiInputItem[] {
+    return front
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map((line, index) => {
+            const m = line.match(MULTI_NO_RE);
+            return {
+                no: m ? m[1] : String(index + 1),
+                text: m ? m[2].trim() : line,
+                answer: (answers[index] ?? '').trim(),
+            };
+        });
+}
+
+function normalizeTypedAnswer(value: string): string {
+    return value.normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+}
+
+/**
+ * 打字答案是否命中：全半角、空格不敏感；
+ * `answers:` 里带字母标号（`C 上で`）时，只写词（`上で`）也算对。
+ */
+export function answerMatches(typed: string, expected: string): boolean {
+    const value = normalizeTypedAnswer(typed);
+    if (!value) return false;
+    if (value === normalizeTypedAnswer(expected)) return true;
+    const withoutLabel = expected.replace(/^[A-Za-z]\s*[.．、:：]?\s+/, '');
+    return withoutLabel !== expected && value === normalizeTypedAnswer(withoutLabel);
 }
 
 function unquote(value: string): string {

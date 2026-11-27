@@ -155,4 +155,62 @@ describe('note quiz rendering', () => {
         expect(input.disabled).toBe(false);
         expect(input.value).toBe('');
     });
+
+    it('checks every blank of a multi-input card', async () => {
+        const source = [
+            '---',
+            'type: multi-input',
+            'answers:',
+            '- C 上で',
+            '- B あまり',
+            '---',
+            '11 子どもを教育する（　）大事なことは叱るだけでなく、ほめることである。',
+            '12 息子の病気を心配する（　）、仕事が手につかなくなった。',
+            '---',
+            '正解：11 C 上で / 12 B あまり',
+        ].join('\n');
+
+        const el = await render(source);
+        const inputs = Array.from(el.querySelectorAll('.mgo-quiz-multi-input')) as HTMLInputElement[];
+        expect(inputs).toHaveLength(2);
+        expect(inputs[0].parentElement!.classList.contains('mgo-quiz-multi-text')).toBe(true);
+        expect(el.querySelectorAll('.mgo-quiz-multi-no')[1].textContent).toBe('12');
+
+        inputs[0].value = '上で';
+        inputs[1].value = 'ちがう';
+        const check = Array.from(el.querySelectorAll('button')).find((b) => b.textContent === '检查') as HTMLElement;
+        check.click();
+        expect(el.querySelector('.mgo-quiz-feedback')!.textContent).toContain('答对 1 / 2');
+        expect(el.querySelectorAll('.mgo-quiz-multi-row.is-correct')).toHaveLength(1);
+        expect(el.querySelectorAll('.mgo-quiz-multi-row.is-wrong')).toHaveLength(1);
+        const hint = el.querySelector('.mgo-quiz-multi-row.is-wrong .mgo-quiz-multi-answer') as HTMLElement;
+        expect(hint.style.display).not.toBe('none');
+        expect(hint.textContent).toBe('正解：B あまり');
+
+        const reset = Array.from(el.querySelectorAll('button')).find((b) => b.textContent === '重做') as HTMLElement;
+        reset.click();
+        expect(inputs[0].disabled).toBe(false);
+        expect(inputs[1].value).toBe('');
+        expect(el.querySelectorAll('.mgo-quiz-multi-row.is-wrong')).toHaveLength(0);
+    });
+
+    it('fills every blank when a multi-input answer is revealed', async () => {
+        const source = [
+            '---',
+            'type: multi-input',
+            'answers: [上で, あまり]',
+            '---',
+            '11 子どもを教育する（　）こと。',
+            '12 心配する（　）こと。',
+            '---',
+            '正解：11 上で / 12 あまり',
+        ].join('\n');
+        const el = await render(source);
+        const reveal = Array.from(el.querySelectorAll('button')).find((b) => b.textContent === '显示答案') as HTMLElement;
+        reveal.click();
+        const inputs = Array.from(el.querySelectorAll('.mgo-quiz-multi-input')) as HTMLInputElement[];
+        expect(inputs.map((i) => i.value)).toEqual(['上で', 'あまり']);
+        expect(inputs[0].disabled).toBe(true);
+        expect(el.querySelector('.mgo-quiz-feedback')!.textContent).toContain('已显示答案');
+    });
 });

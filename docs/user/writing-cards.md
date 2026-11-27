@@ -133,7 +133,7 @@ High blood pressure is a common illness among the elderly.
 |---|---|---|
 | `id` | text | Stable card identity; editing the front or back keeps its review history. A UUID per card is a good choice |
 | `title` | text | Display name in the dashboard card list under the deck (expand a folder); falls back to the front text |
-| `type` | text | Card type: `single-choice`, `input` or `basic`; inferred from the data when omitted |
+| `type` | text | Card type: `single-choice`, `input`, `multi-input` or `basic`; inferred from the data when omitted |
 | `detail` | text | Link target of a detail note (often named after the answered sentence); question cards get a 详解 button that opens it |
 | `options` | list | Multiple-choice candidates; with `answer` set, review renders them as clickable options |
 | `answer` | text | Correct option: a 1-based index, a letter A–J, or the option text |
@@ -145,7 +145,7 @@ Rules:
 - The header must be the first thing in the block. Every line between the two `---` lines must be `key: value` or a `- list item`, otherwise the whole block is treated as plain content.
 - `options` accepts `[A, B, C]`, `options: A, B, C`, or a multi-line dash list.
 - `id` may only contain letters, digits, underscores and hyphens; an invalid id is ignored and the card falls back to its content hash.
-- `type` also accepts the aliases `quiz`, `mc`, `blank`, `fill` and `typein`. A declared type that its data cannot satisfy (for example `single-choice` without a resolvable `answer`) falls back to a normal card; `type: basic` suppresses inference.
+- `type` also accepts the aliases `quiz`, `mc`, `blank`, `fill`, `typein` and `multi`. A declared type that its data cannot satisfy (for example `single-choice` without a resolvable `answer`) falls back to a normal card; `type: basic` suppresses inference.
 - Cloze blocks accept the same header; the attributes apply to every card generated for the block's cloze numbers.
 - Unknown keys are preserved but have no effect (reserved for future attributes).
 
@@ -175,6 +175,7 @@ answer: 2
 - Answering in the note is practice only — it does not affect FSRS. Scheduling comes from the rating you give in the review view.
 - Single choice only.
 - `type: input` with `answer: …` is a fill-in card: the note shows a typed-answer box with a "Check" button, and review shows the same typing box, checks against `answer`, then reveals the back. Basic cards can still use `reveal: true` for a plain collapsed answer.
+- `type: multi-input` is one card holding several sentences that share a word bank: one sentence per line, `answers:` lists the answers in line order, and every （　） becomes an underline input. Check grades them all; the card stays in the note and is not added to a deck.
 
 ## What you can put in a card
 
