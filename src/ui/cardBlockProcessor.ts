@@ -1,5 +1,5 @@
 import { MarkdownRenderer, MarkdownRenderChild, Notice, setIcon, type Plugin } from 'obsidian';
-import { toHardBreaks } from '../data/constants';
+import { CHOICE_CARDS_ENABLED, toHardBreaks } from '../data/constants';
 import { CARD_FENCE_LANGS, hasCloze, parseCardBlockAttributes, parseCardBlockBody, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../data/cardText';
 import { editCardAtSource } from './editCardSource';
 import { resolveAudioSrc } from './audioSrc';
@@ -119,7 +119,9 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             if (!front) return;
             const options = Array.isArray(attrs.options) ? attrs.options : [];
             const answer = typeof attrs.answer === 'string' ? attrs.answer.trim() : undefined;
-            const kind = resolveQuizKind(typeof attrs.type === 'string' ? attrs.type : undefined, options, answer);
+            const resolvedKind = resolveQuizKind(typeof attrs.type === 'string' ? attrs.type : undefined, options, answer);
+            // 临时开关：选择题暂不渲染成题卡，按普通卡片显示正/背面。
+            const kind = CHOICE_CARDS_ENABLED ? resolvedKind : (resolvedKind === 'choice' ? null : resolvedKind);
             const correctIndex = resolveQuizAnswer(answer, options);
             const reveal = typeof attrs.reveal === 'string' && /^(1|true|yes|on)$/i.test(attrs.reveal.trim());
 

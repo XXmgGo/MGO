@@ -9,6 +9,12 @@ export const MGO_ICON_SVG = '<circle cx="50" cy="50" r="48" fill="#6366F1"/><pat
 export const VIEW_ICON_NAME = MGO_ICON_ID;
 export const STATUS_ICON_NAME = MGO_ICON_ID;
 
+/**
+ * 临时开关：暂不把「选择题」（type: single-choice，A–J 词库那种）当闪卡。
+ * 关着时这类围栏不进牌组/复习，笔记里按普通卡片显示；改回 true 即恢复。
+ */
+export const CHOICE_CARDS_ENABLED = false;
+
 export const DEFAULT_SETTINGS: FSRSSettings = {
     deckTags: ['flashcards'],
     newCardsPerDay: 20,

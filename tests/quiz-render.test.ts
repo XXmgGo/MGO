@@ -23,6 +23,7 @@ vi.mock('obsidian', () => {
 });
 
 import { registerCardCodeBlocks } from '../src/ui/cardBlockProcessor';
+import { CHOICE_CARDS_ENABLED } from '../src/data/constants';
 
 type Opts = { cls?: string; text?: string; attr?: Record<string, string> };
 
@@ -83,8 +84,11 @@ const quiz = [
     '正解：増える',
 ].join('\n');
 
+// 选择题卡片开关关着时，这两条用例不适用（恢复开关后自动跑）。
+const itChoice = CHOICE_CARDS_ENABLED ? it : it.skip;
+
 describe('note quiz rendering', () => {
-    it('grades a click and can reset', async () => {
+    itChoice('grades a click and can reset', async () => {
         const el = await render(quiz);
         const options = Array.from(el.querySelectorAll('.mgo-quiz-option')) as HTMLElement[];
         expect(options).toHaveLength(4);
@@ -102,7 +106,7 @@ describe('note quiz rendering', () => {
         expect((el.querySelector('.mgo-quiz-answer') as HTMLElement).style.display).toBe('none');
     });
 
-    it('opens the detail note when the card declares detail', async () => {
+    itChoice('opens the detail note when the card declares detail', async () => {
         const source = [
             '---',
             'type: single-choice',

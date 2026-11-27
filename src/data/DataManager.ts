@@ -1,7 +1,7 @@
 import { FSRS, Rating, State, createEmptyCard, type Card as FSRSCard } from 'ts-fsrs';
 import { Notice, TFile, type CachedMetadata } from 'obsidian';
 import type { Card, Deck, DeckSettings, FSRSData, FSRSParameters, Gamification, NoteReviewData, PluginData, ReviewLog } from './types';
-import { isRecord, cyrb53hex, LEGACY_DATABASE_NAME, getDocsWritten, getErrorMessage, isLikelyCorsOrNetworkErrorMessage, buildAuthenticatedUrl, sanitizeUrlForDisplay } from './constants';
+import { isRecord, cyrb53hex, LEGACY_DATABASE_NAME, CHOICE_CARDS_ENABLED, getDocsWritten, getErrorMessage, isLikelyCorsOrNetworkErrorMessage, buildAuthenticatedUrl, sanitizeUrlForDisplay } from './constants';
 import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, parseCardBlockAttributes, parseCardBlockBody, resolveQuizKind } from './cardText';
 import { PouchDBManager } from '../database/PouchDBManager';
 import { buildBackup, type BackupContent } from './backup';
@@ -531,6 +531,8 @@ export class DataManager {
                 hint: typeof attrs.hint === 'string' ? attrs.hint : undefined,
                 audio: typeof attrs.audio === 'string' ? attrs.audio : undefined,
             };
+            // 临时开关：选择题卡片暂不登记为闪卡（笔记里仍按普通卡片显示）。
+            if (meta.kind === 'choice' && !CHOICE_CARDS_ENABLED) continue;
             const explicitId = typeof attrs.id === 'string' ? attrs.id : '';
 
             if (clozeNumbers(body).length > 0) {
