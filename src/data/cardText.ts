@@ -69,7 +69,7 @@ export function parseCardBlockBody(body: string): { front: string; back: string 
 export interface CardAttributes {
     title?: string;
     id?: string;
-    /** 卡片类型：single-choice / input / basic；不写时按 options + answer 推断。 */
+    /** 卡片类型：single-choice / input / multi-input / basic；不写时按 options + answer 推断。 */
     type?: string;
     options?: string[];
     /** 选择题正确答案：1 起始序号、A–J 字母，或选项原文。 */

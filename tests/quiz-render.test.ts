@@ -156,6 +156,32 @@ describe('note quiz rendering', () => {
         expect(input.value).toBe('');
     });
 
+    it('renders the shared A–J word bank inside a multi-input card', async () => {
+        const options = ['すべき', 'ばかりに', 'はもちろん', 'まい', 'ば～ほど', 'ほど', 'はともかく', 'よりほかはない', '反面', 'は別として'];
+        const source = [
+            '---',
+            'type: multi-input',
+            `options: [${options.join(', ')}]`,
+            'answers: [ば～ほど, 反面]',
+            '---',
+            '11 間違いが少なければ少ない（　）いい。',
+            '12 彼は人前で明るく振舞う（　）、家に帰ると無口になる。',
+            '---',
+            '正解：11 E ば～ほど / 12 I 反面',
+        ].join('\n');
+
+        const el = await render(source);
+        const card = el.querySelector('.mgo-multi-card')!;
+        const bank = card.querySelector('.mgo-quiz-multi-bank')!;
+        expect(bank).not.toBeNull();
+        expect(bank.nextElementSibling?.classList.contains('mgo-quiz-multi-list')).toBe(true);
+        expect(Array.from(bank.querySelectorAll('.mgo-quiz-multi-bank-key')).map((node) => node.textContent))
+            .toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']);
+        expect(Array.from(bank.querySelectorAll('.mgo-quiz-multi-bank-text')).map((node) => node.textContent))
+            .toEqual(options);
+        expect(el.textContent).not.toContain('options:');
+    });
+
     it('checks every blank of a multi-input card', async () => {
         const source = [
             '---',

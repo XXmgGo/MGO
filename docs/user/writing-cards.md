@@ -175,7 +175,7 @@ answer: 2
 - Answering in the note is practice only — it does not affect FSRS. Scheduling comes from the rating you give in the review view.
 - Single choice only.
 - `type: input` with `answer: …` is a fill-in card: the note shows a typed-answer box with a "Check" button, and review shows the same typing box, checks against `answer`, then reveals the back. Basic cards can still use `reveal: true` for a plain collapsed answer.
-- `type: multi-input` is one card holding several sentences that share a word bank: one sentence per line, `answers:` lists the answers in line order, and every （　） becomes an underline input. Check grades them all; the card stays in the note and is not added to a deck.
+- `type: multi-input` is one card holding several sentences that share a word bank: put the bank in `options:` to render it above the sentences with A, B, C… labels, write one sentence per line, and list `answers:` in line order. Every （　） becomes an underline input. Check grades them all; the card stays in the note and is not added to a deck.
 
 ## What you can put in a card
 

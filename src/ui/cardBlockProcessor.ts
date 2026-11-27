@@ -7,7 +7,7 @@ import { resolveAudioSrc } from './audioSrc';
 const BLANK_RE = /（\s*）|\(\s*\)|＿{2,}|_{2,}/;
 
 /**
- * 把第一处（　）换成打字框；题干是按 Markdown 渲染过的，所以走文本节点替换。
+ * 把第一处全角括号空位换成打字框；题干是按 Markdown 渲染过的，所以走文本节点替换。
  * 找不到空位时把输入框追加到行尾，至少不丢题。
  */
 function insertBlank(host: HTMLElement, input: HTMLElement): void {
@@ -27,7 +27,11 @@ function insertBlank(host: HTMLElement, input: HTMLElement): void {
     host.appendChild(input);
 }
 
-const isComposingKey = (evt: KeyboardEvent): boolean => evt.isComposing || evt.keyCode === 229;
+// keyCode 229 用于识别输入法确认候选词，不能只看 isComposing。
+const isComposingKey = (evt: KeyboardEvent): boolean => {
+    const legacyKeyCode = (evt as unknown as { keyCode?: number }).keyCode;
+    return evt.isComposing || legacyKeyCode === 229;
+};
 
 let currentAudio: HTMLAudioElement | null = null;
 
@@ -181,6 +185,20 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 if (items.length === 0) return;
 
                 const card = el.createDiv({ cls: 'mgo-quiz-card mgo-multi-card' });
+                if (options.length > 0) {
+                    const bank = card.createDiv({
+                        cls: 'mgo-quiz-multi-bank',
+                        attr: { role: 'list', 'aria-label': '共用词库' },
+                    });
+                    options.forEach((option, index) => {
+                        const item = bank.createSpan({
+                            cls: 'mgo-quiz-multi-bank-item',
+                            attr: { role: 'listitem' },
+                        });
+                        item.createSpan({ cls: 'mgo-quiz-multi-bank-key', text: String.fromCharCode(65 + index) });
+                        item.createSpan({ cls: 'mgo-quiz-multi-bank-text', text: option });
+                    });
+                }
                 const list = card.createDiv({ cls: 'mgo-quiz-multi-list' });
                 const rows = items.map((item) => {
                     const row = list.createDiv({ cls: 'mgo-quiz-multi-row' });
