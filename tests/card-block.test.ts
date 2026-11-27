@@ -46,7 +46,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { Rating } from 'ts-fsrs';
 import { CARD_BLOCK_RE, answerMatches, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, parseMultiInputItems, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../src/data/cardText';
 import { DataManager } from '../src/data/DataManager';
-import { CHOICE_CARDS_ENABLED, DEFAULT_SETTINGS } from '../src/data/constants';
+import { DEFAULT_SETTINGS } from '../src/data/constants';
 
 const fence = (lang: string, body: string) => '```' + lang + '\n' + body + '\n```\n';
 
@@ -261,16 +261,6 @@ describe('DataManager parses code fence cards', () => {
         ]);
     });
 
-    const itChoice = CHOICE_CARDS_ENABLED ? it : it.skip;
-
-    it('skips single-choice cards while the temporary switch is off', async () => {
-        if (CHOICE_CARDS_ENABLED) return;
-        const md = '# 牌组\n\n```mgo\n---\ntype: single-choice\noptions: [食べる, 飲む]\nanswer: 1\n---\n食べる\n---\n吃\n```';
-        const dm = new DataManager(createPlugin(md) as never);
-        await dm.buildIndex();
-        expect(dm.getAllCards()).toHaveLength(0);
-    });
-
     it('does not register flashcard:false fences as cards', async () => {
         const md = '# 牌组\n\n```mgo\n---\nflashcard: false\n---\n- 第一行\n- 第二行\n```';
         const dm = new DataManager(createPlugin(md) as never);
@@ -285,7 +275,7 @@ describe('DataManager parses code fence cards', () => {
         expect(dm.getAllCards()).toHaveLength(0);
     });
 
-    itChoice('stores title, options, answer and hint, and keeps an explicit id stable', async () => {
+    it('stores title, options, answer and hint, and keeps an explicit id stable', async () => {
         const block = (front: string) =>
             '```mgo\n---\ntitle: 单词卡\nid: fsrs-word-1\ntype: single-choice\noptions: [食べる, 飲む]\nanswer: 1\nhint: 动词\n---\n' + front + '\n---\n吃\n```';
         const first = new DataManager(createPlugin('# 牌组\n\n' + block('食べる')) as never);

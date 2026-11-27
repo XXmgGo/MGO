@@ -1,7 +1,7 @@
 import { FSRS, Rating, State, createEmptyCard, type Card as FSRSCard } from 'ts-fsrs';
 import { Notice, TFile, type CachedMetadata } from 'obsidian';
 import type { Card, Deck, DeckSettings, FSRSData, FSRSParameters, Gamification, NoteReviewData, PluginData, ReviewLog } from './types';
-import { isRecord, cyrb53hex, LEGACY_DATABASE_NAME, CHOICE_CARDS_ENABLED, getDocsWritten, getErrorMessage, isLikelyCorsOrNetworkErrorMessage, buildAuthenticatedUrl, sanitizeUrlForDisplay } from './constants';
+import { isRecord, cyrb53hex, LEGACY_DATABASE_NAME, getDocsWritten, getErrorMessage, isLikelyCorsOrNetworkErrorMessage, buildAuthenticatedUrl, sanitizeUrlForDisplay } from './constants';
 import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, parseCardBlockAttributes, parseCardBlockBody, resolveQuizKind } from './cardText';
 import { PouchDBManager } from '../database/PouchDBManager';
 import { buildBackup, type BackupContent } from './backup';
@@ -466,11 +466,9 @@ export class DataManager {
                 hint: typeof attrs.hint === 'string' ? attrs.hint : undefined,
                 audio: typeof attrs.audio === 'string' ? attrs.audio : undefined,
             };
-            // 临时开关：选择题卡片暂不登记为闪卡（笔记里仍按普通卡片显示）。
-            if (meta.kind === 'choice' && !CHOICE_CARDS_ENABLED) continue;
             // 多句填空题（multi-input）只在笔记里做练习，不进牌组/复习。
             if (meta.kind === 'multi') continue;
-            // flashcard: false → 只显示成卡片框，不进牌组/复习。
+            // flashcard: false → 笔记里照常显示（题卡也能点选），但不登记成闪卡。
             if (typeof attrs.flashcard === 'string' && /^(0|false|no|off)$/i.test(attrs.flashcard.trim())) continue;
             const explicitId = typeof attrs.id === 'string' ? attrs.id : '';
 
