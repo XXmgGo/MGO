@@ -520,7 +520,11 @@ export class DataManager {
             const body = cardContent.trim();
             if (!body) continue;
 
-            const context = this.findCardContext(content, breadcrumbs, match[0]);
+            const headingContext = this.findCardContext(content, breadcrumbs, match[0]);
+            // 卡片名称优先用属性头的 title；没写才退回标题层级（面包屑）。
+            const context = typeof attrs.title === 'string' && attrs.title.trim()
+                ? attrs.title.trim()
+                : headingContext;
             const options = Array.isArray(attrs.options) ? attrs.options : undefined;
             const answer = typeof attrs.answer === 'string' ? attrs.answer : undefined;
             const meta = {

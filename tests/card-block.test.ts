@@ -318,3 +318,15 @@ describe('DataManager parses code fence cards', () => {
         expect(dm.getAllCards()[0].id).toMatch(/::fsrs-cl-1-1$/);
     });
 });
+
+describe('card context uses the title attribute', () => {
+    it('prefers title over the heading breadcrumb', async () => {
+        const plugin = createMultiFilePlugin([
+            { path: 'n.md', markdown: '# 笔记标题\n\n```mgo\n---\ntitle: 卡片名\n---\nQ\n---\nA\n```', mgo: '日本語' },
+        ]);
+        const dm = new DataManager(plugin as never);
+        await dm.updateFile({ path: 'n.md', basename: 'n' } as never);
+        const card = dm.getAllCards()[0];
+        expect(card.context).toBe('卡片名');
+    });
+});
