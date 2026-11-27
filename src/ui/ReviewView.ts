@@ -149,9 +149,9 @@ export class ReviewView extends ItemView {
         const progress = topbar.createDiv({ cls: 'fsrs-review-progress' });
         this.progressFill = progress.createDiv({ cls: 'fsrs-review-progress-fill' });
 
-        const refreshBtn = topbar.createDiv({ cls: 'fsrs-review-icon-btn', attr: { 'aria-label': '刷新卡片（R）' } });
+        const refreshBtn = topbar.createDiv({ cls: 'fsrs-review-icon-btn', attr: { 'aria-label': '刷新全部卡片（R）' } });
         setIcon(refreshBtn, 'refresh-cw');
-        refreshBtn.addEventListener('click', () => void this.refreshCurrentCard());
+        refreshBtn.addEventListener('click', () => void this.refreshAllCards());
 
         const sourceBtn = topbar.createDiv({ cls: 'fsrs-review-icon-btn', attr: { 'aria-label': '打开原文笔记' } });
         setIcon(sourceBtn, 'file-text');
@@ -234,10 +234,10 @@ export class ReviewView extends ItemView {
 
         hints.createSpan({ cls: 'fsrs-review-hint-divider', text: '·' });
 
-        const refreshHint = hints.createSpan({ cls: 'fsrs-review-hint', attr: { 'aria-label': '刷新卡片' } });
+        const refreshHint = hints.createSpan({ cls: 'fsrs-review-hint', attr: { 'aria-label': '刷新全部卡片' } });
         refreshHint.createEl('kbd', { text: 'R' });
         refreshHint.createSpan({ text: ' 刷新' });
-        refreshHint.addEventListener('click', () => void this.refreshCurrentCard());
+        refreshHint.addEventListener('click', () => void this.refreshAllCards());
 
         this.audioHintDivider = hints.createSpan({ cls: 'fsrs-review-hint-divider', text: '·' });
         this.audioHintDivider.hide();
@@ -348,35 +348,60 @@ export class ReviewView extends ItemView {
         await openCardSource(this.app, card);
     }
 
-    /** 重新读取当前卡片的原文笔记，替换队列里的旧内容并重新渲染。 */
-    private async refreshCurrentCard(): Promise<void> {
-        const card = this.getCurrentCard();
-        if (!card) return;
+    /**
+     * 重新读取本次会话涉及的每一篇原文笔记，把整个队列里的卡片内容换成最新的。
+     * 对不上号（卡片已被改掉/删掉）的按「同文件同位置」兜底，仍在队列里占位。
+     */
+    private async refreshAllCards(): Promise<void> {
+        if (this.queue.length === 0) return;
+        const dm = this.plugin.dataManager;
 
-        const file = this.app.vault.getAbstractFileByPath(card.filePath);
-        if (!(file instanceof TFile)) {
-            new Notice('找不到这张卡片的原文笔记。');
+        const files = new Map<string, TFile>();
+        for (const card of this.queue) {
+            if (files.has(card.filePath)) continue;
+            const file = this.app.vault.getAbstractFileByPath(card.filePath);
+            if (file instanceof TFile) files.set(card.filePath, file);
+        }
+        if (files.size === 0) {
+            new Notice('找不到卡片对应的原文笔记。');
             return;
         }
 
-        const oldFileCards = this.plugin.dataManager.getAllCards().filter((c) => c.filePath === card.filePath);
-        const oldIndex = oldFileCards.findIndex((c) => c.id === card.id);
-
-        await this.plugin.dataManager.updateFile(file);
-
-        const pool = this.plugin.dataManager.getAllCards().filter((c) => c.filePath === card.filePath);
-        const next = pool.find((c) => c.id === card.id)
-            ?? pool.find((c) => c.front === card.front && c.back === card.back)
-            ?? (oldIndex >= 0 ? pool[oldIndex] : undefined)
-            ?? pool[0];
-        if (!next) {
-            new Notice('原文里已经找不到这张卡片了。');
-            return;
+        const oldPools = new Map<string, Card[]>();
+        for (const path of files.keys()) {
+            oldPools.set(path, dm.getAllCards().filter((c) => c.filePath === path));
+        }
+        const oldIndexById = new Map<string, number>();
+        for (const pool of oldPools.values()) {
+            pool.forEach((card, index) => oldIndexById.set(card.id, index));
         }
 
-        this.queue[this.currentCardIndex] = next;
+        for (const file of files.values()) await dm.updateFile(file);
+        dm.recalculateAllDeckStats();
+
+        const freshByFile = new Map<string, Card[]>();
+        for (const card of dm.getAllCards()) {
+            const list = freshByFile.get(card.filePath);
+            if (list) list.push(card); else freshByFile.set(card.filePath, [card]);
+        }
+
+        let missing = 0;
+        for (let i = 0; i < this.queue.length; i++) {
+            const card = this.queue[i];
+            const pool = freshByFile.get(card.filePath) ?? [];
+            if (pool.length === 0) { missing++; continue; }
+            const oldIndex = oldIndexById.get(card.id);
+            const next = pool.find((c) => c.id === card.id)
+                ?? pool.find((c) => c.front === card.front && c.back === card.back)
+                ?? (oldIndex !== undefined ? pool[Math.min(oldIndex, pool.length - 1)] : undefined)
+                ?? pool[0];
+            this.queue[i] = next;
+        }
+
         this.plugin.refreshDashboardView();
-        new Notice('已刷新卡片内容');
+        new Notice(missing > 0
+            ? `已刷新 ${files.size} 篇笔记（${missing} 张卡在原文里已找不到）`
+            : `已刷新 ${files.size} 篇笔记的卡片`);
         void this.showNextCard();
     }
 
@@ -826,7 +851,7 @@ export class ReviewView extends ItemView {
         }
         if (evt.key.toLowerCase() === 'r' && !evt.shiftKey && !evt.altKey && !evt.ctrlKey && !evt.metaKey) {
             evt.preventDefault();
-            void this.refreshCurrentCard();
+            void this.refreshAllCards();
             return;
         }
         if (evt.key.toLowerCase() === 'a' && !evt.shiftKey && !evt.altKey && !evt.ctrlKey && !evt.metaKey) {

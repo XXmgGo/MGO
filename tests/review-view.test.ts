@@ -110,6 +110,7 @@ async function openView(queue: Card[], deckName = 'Deck') {
             undoLastRating: () => rated.pop() ?? null,
             areSiblings: () => false,
             isLeech: () => false,
+            recalculateAllDeckStats: () => {},
         },
     };
     const leaf: Record<string, unknown> = {
@@ -230,10 +231,33 @@ describe('ReviewView (tab)', () => {
         internal.plugin.dataManager.updateFile = vi.fn(async () => true);
         internal.app.vault.getAbstractFileByPath = () => new TFile('notes/Deck.md');
 
-        await click(view.contentEl.querySelector('[aria-label="刷新卡片（R）"]') as HTMLElement);
+        await click(view.contentEl.querySelector('[aria-label="刷新全部卡片（R）"]') as HTMLElement);
 
         expect(internal.plugin.dataManager.updateFile).toHaveBeenCalled();
         expect(view.contentEl.querySelector('.fsrs-card-front')!.textContent).toContain('新正面');
+    });
+
+    it('refreshes every card of the session, not just the current one', async () => {
+        const a = makeCard('c1', 'a.md');
+        a.front = 'A 旧';
+        const b = makeCard('c2', 'b.md');
+        b.front = 'B 旧';
+        const { view } = await openView([a, b]);
+
+        const internal = view as unknown as {
+            plugin: { dataManager: Record<string, unknown> };
+            app: { vault: { getAbstractFileByPath: (p: string) => unknown } };
+            queue: Card[];
+        };
+        const updateFile = vi.fn(async () => true);
+        internal.plugin.dataManager.updateFile = updateFile;
+        internal.plugin.dataManager.getAllCards = () => [{ ...a, front: 'A 新' }, { ...b, front: 'B 新' }];
+        internal.app.vault.getAbstractFileByPath = (p: string) => new TFile(p);
+
+        await click(view.contentEl.querySelector('[aria-label="刷新全部卡片（R）"]') as HTMLElement);
+
+        expect(updateFile).toHaveBeenCalledTimes(2);
+        expect(internal.queue.map((c) => c.front)).toEqual(['A 新', 'B 新']);
     });
 
     it('handles in-place image cards with tap-to-flip', async () => {
