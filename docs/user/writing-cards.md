@@ -133,7 +133,7 @@ High blood pressure is a common illness among the elderly.
 |---|---|---|
 | `id` | text | Stable card identity; editing the front or back keeps its review history. A UUID per card is a good choice |
 | `title` | text | Display name in the dashboard card list under the deck (expand a folder); falls back to the front text |
-| `type` | text | Card type: `single-choice`, `input`, `multi-input` or `basic`; inferred from the data when omitted |
+| `type` | text | Card type: `single-choice`, `input`, `multi-input`, `reading` or `basic`; inferred from the data when omitted |
 | `detail` | text | Link target of a detail note (often named after the answered sentence); question cards get a 详解 button that opens it |
 | `options` | list | Multiple-choice candidates; with `answer` set, review renders them as clickable options |
 | `answer` | text | Correct option: a 1-based index, a letter A–J, or the option text |
@@ -175,6 +175,7 @@ answer: 2
 - Answering in the note is practice only — it does not affect FSRS. Scheduling comes from the rating you give in the review view.
 - Single choice only.
 - `type: input` with `answer: …` is a fill-in card: the note shows a typed-answer box with a "Check" button, and review shows the same typing box, checks against `answer`, then reveals the back. Basic cards can still use `reveal: true` for a plain collapsed answer.
+- `type: reading` is one passage with several four-option sub-questions: put one `题号|选项1|选项2|选项3|选项4|答案` line per question under `questions:`; the note renders them as clickable groups and the review card lists them as text.
 - `analysisId: <uuid>` binds the 详解 note by its frontmatter `UUID` instead of its name, so renaming the note does not break the button; it takes precedence over `detail:`.
 - `type: multi-input` is one card holding several sentences that share a word bank: put the bank in `options:` to render it above the sentences with A, B, C… labels, write one sentence per line, and list `answers:` in line order. Every （　） becomes an underline input. Check grades them all; the card stays in the note and is not added to a deck.
 

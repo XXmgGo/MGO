@@ -1,6 +1,6 @@
 import { MarkdownRenderer, MarkdownRenderChild, Notice, setIcon, type Plugin } from 'obsidian';
 import { toHardBreaks } from '../data/constants';
-import { CARD_FENCE_LANGS, answerMatches, hasCloze, parseCardBlockAttributes, parseCardBlockBody, parseMultiInputItems, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../data/cardText';
+import { CARD_FENCE_LANGS, answerMatches, hasCloze, parseCardBlockAttributes, parseCardBlockBody, parseMultiInputItems, parseReadingQuestions, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../data/cardText';
 import { editCardAtSource } from './editCardSource';
 import { resolveAudioSrc } from './audioSrc';
 import { resolveNoteByUuid } from './noteByUuid';
@@ -78,7 +78,8 @@ let currentAudio: HTMLAudioElement | null = null;
 type CardAnswerState =
     | { kind: 'choice'; picked: number | null }
     | { kind: 'input'; value: string; mode: 'check' | 'reveal' }
-    | { kind: 'multi'; values: string[]; mode: 'check' | 'reveal' };
+    | { kind: 'multi'; values: string[]; mode: 'check' | 'reveal' }
+    | { kind: 'reading'; picks: (number | null)[]; mode: 'check' | 'reveal' };
 const answerStates = new Map<string, CardAnswerState>();
 
 function stopCurrentAudio(): void {
@@ -386,6 +387,121 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                         }
                     }
                     finish(savedMulti.mode === 'reveal');
+                }
+                return;
+            }
+
+            if (kind === 'reading') {
+                const lines = Array.isArray(attrs.questions) ? attrs.questions : [];
+                const questions = parseReadingQuestions(lines);
+                if (questions.length === 0) return;
+
+                const card = el.createDiv({ cls: 'mgo-quiz-card mgo-reading-card' });
+                const stem = card.createDiv({ cls: 'mgo-quiz-stem' });
+                void MarkdownRenderer.render(plugin.app, toHardBreaks(front), stem, ctx.sourcePath, child);
+
+                const picks: (number | null)[] = questions.map(() => null);
+                const groups = questions.map((q, gi) => {
+                    const group = card.createDiv({ cls: 'mgo-quiz-reading-group' });
+                    group.createDiv({ cls: 'mgo-quiz-reading-no', text: q.no });
+                    const list = group.createDiv({ cls: 'mgo-quiz-options' });
+                    const rows = q.options.map((option, oi) => {
+                        const row = list.createDiv({ cls: 'mgo-quiz-option', attr: { role: 'button', tabindex: '0' } });
+                        row.createSpan({ cls: 'mgo-quiz-key', text: String(oi + 1) });
+                        row.createSpan({ cls: 'mgo-quiz-text', text: option });
+                        row.addEventListener('click', () => pick(gi, oi));
+                        row.addEventListener('keydown', (evt: KeyboardEvent) => {
+                            if (evt.key !== 'Enter' && evt.key !== ' ') return;
+                            evt.preventDefault();
+                            pick(gi, oi);
+                        });
+                        return row;
+                    });
+                    return { q, rows };
+                });
+
+                const select = (gi: number, oi: number) => {
+                    picks[gi] = oi;
+                    groups[gi].rows.forEach((row, index) => row.classList.toggle('is-selected', index === oi));
+                };
+                function pick(gi: number, oi: number): void {
+                    if (answered) return;
+                    select(gi, oi);
+                }
+
+                const feedback = card.createDiv({ cls: 'mgo-quiz-feedback' });
+                feedback.hide();
+                const actions = card.createDiv({ cls: 'mgo-quiz-actions' });
+                const checkBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal', text: '检查' });
+                const revealBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal', text: '显示答案' });
+                const refineBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal mgo-quiz-detail-toggle', text: '详解' });
+                refineBtn.hide();
+                const resetBtn = actions.createEl('button', { cls: 'mgo-quiz-reveal mgo-quiz-reset', text: '重做' });
+                resetBtn.hide();
+                const answerEl = renderBack(card);
+                let answered = false;
+
+                const finish = (revealMode: boolean) => {
+                    if (answered) return;
+                    answered = true;
+                    let correct = 0;
+                    groups.forEach(({ q, rows }, gi) => {
+                        const picked = picks[gi];
+                        rows.forEach((row, oi) => {
+                            row.addClass('is-locked');
+                            row.setAttribute('aria-disabled', 'true');
+                            if (oi === q.answer) row.addClass('is-correct');
+                            if (!revealMode && picked === oi && oi !== q.answer) row.addClass('is-wrong');
+                        });
+                        if (!revealMode && picked === q.answer) correct++;
+                    });
+                    feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
+                    if (revealMode) {
+                        feedback.setText('已显示答案');
+                        feedback.addClass('is-skipped');
+                    } else {
+                        feedback.setText(`答对 ${correct} / ${groups.length}`);
+                        feedback.addClass(correct === groups.length ? 'is-correct' : 'is-wrong');
+                    }
+                    feedback.show();
+                    answerEl.show();
+                    checkBtn.hide();
+                    revealBtn.hide();
+                    if (detailFile) refineBtn.show();
+                    resetBtn.show();
+                    answerStates.set(stateKey, { kind: 'reading', picks: picks.slice(), mode: revealMode ? 'reveal' : 'check' });
+                };
+
+                checkBtn.addEventListener('click', () => finish(false));
+                revealBtn.addEventListener('click', () => finish(true));
+                refineBtn.addEventListener('click', () => {
+                    if (!detailFile || !detailTarget) return;
+                    void plugin.app.workspace.openLinkText(detailTarget, ctx.sourcePath, true);
+                });
+                resetBtn.addEventListener('click', () => {
+                    answered = false;
+                    picks.fill(null);
+                    groups.forEach(({ rows }) => {
+                        rows.forEach((row) => {
+                            row.removeClass('is-locked', 'is-correct', 'is-wrong', 'is-selected');
+                            row.removeAttribute('aria-disabled');
+                        });
+                    });
+                    feedback.hide();
+                    feedback.empty();
+                    feedback.removeClass('is-correct', 'is-wrong', 'is-skipped');
+                    answerEl.hide();
+                    refineBtn.hide();
+                    checkBtn.show();
+                    revealBtn.show();
+                    resetBtn.hide();
+                    answerStates.delete(stateKey);
+                });
+
+                const savedReading = answerStates.get(stateKey);
+                if (savedReading?.kind === 'reading') {
+                    savedReading.picks.forEach((value, gi) => { if (value !== null) select(gi, value); });
+                    finish(savedReading.mode === 'reveal');
                 }
                 return;
             }

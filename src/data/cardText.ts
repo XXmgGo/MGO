@@ -79,6 +79,8 @@ export interface CardAttributes {
     detail?: string;
     /** 详解笔记的 UUID（frontmatter `UUID`）：改名后仍能打开，优先于 detail。 */
     analysisId?: string;
+    /** 阅读理解大题的小问：每项 `题号|选项1|选项2|选项3|选项4|答案`。 */
+    questions?: string[];
     /** 语音地址：卡片右下角显示小喇叭，点击播放。 */
     audio?: string;
     /** 写 `false` 时笔记里照常显示，但不登记成闪卡。 */
@@ -86,7 +88,7 @@ export interface CardAttributes {
     [key: string]: string | string[] | undefined;
 }
 
-export type QuizKind = 'choice' | 'input' | 'multi';
+export type QuizKind = 'choice' | 'input' | 'multi' | 'reading';
 
 const QUIZ_TYPE_ALIASES: Record<string, QuizKind | 'basic'> = {
     'single-choice': 'choice',
@@ -99,6 +101,7 @@ const QUIZ_TYPE_ALIASES: Record<string, QuizKind | 'basic'> = {
     'multi-input': 'multi',
     multiinput: 'multi',
     multi: 'multi',
+    reading: 'reading',
     basic: 'basic',
     card: 'basic',
 };
@@ -118,6 +121,7 @@ export function resolveQuizKind(
     const declared = type ? QUIZ_TYPE_ALIASES[type.normalize('NFKC').trim().toLowerCase()] : undefined;
     if (declared === 'basic') return null;
     if (declared === 'multi') return 'multi';
+    if (declared === 'reading') return 'reading';
     if (declared === 'choice') {
         return resolveQuizAnswer(answer, options) === null ? null : 'choice';
     }
@@ -180,6 +184,37 @@ export function parseMultiInputItems(front: string, answers: readonly string[]):
                 hasNo: Boolean(m),
             };
         });
+}
+
+/** 阅读理解一个小组：题号、选项、答案（下标 0 起；对不上为 -1）。 */
+export interface ReadingQuestion {
+    no: string;
+    options: string[];
+    answer: number;
+}
+
+/** 把 `questions:` 的每行 `18|a|b|c|d|2` 拆成小问。 */
+export function parseReadingQuestions(lines: readonly string[]): ReadingQuestion[] {
+    return lines
+        .map((line) => line.split('|').map((part) => part.trim()))
+        .filter((parts) => parts.length >= 3)
+        .map((parts, index) => {
+            const no = parts[0] || String(index + 1);
+            const answerRaw = parts[parts.length - 1];
+            const options = parts.slice(1, -1);
+            const numeric = Number(answerRaw);
+            const answer = Number.isInteger(numeric) && numeric >= 1 && numeric <= options.length
+                ? numeric - 1
+                : options.findIndex((option) => option === answerRaw);
+            return { no, options, answer };
+        });
+}
+
+/** 复习界面用的纯文本版小问：`18　1 a　2 b …`。 */
+export function formatReadingQuestions(lines: readonly string[]): string {
+    return parseReadingQuestions(lines)
+        .map((q) => `${q.no}　${q.options.map((option, index) => `${index + 1} ${option}`).join('　')}`)
+        .join('\n');
 }
 
 function normalizeTypedAnswer(value: string): string {

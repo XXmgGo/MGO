@@ -3352,3 +3352,23 @@
     font-size: 0.8em;
     color: var(--mgo-tone-bad);
 }
+
+/* ── 阅读理解大题（reading）：一段文章 + 多个四选一小问 ───────────── */
+.mgo-card-render .mgo-quiz-reading-group {
+    margin: 12px 0 2px;
+}
+
+.mgo-card-render .mgo-quiz-reading-no {
+    font-size: 0.82em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.mgo-card-render .mgo-quiz-option.is-selected {
+    border-color: var(--interactive-accent);
+    background: var(--background-modifier-hover);
+}
+
+.mgo-card-render .mgo-quiz-option.is-selected.is-locked {
+    background: var(--background-modifier-hover);
+}

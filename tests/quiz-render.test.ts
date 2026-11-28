@@ -130,6 +130,37 @@ describe('note quiz rendering', () => {
         expect(openLinkTextSpy).toHaveBeenCalledWith('详解句', 'note.md', true);
     });
 
+    it('grades a reading card with several sub-questions', async () => {
+        const source = [
+            '---',
+            'type: reading',
+            'questions:',
+            '- 18|A1|A2|A3|A4|2',
+            '- 19|B1|B2|B3|B4|4',
+            '---',
+            '一段文章（　）…（　）。',
+            '---',
+            '解析',
+        ].join('\n');
+        const el = await render(source);
+        const groups = el.querySelectorAll('.mgo-quiz-reading-group');
+        expect(groups).toHaveLength(2);
+        const options = el.querySelectorAll('.mgo-quiz-option');
+        (options[1] as HTMLElement).click();
+        (options[4] as HTMLElement).click();
+        const check = Array.from(el.querySelectorAll('button')).find((b) => b.textContent === '检查') as HTMLElement;
+        check.click();
+        expect(el.querySelector('.mgo-quiz-feedback')!.textContent).toContain('答对 1 / 2');
+        expect(options[1].classList.contains('is-correct')).toBe(true);
+        expect(options[4].classList.contains('is-wrong')).toBe(true);
+        expect(options[7].classList.contains('is-correct')).toBe(true);
+
+        const reset = Array.from(el.querySelectorAll('button')).find((b) => b.textContent === '重做') as HTMLElement;
+        reset.click();
+        expect(options[1].classList.contains('is-correct')).toBe(false);
+        expect(options[1].classList.contains('is-selected')).toBe(false);
+    });
+
     it('restores a graded card when the block renders again', async () => {
         const source = ['---', 'type: single-choice', 'options: [A, B]', 'answer: B', '---', '问题', '---', '正解：B'].join('\n');
         const first = await render(source);

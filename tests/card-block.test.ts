@@ -44,7 +44,7 @@ vi.mock('../src/database/PouchDBManager', () => {
 
 import { describe, it, expect, vi } from 'vitest';
 import { Rating } from 'ts-fsrs';
-import { CARD_BLOCK_RE, answerMatches, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, parseMultiInputItems, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../src/data/cardText';
+import { CARD_BLOCK_RE, answerMatches, clozeBack, clozeFront, clozeNumbers, hasCloze, parseCardBlockAttributes, parseCardBlockBody, parseMultiInputItems, parseReadingQuestions, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../src/data/cardText';
 import { DataManager } from '../src/data/DataManager';
 import { DEFAULT_SETTINGS } from '../src/data/constants';
 
@@ -121,6 +121,15 @@ describe('code fence card syntax (pure helpers)', () => {
         expect(resolveQuizKind('input', undefined, undefined)).toBeNull();
         expect(resolveQuizKind('multi-input', undefined, undefined)).toBe('multi');
         expect(resolveQuizKind('multi', undefined, undefined)).toBe('multi');
+    });
+
+    it('parses reading sub-questions', () => {
+        const qs = parseReadingQuestions(['18|ほめて|ほめられて|ほめさせて|ほめたくて|2', '19|うちに|うえで|あげく|いじょう|2']);
+        expect(qs).toEqual([
+            { no: '18', options: ['ほめて', 'ほめられて', 'ほめさせて', 'ほめたくて'], answer: 1 },
+            { no: '19', options: ['うちに', 'うえで', 'あげく', 'いじょう'], answer: 1 },
+        ]);
+        expect(resolveQuizKind('reading', undefined, undefined)).toBe('reading');
     });
 
     it('splits multi-input lines into numbered items and matches typed answers', () => {
@@ -266,6 +275,16 @@ describe('DataManager parses code fence cards', () => {
         const dm = new DataManager(createPlugin(md) as never);
         await dm.buildIndex();
         expect(dm.getAllCards()).toHaveLength(0);
+    });
+
+    it('registers a reading card and puts the sub-questions in the front', async () => {
+        const md = '# 牌组\n\n```mgo\n---\ntype: reading\nquestions:\n- 18|a|b|c|d|2\n---\n文章（18）。\n---\n解析\n```';
+        const dm = new DataManager(createPlugin(md) as never);
+        await dm.buildIndex();
+        const cards = dm.getAllCards();
+        expect(cards).toHaveLength(1);
+        expect(cards[0].kind).toBe('reading');
+        expect(cards[0].front).toContain('18　1 a　2 b　3 c　4 d');
     });
 
     it('does not register multi-input cards as flashcards', async () => {

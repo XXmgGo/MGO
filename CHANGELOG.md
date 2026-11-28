@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - **Explicit card types:** an optional `type` attribute (`single-choice`, `input`, `basic`, plus the aliases `quiz` / `mc` / `blank` / `fill` / `typein`) states what a card is instead of relying on inference. A type its data cannot satisfy falls back to a normal card. `input` cards also type in the review view, checking against `answer` before revealing the back.
 - **Multiple-choice cards:** a card with `options` and `answer` becomes a clickable quiz in the review view. Picking an option grades it immediately, reveals the back and suggests Again (wrong) or Good (right); the rating itself stays manual. `answer` accepts a 1-based index, a letter A–J or the option text, and number keys `1`–`9` (`0` for the tenth) pick an option. In the note the same card is interactive — click an option to grade it, reveal the answer and reset with "Redo", with no counters or stats. A card with `answer` but no options gets a typed-answer box with a "Check" button; `reveal: true` still gives basic cards a plain collapsed answer. Note answers are practice only and do not affect FSRS.
 
+### Added
+- **阅读理解大题（`type: reading`）：** one passage plus several four-option sub-questions, written as `questions:` lines (`18|a|b|c|d|2`). The note renders each question as a clickable option group with 检查/显示答案/重做; the deck card carries the passage and the question lists, with answers on the back.
 ### Changed
 - **多句填空单项不再显示自动题号：** a `multi-input` card with a single unnumbered line (a whole passage) no longer renders the auto-generated "1" badge.
 ### Fixed
