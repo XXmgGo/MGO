@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
     usePouchDB: true,
     burySiblings: true,
     leechThreshold: 8,
+    autoPlayAudio: true,
     gamification: {
         currentStreak: 0,
         longestStreak: 0,

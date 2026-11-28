@@ -98,10 +98,10 @@ function makeCard(id: string, filePath: string, withData = false): Card {
     };
 }
 
-async function openView(queue: Card[], deckName = 'Deck') {
+async function openView(queue: Card[], deckName = 'Deck', settingsOverride: Record<string, unknown> = {}) {
     const rated: Card[] = [];
     const plugin = {
-        settings: { ...DEFAULT_SETTINGS, fontSize: 16 },
+        settings: { ...DEFAULT_SETTINGS, fontSize: 16, ...settingsOverride },
         refreshDashboardView: vi.fn(),
         dataManager: {
             getNextReviewIntervals: () => ({ 1: '1d', 2: '2d', 3: '3d', 4: '4d' }),
@@ -318,7 +318,7 @@ describe('ReviewView (tab)', () => {
         try {
             const card = makeCard('c1', 'a.md');
             card.audio = 'https://cdn.example.com/a.mp3';
-            const { view } = await openView([card]);
+            const { view } = await openView([card], 'Deck', { autoPlayAudio: false });
             const btn = view.contentEl.querySelector('.fsrs-card-audio-btn') as HTMLElement;
 
             await click(btn);
@@ -329,6 +329,30 @@ describe('ReviewView (tab)', () => {
             await click(btn);
             expect(pause).toHaveBeenCalled();
             expect(btn.classList.contains('is-playing')).toBe(false);
+        } finally {
+            (window as unknown as Record<string, unknown>).Audio = original;
+        }
+    });
+
+    it('auto-plays card audio by default and respects the setting', async () => {
+        const play = vi.fn().mockResolvedValue(undefined);
+        class FakeAudio {
+            play = play;
+            pause = vi.fn();
+            addEventListener = vi.fn();
+        }
+        const original = (window as Window & typeof globalThis).Audio;
+        (window as unknown as Record<string, unknown>).Audio = FakeAudio;
+        try {
+            const card = makeCard('c1', 'a.md');
+            card.audio = 'https://cdn.example.com/a.mp3';
+            const { view } = await openView([card]);
+            expect(play).toHaveBeenCalledTimes(1);
+            expect((view.contentEl.querySelector('.fsrs-card-audio-btn') as HTMLElement).classList.contains('is-playing')).toBe(true);
+
+            play.mockClear();
+            await openView([card], 'Deck', { autoPlayAudio: false });
+            expect(play).not.toHaveBeenCalled();
         } finally {
             (window as unknown as Record<string, unknown>).Audio = original;
         }

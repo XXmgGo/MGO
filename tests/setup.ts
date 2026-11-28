@@ -3,3 +3,9 @@
 if (Number(process.versions.node.split('.')[0]) < 22) {
     Reflect.deleteProperty(globalThis, 'Blob');
 }
+
+// jsdom 没实现媒体播放，会往控制台刷 "Not implemented"；测试里只需要一个能 resolve 的 play。
+if (typeof HTMLMediaElement !== 'undefined') {
+    HTMLMediaElement.prototype.play = () => Promise.resolve();
+    HTMLMediaElement.prototype.pause = () => undefined;
+}

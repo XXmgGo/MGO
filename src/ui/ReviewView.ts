@@ -579,6 +579,7 @@ export class ReviewView extends ItemView {
         await MarkdownRenderer.render(this.app, toHardBreaks(card.back), this.backEl, card.filePath, this.renderComponent);
         this.renderQuiz(card);
         this.syncAudioUi(card);
+        this.autoPlayAudio(card);
 
         if (isTyped) {
             this.showAnswerButton.buttonEl.hide();
@@ -628,7 +629,19 @@ export class ReviewView extends ItemView {
         const url = resolveAudioSrc(this.app, this.getCurrentCard()?.audio);
         if (!url) return;
         if (this.audioPlayer) { this.stopAudio(); return; }
+        this.startAudio(url, false);
+    }
 
+    /** 卡片带语音且开着「自动播放语音」时，出现即播放。 */
+    private autoPlayAudio(card: Card): void {
+        if (this.plugin.settings.autoPlayAudio === false) return;
+        const url = resolveAudioSrc(this.app, card.audio);
+        if (!url) return;
+        this.startAudio(url, true);
+    }
+
+    /** silent = 自动播放失败时不弹提示（浏览器可能拦截没有手势的播放）。 */
+    private startAudio(url: string, silent: boolean): void {
         const win = this.contentEl.ownerDocument.defaultView ?? window;
         const audio = new win.Audio(url);
         this.audioPlayer = audio;
@@ -641,13 +654,21 @@ export class ReviewView extends ItemView {
         audio.addEventListener('error', () => {
             if (this.audioPlayer !== audio) return;
             this.stopAudio();
-            new Notice('音频加载失败');
+            if (!silent) new Notice('音频加载失败');
         });
-        void audio.play().catch(() => {
-            if (this.audioPlayer !== audio) return;
+        try {
+            const started = audio.play() as Promise<void> | undefined;
+            if (started && typeof started.catch === 'function') {
+                started.catch(() => {
+                    if (this.audioPlayer !== audio) return;
+                    this.stopAudio();
+                    if (!silent) new Notice('无法播放这段音频');
+                });
+            }
+        } catch {
             this.stopAudio();
-            new Notice('无法播放这段音频');
-        });
+            if (!silent) new Notice('无法播放这段音频');
+        }
     }
 
     private resetQuiz(): void {
