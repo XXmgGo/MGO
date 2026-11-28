@@ -140,7 +140,7 @@ export class FSRSSettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('自动播放语音')
-            .setDesc('复习时卡片一出现就自动播放它的 audio 语音；没有语音的卡片不受影响。')
+            .setDesc('复习时显示答案后，自动播放这张卡的 audio 语音；没有语音的卡片不受影响。')
             .addToggle((toggle) => toggle
                 .setValue(this.plugin.settings.autoPlayAudio ?? true)
                 .onChange(async (value) => {

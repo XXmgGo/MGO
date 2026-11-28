@@ -30,7 +30,7 @@ export interface FSRSSettings {
     databaseName?: string;
     burySiblings?: boolean;
     leechThreshold?: number;
-    /** 复习时卡片出现就自动播放它的 audio 语音。 */
+    /** 复习时显示答案后自动播放这张卡的 audio 语音。 */
     autoPlayAudio?: boolean;
     gamification: Gamification;
 }

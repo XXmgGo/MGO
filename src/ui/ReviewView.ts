@@ -54,6 +54,7 @@ export class ReviewView extends ItemView {
     private audioPlayer: HTMLAudioElement | null = null;
     private audioHint: HTMLElement | null = null;
     private audioHintDivider: HTMLElement | null = null;
+    private audioAutoPlayed = false;
 
     private gestureStartX = 0;
     private gestureStartY = 0;
@@ -310,6 +311,7 @@ export class ReviewView extends ItemView {
                 this.controlsContainer.show();
                 this.showAnswerButton.buttonEl.hide();
                 this.answerContainer.show();
+                this.autoPlayOnReveal();
             });
         this.typeinCheckBtn.buttonEl.addClass('fsrs-typein-check-btn');
 
@@ -542,6 +544,7 @@ export class ReviewView extends ItemView {
         this.controlsContainer.hide();
 
         this.state = 'question';
+        this.audioAutoPlayed = false;
         const card = this.getCurrentCard();
         const kind = card.kind ?? resolveQuizKind(undefined, card.options, card.answer);
         const isTyped = card.type === 'typein' || kind === 'input';
@@ -579,7 +582,6 @@ export class ReviewView extends ItemView {
         await MarkdownRenderer.render(this.app, toHardBreaks(card.back), this.backEl, card.filePath, this.renderComponent);
         this.renderQuiz(card);
         this.syncAudioUi(card);
-        this.autoPlayAudio(card);
 
         if (isTyped) {
             this.showAnswerButton.buttonEl.hide();
@@ -632,10 +634,13 @@ export class ReviewView extends ItemView {
         this.startAudio(url, false);
     }
 
-    /** 卡片带语音且开着「自动播放语音」时，出现即播放。 */
-    private autoPlayAudio(card: Card): void {
+    /** 显示答案后自动播放这张卡的语音（一张卡只自动播一次；手动播过就不再插）。 */
+    private autoPlayOnReveal(): void {
+        if (this.audioAutoPlayed) return;
+        this.audioAutoPlayed = true;
         if (this.plugin.settings.autoPlayAudio === false) return;
-        const url = resolveAudioSrc(this.app, card.audio);
+        if (this.audioPlayer) return;
+        const url = resolveAudioSrc(this.app, this.getCurrentCard()?.audio);
         if (!url) return;
         this.startAudio(url, true);
     }
@@ -768,6 +773,7 @@ export class ReviewView extends ItemView {
             this.answerContainer.show();
             this.inplaceIndicatorEl.hide();
         }
+        this.autoPlayOnReveal();
     }
 
     private toggleInPlaceView() {

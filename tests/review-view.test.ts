@@ -334,7 +334,7 @@ describe('ReviewView (tab)', () => {
         }
     });
 
-    it('auto-plays card audio by default and respects the setting', async () => {
+    it('auto-plays card audio when the answer is shown', async () => {
         const play = vi.fn().mockResolvedValue(undefined);
         class FakeAudio {
             play = play;
@@ -347,11 +347,15 @@ describe('ReviewView (tab)', () => {
             const card = makeCard('c1', 'a.md');
             card.audio = 'https://cdn.example.com/a.mp3';
             const { view } = await openView([card]);
+            expect(play).not.toHaveBeenCalled();
+
+            await click(view.contentEl.querySelector('.fsrs-show-answer-btn') as HTMLElement);
             expect(play).toHaveBeenCalledTimes(1);
             expect((view.contentEl.querySelector('.fsrs-card-audio-btn') as HTMLElement).classList.contains('is-playing')).toBe(true);
 
             play.mockClear();
-            await openView([card], 'Deck', { autoPlayAudio: false });
+            const { view: offView } = await openView([card], 'Deck', { autoPlayAudio: false });
+            await click(offView.contentEl.querySelector('.fsrs-show-answer-btn') as HTMLElement);
             expect(play).not.toHaveBeenCalled();
         } finally {
             (window as unknown as Record<string, unknown>).Audio = original;
