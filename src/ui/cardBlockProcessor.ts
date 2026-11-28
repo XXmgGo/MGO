@@ -74,6 +74,13 @@ const isComposingKey = (evt: KeyboardEvent): boolean => {
 
 let currentAudio: HTMLAudioElement | null = null;
 
+/** 作答状态：同一张卡重新渲染（滚动触发）时恢复，避免高度突然变化、位置跳动。 */
+type CardAnswerState =
+    | { kind: 'choice'; picked: number | null }
+    | { kind: 'input'; value: string; mode: 'check' | 'reveal' }
+    | { kind: 'multi'; values: string[]; mode: 'check' | 'reveal' };
+const answerStates = new Map<string, CardAnswerState>();
+
 function stopCurrentAudio(): void {
     if (!currentAudio) return;
     try { currentAudio.pause(); } catch { /* 元素可能已被卸载 */ }
@@ -173,6 +180,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             const { attrs, content } = parseCardBlockAttributes(raw);
             const body = content.trim();
             if (!body) return;
+            const stateKey = `${ctx.sourcePath ?? ''}::${source}`;
 
             const audioUrl = resolveAudioSrc(plugin.app, typeof attrs.audio === 'string' ? attrs.audio : '');
             if (audioUrl) attachAudioButton(el, audioUrl);
@@ -318,6 +326,11 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     revealBtn.hide();
                     if (detailFile) detailBtn.show();
                     resetBtn.show();
+                    answerStates.set(stateKey, {
+                        kind: 'multi',
+                        values: rows.flatMap((r) => r.inputs.map((input) => input.value)),
+                        mode: revealMode ? 'reveal' : 'check',
+                    });
                 };
 
                 checkBtn.addEventListener('click', () => finish(false));
@@ -358,8 +371,21 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     checkBtn.show();
                     revealBtn.show();
                     resetBtn.hide();
+                    answerStates.delete(stateKey);
                     rows[0]?.inputs[0]?.focus();
                 });
+
+                const savedMulti = answerStates.get(stateKey);
+                if (savedMulti?.kind === 'multi') {
+                    let n = 0;
+                    for (const r of rows) {
+                        for (const input of r.inputs) {
+                            input.value = savedMulti.values[n++] ?? '';
+                            fitMultiInputWidth(input);
+                        }
+                    }
+                    finish(savedMulti.mode === 'reveal');
+                }
                 return;
             }
 
@@ -408,6 +434,7 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     revealBtn.hide();
                     if (detailFile) detailBtn.show();
                     resetBtn.show();
+                    answerStates.set(stateKey, { kind: 'choice', picked });
                 };
 
                 rows.forEach((row, index) => {
@@ -436,7 +463,11 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     detailBtn.hide();
                     revealBtn.show();
                     resetBtn.hide();
+                    answerStates.delete(stateKey);
                 });
+
+                const savedChoice = answerStates.get(stateKey);
+                if (savedChoice?.kind === 'choice') grade(savedChoice.picked);
                 return;
             }
 
@@ -480,6 +511,11 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     revealBtn.hide();
                     if (detailFile) detailBtn.show();
                     resetBtn.show();
+                    answerStates.set(stateKey, {
+                        kind: 'input',
+                        value: input.value,
+                        mode: ok === null ? 'reveal' : 'check',
+                    });
                 };
 
                 const check = () => {
@@ -511,8 +547,19 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                     detailBtn.hide();
                     revealBtn.show();
                     resetBtn.hide();
+                    answerStates.delete(stateKey);
                     input.focus();
                 });
+
+                const savedInput = answerStates.get(stateKey);
+                if (savedInput?.kind === 'input') {
+                    if (savedInput.mode === 'reveal') {
+                        finish(null);
+                    } else {
+                        input.value = savedInput.value;
+                        check();
+                    }
+                }
                 return;
             }
 

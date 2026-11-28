@@ -130,6 +130,17 @@ describe('note quiz rendering', () => {
         expect(openLinkTextSpy).toHaveBeenCalledWith('详解句', 'note.md', true);
     });
 
+    it('restores a graded card when the block renders again', async () => {
+        const source = ['---', 'type: single-choice', 'options: [A, B]', 'answer: B', '---', '问题', '---', '正解：B'].join('\n');
+        const first = await render(source);
+        (first.querySelectorAll('.mgo-quiz-option')[0] as HTMLElement).click();
+        expect(first.querySelector('.mgo-quiz-feedback')!.textContent).toContain('回答错误');
+
+        const second = await render(source);
+        expect(second.querySelector('.mgo-quiz-feedback')!.textContent).toContain('回答错误');
+        expect((second.querySelectorAll('.mgo-quiz-option')[0] as HTMLElement).classList.contains('is-wrong')).toBe(true);
+    });
+
     it('opens the detail note by analysisId uuid', async () => {
         const source = [
             '---',
