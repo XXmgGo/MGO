@@ -129,9 +129,9 @@ describe('code fence card syntax (pure helpers)', () => {
             ['C 上で', 'あまり'],
         );
         expect(items).toEqual([
-            { no: '11', text: '子どもを教育する（　）こと。', answer: 'C 上で' },
-            { no: '12', text: '心配する（　）こと。', answer: 'あまり' },
-            { no: '3', text: 'ただの行', answer: '' },
+            { no: '11', text: '子どもを教育する（　）こと。', answer: 'C 上で', hasNo: true },
+            { no: '12', text: '心配する（　）こと。', answer: 'あまり', hasNo: true },
+            { no: '3', text: 'ただの行', answer: '', hasNo: false },
         ]);
         expect(answerMatches('上で', 'C 上で')).toBe(true);
         expect(answerMatches(' C 上で ', 'C 上で')).toBe(true);

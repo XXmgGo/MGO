@@ -156,6 +156,8 @@ export interface MultiInputItem {
     no: string;
     text: string;
     answer: string;
+    /** 行首本来就有题号（不是自动编的）。 */
+    hasNo: boolean;
 }
 
 const MULTI_NO_RE = /^(\d{1,3})\s*[.．、:：|｜]?\s+(.+)$/;
@@ -175,6 +177,7 @@ export function parseMultiInputItems(front: string, answers: readonly string[]):
                 no: m ? m[1] : String(index + 1),
                 text: m ? m[2].trim() : line,
                 answer: (answers[index] ?? '').trim(),
+                hasNo: Boolean(m),
             };
         });
 }

@@ -254,7 +254,8 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
                 const list = card.createDiv({ cls: 'mgo-quiz-multi-list' });
                 const rows = items.map((item) => {
                     const row = list.createDiv({ cls: 'mgo-quiz-multi-row' });
-                    row.createSpan({ cls: 'mgo-quiz-multi-no', text: item.no });
+                    // 只有一项又没写题号时（整段短文），不显示自动编的「1」。
+                    if (item.hasNo || items.length > 1) row.createSpan({ cls: 'mgo-quiz-multi-no', text: item.no });
                     const textEl = row.createSpan({ cls: 'mgo-quiz-multi-text' });
                     const blankCount = (item.text.match(BLANK_RE_ALL) ?? []).length;
                     const parts = splitAnswerParts(item.answer, blankCount);

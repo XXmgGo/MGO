@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - **Explicit card types:** an optional `type` attribute (`single-choice`, `input`, `basic`, plus the aliases `quiz` / `mc` / `blank` / `fill` / `typein`) states what a card is instead of relying on inference. A type its data cannot satisfy falls back to a normal card. `input` cards also type in the review view, checking against `answer` before revealing the back.
 - **Multiple-choice cards:** a card with `options` and `answer` becomes a clickable quiz in the review view. Picking an option grades it immediately, reveals the back and suggests Again (wrong) or Good (right); the rating itself stays manual. `answer` accepts a 1-based index, a letter A–J or the option text, and number keys `1`–`9` (`0` for the tenth) pick an option. In the note the same card is interactive — click an option to grade it, reveal the answer and reset with "Redo", with no counters or stats. A card with `answer` but no options gets a typed-answer box with a "Check" button; `reveal: true` still gives basic cards a plain collapsed answer. Note answers are practice only and do not affect FSRS.
 
+### Changed
+- **多句填空单项不再显示自动题号：** a `multi-input` card with a single unnumbered line (a whole passage) no longer renders the auto-generated "1" badge.
 ### Fixed
 - **答题后滚动导致题卡高度塌回去：** 实时预览把代码块移出视口再移回来时会重新渲染，题卡会回到未作答状态、答案区收起，页面高度突变、当前位置跳动。作答状态（选项、输入、多空填空）现在按「笔记路径＋卡片源码」记在内存里，重新渲染时自动恢复；重做或改动卡片源码才清空。
 ### Added
