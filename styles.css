@@ -3390,3 +3390,36 @@
 .mgo-card-render .mgo-quiz-option.is-selected.is-locked {
     background: var(--background-modifier-hover);
 }
+
+/* ── 阅读理解大题：复习界面 ─────────────────────────────────────── */
+.fsrs-review-view .fsrs-quiz-reading-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 10px 0 2px;
+}
+
+.fsrs-review-view .fsrs-quiz-reading-no {
+    flex: 0 0 auto;
+    min-width: 1.6em;
+    padding-top: 10px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+.fsrs-review-view .fsrs-quiz-reading-group .fsrs-quiz-options {
+    flex: 1 1 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+}
+
+.fsrs-review-view .fsrs-quiz-reading-group .fsrs-quiz-option {
+    flex: 0 0 auto;
+    max-width: 100%;
+}
+
+.fsrs-review-view .fsrs-quiz-option.is-selected {
+    border-color: var(--interactive-accent);
+    background: var(--background-modifier-hover);
+}

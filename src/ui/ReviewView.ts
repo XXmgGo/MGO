@@ -40,6 +40,8 @@ export class ReviewView extends ItemView {
     private quizContainer: HTMLElement;
     private quizOptions: string[] = [];
     private quizCorrectIndex = -1;
+    private readingGroups: { rows: HTMLElement[]; answer: number }[] = [];
+    private readingPicks: (number | null)[] = [];
     private quizAnswered = false;
     private quizCorrect = false;
     private quizSkipped = false;
@@ -679,6 +681,8 @@ export class ReviewView extends ItemView {
     private resetQuiz(): void {
         this.quizOptions = [];
         this.quizCorrectIndex = -1;
+        this.readingGroups = [];
+        this.readingPicks = [];
         this.quizAnswered = false;
         this.quizCorrect = false;
         this.quizSkipped = false;
@@ -691,6 +695,10 @@ export class ReviewView extends ItemView {
         if (card.type === 'typein' || card.type === 'cloze' || this.isInPlaceImage) return;
         const options = card.options ?? [];
         const kind = card.kind ?? resolveQuizKind(undefined, options, card.answer);
+        if (kind === 'reading') {
+            this.renderReading(card);
+            return;
+        }
         if (kind !== 'choice') return;
         const correctIndex = resolveQuizAnswer(card.answer, options);
         if (correctIndex === null) return;
@@ -715,6 +723,74 @@ export class ReviewView extends ItemView {
                 this.answerQuiz(index);
             });
         });
+    }
+
+    /** 阅读理解大题：一段文章 + 多个四选一小问。 */
+    private renderReading(card: Card): void {
+        const questions = card.questions ?? [];
+        if (questions.length === 0) return;
+        this.readingGroups = [];
+        this.readingPicks = questions.map(() => null);
+        this.quizContainer.empty();
+        this.quizContainer.show();
+
+        questions.forEach((q, gi) => {
+            const group = this.quizContainer.createDiv({ cls: 'fsrs-quiz-reading-group' });
+            group.createDiv({ cls: 'fsrs-quiz-reading-no', text: q.no });
+            const list = group.createDiv({ cls: 'fsrs-quiz-options' });
+            const rows = q.options.map((option, oi) => {
+                const row = list.createDiv({
+                    cls: 'fsrs-quiz-option',
+                    attr: { role: 'button', tabindex: '0', 'aria-label': `第 ${q.no} 题 选项 ${oi + 1}` },
+                });
+                row.createSpan({ cls: 'fsrs-quiz-key', text: String(oi + 1) });
+                row.createSpan({ cls: 'fsrs-quiz-text', text: option });
+                row.addEventListener('click', () => this.pickReading(gi, oi));
+                row.addEventListener('keydown', (evt: KeyboardEvent) => {
+                    if (evt.key !== 'Enter' && evt.key !== ' ') return;
+                    evt.preventDefault();
+                    this.pickReading(gi, oi);
+                });
+                return row;
+            });
+            this.readingGroups.push({ rows, answer: q.answer });
+        });
+    }
+
+    private pickReading(gi: number, oi: number): void {
+        if (this.state !== 'question' || this.quizAnswered) return;
+        this.readingPicks[gi] = oi;
+        this.readingGroups[gi]?.rows.forEach((row, index) => {
+            row.classList.toggle('is-selected', index === oi);
+        });
+        if (this.readingPicks.every((pick) => pick !== null)) this.answerReading(false);
+    }
+
+    private answerReading(skipped: boolean): void {
+        if (this.state !== 'question' || this.quizAnswered) return;
+        this.quizAnswered = true;
+        this.quizSkipped = skipped;
+        let correct = 0;
+        this.readingGroups.forEach((group, gi) => {
+            const pick = this.readingPicks[gi];
+            group.rows.forEach((row, oi) => {
+                row.classList.add('is-locked');
+                row.setAttribute('aria-disabled', 'true');
+                if (oi === group.answer) row.classList.add('is-correct');
+                if (!skipped && pick === oi && oi !== group.answer) row.classList.add('is-wrong');
+            });
+            if (!skipped && pick === group.answer) correct++;
+        });
+        this.quizCorrect = !skipped && correct === this.readingGroups.length;
+        const feedback = this.quizContainer.createDiv({ cls: 'fsrs-quiz-feedback' });
+        if (skipped) {
+            feedback.setText('已显示答案');
+            feedback.addClass('is-skipped');
+        } else {
+            feedback.setText(`答对 ${correct} / ${this.readingGroups.length}`);
+            feedback.addClass(this.quizCorrect ? 'is-correct' : 'is-wrong');
+        }
+        this.revealAnswer();
     }
 
     /** index < 0 表示不改答案、直接显示答案。 */
@@ -748,6 +824,10 @@ export class ReviewView extends ItemView {
 
     private showAnswer() {
         if (this.state === 'answer') return;
+        if (this.readingGroups.length > 0 && !this.quizAnswered) {
+            this.answerReading(true);
+            return;
+        }
         if (this.quizCorrectIndex >= 0 && !this.quizAnswered) {
             this.answerQuiz(-1);
             return;

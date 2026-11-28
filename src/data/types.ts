@@ -52,6 +52,8 @@ export interface CardData {
     options?: string[];
     /** 选择题正确答案：1 起始序号、A–J 字母，或选项原文。 */
     answer?: string;
+    /** 阅读理解大题的小问（type: reading）。 */
+    questions?: { no: string; options: string[]; answer: number }[];
     /** 显式或推断出的题卡类型；不写 type 属性时由 options/answer 推断。 */
     kind?: 'choice' | 'input' | 'multi' | 'reading';
     /** 回忆提示，显示在正面下方。 */

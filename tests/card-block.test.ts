@@ -284,7 +284,8 @@ describe('DataManager parses code fence cards', () => {
         const cards = dm.getAllCards();
         expect(cards).toHaveLength(1);
         expect(cards[0].kind).toBe('reading');
-        expect(cards[0].front).toContain('18　1 a　2 b　3 c　4 d');
+        expect(cards[0].front).toBe('文章（18）。');
+        expect(cards[0].questions).toEqual([{ no: '18', options: ['a', 'b', 'c', 'd'], answer: 1 }]);
     });
 
     it('does not register multi-input cards as flashcards', async () => {

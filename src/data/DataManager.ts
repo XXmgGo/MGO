@@ -2,7 +2,7 @@ import { FSRS, Rating, State, createEmptyCard, type Card as FSRSCard } from 'ts-
 import { Notice, TFile, type CachedMetadata } from 'obsidian';
 import type { Card, Deck, DeckSettings, FSRSData, FSRSParameters, Gamification, NoteReviewData, PluginData, ReviewLog } from './types';
 import { isRecord, cyrb53hex, LEGACY_DATABASE_NAME, getDocsWritten, getErrorMessage, isLikelyCorsOrNetworkErrorMessage, buildAuthenticatedUrl, sanitizeUrlForDisplay } from './constants';
-import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, formatReadingQuestions, parseCardBlockAttributes, parseCardBlockBody, resolveQuizKind } from './cardText';
+import { CARD_BLOCK_RE, clozeBack, clozeFront, clozeNumbers, parseCardBlockAttributes, parseCardBlockBody, parseReadingQuestions, resolveQuizKind } from './cardText';
 import { PouchDBManager } from '../database/PouchDBManager';
 import { buildBackup, type BackupContent } from './backup';
 
@@ -483,9 +483,10 @@ export class DataManager {
             if (!front || !back) continue;
             const faceContext = cardTitle || front.replace(/\s+/g, ' ').trim();
 
-            let finalFront = meta.kind === 'reading' && Array.isArray(attrs.questions)
-                ? `${front}\n\n${formatReadingQuestions(attrs.questions)}`
-                : front;
+            let finalFront = front;
+            const questions = meta.kind === 'reading' && Array.isArray(attrs.questions)
+                ? parseReadingQuestions(attrs.questions)
+                : undefined;
             let finalBack = back;
             let type: Card['type'] = 'basic';
             if (lang === 'mgo-reverse') { finalFront = back; finalBack = front; type = 'reversed'; }
@@ -498,6 +499,7 @@ export class DataManager {
                 id: cardId, deckId, filePath, type,
                 originalText: match[0], front: finalFront, back: finalBack, context: faceContext,
                 ...meta,
+                questions,
                 fsrsData: this.fsrsDataStore[cardId],
             };
             this.cards.set(cardId, card);
