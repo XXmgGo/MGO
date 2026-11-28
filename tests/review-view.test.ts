@@ -149,6 +149,17 @@ describe('ReviewView (tab)', () => {
         expect(view.getDisplayText()).toBe('Deck');
     });
 
+    it('skips the current card to the end of the queue', async () => {
+        const { view } = await openView([makeCard('c1', 'a.md'), makeCard('c2', 'b.md')]);
+        const front = () => view.contentEl.querySelector('.fsrs-card-front')!.textContent;
+        expect(front()).toContain('front c1');
+        const skip = () => Array.from(view.contentEl.querySelectorAll('button')).find((b) => b.textContent === '跳过') as HTMLElement;
+        await click(skip());
+        expect(front()).toContain('front c2');
+        await click(skip());
+        expect(front()).toContain('front c1');
+    });
+
     it('shows the answered counter and deck info', async () => {
         notices.length = 0;
         const { view } = await openView([makeCard('c1', 'a.md'), makeCard('c2', 'b.md', true)]);

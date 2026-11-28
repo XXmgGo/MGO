@@ -3434,3 +3434,24 @@
 .fsrs-review-view .fsrs-card-answer {
     flex: 0 0 auto;
 }
+
+
+.fsrs-review-view .fsrs-skip-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    margin-left: 8px;
+    padding: 0 14px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    box-shadow: none;
+}
+
+.fsrs-review-view .fsrs-skip-btn:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}

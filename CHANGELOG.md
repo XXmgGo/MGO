@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **阅读理解大题在复习界面可直接点选：** each sub-question renders as its own option group; picking one option per group grades the whole card (答对 x / n), highlights wrong picks and still suggests the rating. The deck card keeps the passage on the front and the explanations on the back.
 ### Added
+- **跳过当前卡（跳过按钮）：** the review footer gains a 跳过 button that moves the current card to the end of this session's queue without rating it; it comes back later in the same session. The last remaining card refuses to skip with a notice.
+### Added
 - **阅读理解大题（`type: reading`）：** one passage plus several four-option sub-questions, written as `questions:` lines (`18|a|b|c|d|2`). The note renders each question as a clickable option group with 检查/显示答案/重做; the deck card carries the passage and the question lists, with answers on the back.
 ### Changed
 - **多句填空单项不再显示自动题号：** a `multi-input` card with a single unnumbered line (a whole passage) no longer renders the auto-generated "1" badge.

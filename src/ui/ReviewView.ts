@@ -40,6 +40,7 @@ export class ReviewView extends ItemView {
     private quizContainer: HTMLElement;
     private quizOptions: string[] = [];
     private quizCorrectIndex = -1;
+    private skipButton: ButtonComponent;
     private readingGroups: { rows: HTMLElement[]; answer: number }[] = [];
     private readingPicks: (number | null)[] = [];
     private quizAnswered = false;
@@ -225,6 +226,11 @@ export class ReviewView extends ItemView {
             .onClick(() => this.showAnswer());
         this.showAnswerButton.buttonEl.addClass('fsrs-show-answer-btn');
         this.showAnswerButton.buttonEl.createEl('kbd', { text: '空格键', cls: 'fsrs-show-answer-kbd' });
+
+        this.skipButton = new ButtonComponent(bottomControlsContainer)
+            .setButtonText('跳过')
+            .onClick(() => this.skipCurrentCard());
+        this.skipButton.buttonEl.addClass('fsrs-skip-btn');
 
         this.controlsContainer = bottomControlsContainer.createDiv({ cls: 'fsrs-review-controls' });
         this.controlsContainer.hide();
@@ -537,6 +543,19 @@ export class ReviewView extends ItemView {
             btn.buttonEl.createSpan({ text, cls: 'fsrs-rating-text' });
             btn.buttonEl.createEl('small', { text: intervals[rating], cls: 'fsrs-interval-hint' });
         }
+    }
+
+    /** 暂时跳过当前卡：把它挪到本轮队尾，不记评分、不计入 FSRS。 */
+    private skipCurrentCard(): void {
+        const card = this.getCurrentCard();
+        if (!card) return;
+        if (this.queue.length - this.currentCardIndex <= 1) {
+            new Notice('这是本轮最后一张，稍后再跳过吧');
+            return;
+        }
+        this.queue.splice(this.currentCardIndex, 1);
+        this.queue.push(card);
+        void this.showNextCard();
     }
 
     private async showNextCard() {
