@@ -77,6 +77,8 @@ export interface CardAttributes {
     hint?: string;
     /** 详解笔记名（通常是以正确句子命名的笔记）：题卡作答后可打开。 */
     detail?: string;
+    /** 详解笔记的 UUID（frontmatter `UUID`）：改名后仍能打开，优先于 detail。 */
+    analysisId?: string;
     /** 语音地址：卡片右下角显示小喇叭，点击播放。 */
     audio?: string;
     /** 写 `false` 时笔记里照常显示，但不登记成闪卡。 */

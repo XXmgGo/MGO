@@ -3,6 +3,7 @@ import { toHardBreaks } from '../data/constants';
 import { CARD_FENCE_LANGS, answerMatches, hasCloze, parseCardBlockAttributes, parseCardBlockBody, parseMultiInputItems, resolveQuizAnswer, resolveQuizKind, revealCloze } from '../data/cardText';
 import { editCardAtSource } from './editCardSource';
 import { resolveAudioSrc } from './audioSrc';
+import { resolveNoteByUuid } from './noteByUuid';
 
 const BLANK_RE = /（\s*）|\(\s*\)|＿{2,}|_{2,}/;
 const BLANK_RE_ALL = /（\s*）|\(\s*\)|＿{2,}|_{2,}/g;
@@ -190,10 +191,15 @@ export function registerCardCodeBlocks(plugin: Plugin): void {
             const correctIndex = resolveQuizAnswer(answer, options);
             const reveal = typeof attrs.reveal === 'string' && /^(1|true|yes|on)$/i.test(attrs.reveal.trim());
 
-            const detailTarget = typeof attrs.detail === 'string' ? attrs.detail.trim() : '';
-            const detailFile = detailTarget
-                ? plugin.app.metadataCache?.getFirstLinkpathDest?.(detailTarget, ctx.sourcePath) ?? null
-                : null;
+            const analysisId = typeof attrs.analysisId === 'string' ? attrs.analysisId.trim() : '';
+            const analysisFile = analysisId ? resolveNoteByUuid(plugin.app, analysisId) : null;
+            const detailTarget = analysisFile
+                ? analysisFile.path
+                : typeof attrs.detail === 'string' ? attrs.detail.trim() : '';
+            const detailFile = analysisFile
+                ?? (detailTarget
+                    ? plugin.app.metadataCache?.getFirstLinkpathDest?.(detailTarget, ctx.sourcePath) ?? null
+                    : null);
             const renderBack = (host: HTMLElement) => {
                 const answerEl = host.createDiv({ cls: 'mgo-quiz-answer' });
                 answerEl.hide();

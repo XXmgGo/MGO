@@ -50,8 +50,14 @@ beforeAll(() => {
         for (const [k, v] of Object.entries(props)) this.style.setProperty(k, v);
     };
 
+    const detailFile = { path: '详解句.md' };
     const appMock = {
-        metadataCache: { getFirstLinkpathDest: (link: string) => (link === '详解句' ? { path: '详解句.md' } : null) },
+        metadataCache: {
+            getFirstLinkpathDest: (link: string) => (link === '详解句' ? detailFile : null),
+            getFileCache: (file: { path: string }) => (file.path === '详解句.md' ? { frontmatter: { UUID: 'uuid-123' } } : null),
+            on: () => undefined,
+        },
+        vault: { getMarkdownFiles: () => [detailFile] },
         workspace: { openLinkText: openLinkTextSpy },
     };
     const plugin = {
@@ -122,6 +128,27 @@ describe('note quiz rendering', () => {
         expect(btn.style.display).not.toBe('none');
         btn.click();
         expect(openLinkTextSpy).toHaveBeenCalledWith('详解句', 'note.md', true);
+    });
+
+    it('opens the detail note by analysisId uuid', async () => {
+        const source = [
+            '---',
+            'type: single-choice',
+            'options: [A, B]',
+            'answer: B',
+            'analysisId: uuid-123',
+            '---',
+            '问题',
+            '---',
+            '正解：B',
+        ].join('\n');
+        openLinkTextSpy.mockClear();
+        const el = await render(source);
+        (el.querySelectorAll('.mgo-quiz-option')[0] as HTMLElement).click();
+        const btn = el.querySelector('.mgo-quiz-detail-toggle') as HTMLElement;
+        expect(btn.style.display).not.toBe('none');
+        btn.click();
+        expect(openLinkTextSpy).toHaveBeenCalledWith('详解句.md', 'note.md', true);
     });
 
     it('keeps flashcard:false cards interactive in the note', async () => {
