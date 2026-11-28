@@ -3423,3 +3423,14 @@
     border-color: var(--interactive-accent);
     background: var(--background-modifier-hover);
 }
+
+/* 阅读大题很长时，front/quiz 不能被 flex 压缩，否则选项会叠到正文上 */
+.fsrs-review-view .fsrs-review-card {
+    justify-content: safe center;
+}
+
+.fsrs-review-view .fsrs-card-front,
+.fsrs-review-view .fsrs-quiz,
+.fsrs-review-view .fsrs-card-answer {
+    flex: 0 0 auto;
+}
