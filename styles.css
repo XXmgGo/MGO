@@ -3371,6 +3371,15 @@
 .mgo-card-render .mgo-quiz-reading-group .mgo-quiz-options {
     flex: 1 1 auto;
     margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+}
+
+/* 选项按文字宽度排，短选项一行能塞四个就四个 */
+.mgo-card-render .mgo-quiz-reading-group .mgo-quiz-option {
+    flex: 0 0 auto;
+    max-width: 100%;
 }
 
 .mgo-card-render .mgo-quiz-option.is-selected {
